@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garm-operator-controller-manager
+  namespace: garm-operator-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: manager
+          args:
+            - --garm-server=<GARM_SERVER>
+            - --garm-username=<GARM_USERNAME>
+            - --garm-password=<GARM_PASSWORD>

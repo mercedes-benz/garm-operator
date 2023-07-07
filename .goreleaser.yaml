@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: MIT
+project_name: garm-operator
+before:
+  hooks:
+    - go mod tidy
+    - sh -c "IMG=ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }} make release-manifests"
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    main: ./cmd/
+
+dockers:
+  - image_templates:
+      - "ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }}"
+      - "ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:latest"
+    dockerfile: release.Dockerfile
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of uname.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  use: github
+  groups:
+    - title: "✨ Features"
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "🐛 Bug fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "📚 Documentation"
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: "🌱 Others"
+      order: 999
+  filters:
+    exclude:
+      - "^test:"
+release:
+  github:
+    owner: mercedes-benz
+    name: garm-operator
+  prerelease: auto
+  extra_files:
+    - glob: tmp/garm_operator_all.yaml
+    - glob: tmp/garm_operator_crds.yaml
+    - glob: tmp/garm_operator.yaml
+    - glob: tmp/3RD_PARTY_LICENSES.txt
+    - glob: tmp/BlackDuck_RiskReport.pdf
+  header: |
+    Container image is available at `ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }}` 
+
+    * `garm_operator.yaml` contains the operator deployment manifest with all the required RBAC rules and certificate configurations.
+    * `garm_operator_crds.yaml` contains the CRDs for the operator.
+    * `garm_operator_all.yaml` is the combination of the above two files.
+
+    ---

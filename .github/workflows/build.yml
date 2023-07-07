@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: MIT
+
+name: build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: make verify
+        run: make verify
+
+      - name: make lint
+        run: make golangci-lint && GOLANGCI_LINT_EXTRA_ARGS=--timeout=1h make lint
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      
+      - name: make test
+        run: make test
