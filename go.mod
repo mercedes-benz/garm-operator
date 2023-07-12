@@ -1,4 +1,4 @@
-module git.i.mercedes-benz.com/GitHub-Actions/garm-operator
+module GitHub-Actions/garm-operator
 
 go 1.20
 
