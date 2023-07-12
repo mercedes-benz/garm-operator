@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
+	"github.com/cloudbase/garm/params"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -24,12 +26,24 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // PoolSpec defines the desired state of Pool
+// See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142
 type PoolSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Pool. Edit pool_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	RunnerPrefix           string          `json:"runner_prefix"`
+	ProviderName           string          `json:"provider_name"`
+	MaxRunners             uint            `json:"max_runners"`
+	MinIdleRunners         uint            `json:"min_idle_runners"`
+	Image                  string          `json:"image"`
+	Flavor                 string          `json:"flavor"`
+	OSType                 params.OSType   `json:"os_type"`
+	OSArch                 params.OSArch   `json:"os_arch"`
+	Tags                   []string        `json:"tags"`
+	Enabled                bool            `json:"enabled"`
+	RunnerBootstrapTimeout uint            `json:"runner_bootstrap_timeout"`
+	ExtraSpecs             json.RawMessage `json:"extra_specs,omitempty"`
+	GitHubRunnerGroup      string          `json:"github-runner-group"`
 }
 
 // PoolStatus defines the observed state of Pool

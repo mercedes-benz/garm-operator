@@ -1,0 +1,90 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.12.0
+  name: pools.garm-operator.mercedes-benz.com
+spec:
+  group: garm-operator.mercedes-benz.com
+  names:
+    kind: Pool
+    listKind: PoolList
+    plural: pools
+    singular: pool
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Pool is the Schema for the pools API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: 'PoolSpec defines the desired state of Pool See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142'
+            properties:
+              enabled:
+                type: boolean
+              extra_specs:
+                description: RawMessage is a raw encoded JSON value. It implements
+                  Marshaler and Unmarshaler and can be used to delay JSON decoding
+                  or precompute a JSON encoding.
+                format: byte
+                type: string
+              flavor:
+                type: string
+              github-runner-group:
+                type: string
+              image:
+                type: string
+              max_runners:
+                type: integer
+              min_idle_runners:
+                type: integer
+              os_arch:
+                type: string
+              os_type:
+                type: string
+              provider_name:
+                type: string
+              runner_bootstrap_timeout:
+                type: integer
+              runner_prefix:
+                type: string
+              tags:
+                items:
+                  type: string
+                type: array
+            required:
+            - enabled
+            - flavor
+            - github-runner-group
+            - image
+            - max_runners
+            - min_idle_runners
+            - os_arch
+            - os_type
+            - provider_name
+            - runner_bootstrap_timeout
+            - runner_prefix
+            - tags
+            type: object
+          status:
+            description: PoolStatus defines the observed state of Pool
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
