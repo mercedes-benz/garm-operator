@@ -69,7 +69,7 @@ spec:
       - command:
         - /manager
         args:
-        - --leader-elect
+        # - --leader-elect
         image: controller:latest
         name: manager
         securityContext:
