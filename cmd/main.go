@@ -33,8 +33,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	garmoperatorv1alpha1 "GitHub-Actions/garm-operator/api/v1alpha1"
-	"GitHub-Actions/garm-operator/internal/controller"
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -106,6 +106,10 @@ func main() {
 	if err = (&controller.EnterpriseReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		// TODO: make this configurable by adding new controller flags
+		BaseURL:  "http://garm-server.garm-server.svc:9997",
+		Username: "admin",
+		Password: "MUST_BE_SET",
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Enterprise")
 		os.Exit(1)

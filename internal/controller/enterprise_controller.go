@@ -24,13 +24,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	garmoperatorv1alpha1 "GitHub-Actions/garm-operator/api/v1alpha1"
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+
+	newGarmClient "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/garmclient"
+	garmClient "github.com/cloudbase/garm/cmd/garm-cli/client"
 )
 
 // EnterpriseReconciler reconciles a Enterprise object
 type EnterpriseReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	BaseURL  string
+	Username string
+	Password string
 }
 
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,resources=enterprises,verbs=get;list;watch;create;update;patch;delete
@@ -47,10 +54,55 @@ type EnterpriseReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
 func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	newClient, err := newGarmClient.NewGarmClient(newGarmClient.GarmClientParams{
+		BaseURL:  r.BaseURL,
+		Username: r.Username,
+		Password: r.Password,
+	})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
+	enterprise := &garmoperatorv1alpha1.Enterprise{}
+	err = r.Get(ctx, req.NamespacedName, enterprise)
+	if err != nil {
+		log.Info("error Mario", "error", err)
+		return ctrl.Result{}, err
+	}
+
+	// Handle deleted enterprises
+	if !enterprise.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, *newClient)
+	}
+
+	return r.reconcileNormal(ctx, *newClient)
+}
+
+func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, garmClient garmClient.Client) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+
+	enterprises, err := garmClient.ListEnterprises()
+	if err != nil {
+		log.Error(err, "client.ListEnterprises error")
+		return ctrl.Result{}, err
+	}
+
+	log.Info("enterprise", "discovered enterprises", enterprises)
+
+	credentials, err := garmClient.ListCredentials()
+	if err != nil {
+		log.Error(err, "client.ListCredentials error")
+		return ctrl.Result{}, err
+	}
+
+	log.Info("credentials", "discovered credentials", credentials)
+
+	return ctrl.Result{}, nil
+}
+
+func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, garmClient garmClient.Client) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
