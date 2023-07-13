@@ -25,11 +25,26 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// +kubebuilder:validation:Enum=Enterprise;Organization;Repository
+type GitHubScope string
+
+const (
+	EnterpriseScope   GitHubScope = "Enterprise"
+	OrganizationScope GitHubScope = "Organization"
+	RepositoryScope   GitHubScope = "Repository"
+)
+
 // PoolSpec defines the desired state of Pool
 // See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142
 type PoolSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Defines in which Scope Runners a registered. Valid options are enterprise, organization, and repository
+	GitHubScope GitHubScope `json:"github_scope"`
+
+	// Garm Internal ID of the specified scope as reference
+	GitHubScopeID string `json:"github_scope"`
 
 	RunnerPrefix           string          `json:"runner_prefix"`
 	ProviderName           string          `json:"provider_name"`
@@ -50,6 +65,7 @@ type PoolSpec struct {
 type PoolStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	ID string `json:"id"`
 }
 
 //+kubebuilder:object:root=true

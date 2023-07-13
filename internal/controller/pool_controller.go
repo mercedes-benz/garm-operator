@@ -18,13 +18,15 @@ package controller
 
 import (
 	"context"
-
+	garmClient "github.com/cloudbase/garm/cmd/garm-cli/client"
+	"github.com/cloudbase/garm/params"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	garmoperatorv1alpha1 "GitHub-Actions/garm-operator/api/v1alpha1"
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 )
 
 // PoolReconciler reconciles a Pool object
@@ -46,10 +48,120 @@ type PoolReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
-func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+const finalizer = "pools.garm-operator.mercedes-benz.com/finalizer"
+
+func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+	pool := &garmoperatorv1alpha1.Pool{}
+	if err := r.Get(ctx, req.NamespacedName, pool); err != nil {
+		log.Error(err, "cannot fetch Pool")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Todo: Init Garm Client
+	var newClient garmClient.Client
+
+	if !pool.ObjectMeta.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, newClient, pool)
+	}
+
+	return r.reconcileNormal(ctx, newClient, pool)
+}
+
+func (r *PoolReconciler) reconcileNormal(ctx context.Context, garmClient garmClient.Client, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+
+	// add finalizer if not present
+	if !controllerutil.ContainsFinalizer(pool, finalizer) {
+		controllerutil.AddFinalizer(pool, finalizer)
+		if err := r.Update(ctx, pool); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	// create pool
+	poolResult, err := r.createPool(*pool, garmClient)
+	if err != nil {
+		log.Error(err, "failed creating pool", "pool", pool.Spec)
+		return ctrl.Result{}, err
+	}
+
+	// update status
+	pool.Status.ID = poolResult.ID
+	if err := r.Status().Update(ctx, pool); err != nil {
+		log.Error(err, "unable to update Pool status")
+		return ctrl.Result{}, err
+	}
+
+	log.Info("created pool", poolResult)
+	return ctrl.Result{}, nil
+}
+
+func (r *PoolReconciler) createPool(pool garmoperatorv1alpha1.Pool, garmClient garmClient.Client) (params.Pool, error) {
+	var result params.Pool
+	var err error
+
+	id := pool.Spec.GitHubScopeID
+	scope := pool.Spec.GitHubScope
+
+	poolParams := params.CreatePoolParams{
+		RunnerPrefix: params.RunnerPrefix{
+			Prefix: pool.Spec.RunnerPrefix,
+		},
+		ProviderName:           pool.Spec.ProviderName,
+		MaxRunners:             pool.Spec.MaxRunners,
+		MinIdleRunners:         pool.Spec.MinIdleRunners,
+		Image:                  pool.Spec.Image,
+		Flavor:                 pool.Spec.Flavor,
+		OSType:                 pool.Spec.OSType,
+		OSArch:                 pool.Spec.OSArch,
+		Tags:                   pool.Spec.Tags,
+		Enabled:                pool.Spec.Enabled,
+		RunnerBootstrapTimeout: pool.Spec.RunnerBootstrapTimeout,
+		ExtraSpecs:             pool.Spec.ExtraSpecs,
+		GitHubRunnerGroup:      pool.Spec.GitHubRunnerGroup,
+	}
+
+	if scope == garmoperatorv1alpha1.EnterpriseScope {
+		result, err = garmClient.CreateEnterprisePool(id, poolParams)
+	}
+
+	if scope == garmoperatorv1alpha1.OrganizationScope {
+		result, err = garmClient.CreateOrgPool(id, poolParams)
+	}
+
+	if scope == garmoperatorv1alpha1.RepositoryScope {
+		result, err = garmClient.CreateRepoPool(id, poolParams)
+	}
+
+	return result, err
+}
+
+func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmClient.Client, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
+	// pool does not exist in garm database yet as ID in Status is empty, so we can safely delete it
+	if pool.Status.ID == "" {
+		return ctrl.Result{}, nil
+	}
+
+	if controllerutil.ContainsFinalizer(pool, finalizer) {
+		// only delete pool if no runners are left
+		runners, err := garmClient.ListPoolInstances(pool.Status.ID)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		// Todo: what to return if there are still runners left? => reque after x minutes and try again?
+		if len(runners) > 0 {
+			return ctrl.Result{Requeue: true}, nil
+		}
+	}
+
+	// remove finalizer so k8s can delete resource
+	controllerutil.RemoveFinalizer(pool, finalizer)
+	if err := r.Update(ctx, pool); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
