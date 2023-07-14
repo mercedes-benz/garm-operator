@@ -17,7 +17,12 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"errors"
+	"fmt"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -33,8 +38,6 @@ func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
 //+kubebuilder:webhook:path=/mutate-garm-operator-mercedes-benz-com-v1alpha1-pool,mutating=true,failurePolicy=fail,sideEffects=None,groups=garm-operator.mercedes-benz.com,resources=pools,verbs=create;update,versions=v1alpha1,name=mpool.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &Pool{}
@@ -42,8 +45,6 @@ var _ webhook.Defaulter = &Pool{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *Pool) Default() {
 	poollog.Info("default", "name", r.Name)
-
-	// TODO(user): fill in your defaulting logic.
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -54,23 +55,49 @@ var _ webhook.Validator = &Pool{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	poollog.Info("validate create", "name", r.Name)
-
-	// TODO(user): fill in your validation logic upon object creation.
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+	var errList field.ErrorList
 	poollog.Info("validate update", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
-	return nil, nil
+	oldCRD, ok := old.(*Pool)
+	if !ok {
+		return nil, errors.New("failed to convert runtime.Object to Pool CRD")
+	}
+
+	errList = append(errList, r.validateProviderName(oldCRD))
+	if len(errList) == 0 {
+		return nil, nil
+	}
+
+	err := apierrors.NewInvalid(
+		schema.GroupKind{Group: "garm-operator.mercedes-benz.com", Kind: "Pool"},
+		r.Name,
+		errList,
+	)
+
+	return nil, err
+}
+
+func (r *Pool) validateProviderName(old *Pool) *field.Error {
+	fieldPath := field.NewPath("spec").Child("provider_name")
+	n := r.Spec.ProviderName
+	o := old.Spec.ProviderName
+	if n != o {
+		return field.Invalid(
+			fieldPath,
+			r.Spec.ProviderName,
+			fmt.Errorf("provider names do not match. Old name: %s, new name:  %s", o, n).Error(),
+		)
+	}
+	return nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Pool) ValidateDelete() (admission.Warnings, error) {
 	poollog.Info("validate delete", "name", r.Name)
-
-	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil
 }

@@ -40,6 +40,7 @@ type PoolSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// Todo: Might replace with reference to Enterprise/Org/Repo CRD
 	// Defines in which Scope Runners a registered. Valid options are enterprise, organization, and repository
 	GitHubScope GitHubScope `json:"github_scope"`
 
