@@ -8,13 +8,30 @@ metadata:
 spec:
   group: garm-operator.mercedes-benz.com
   names:
+    categories:
+    - garm
     kind: Enterprise
     listKind: EnterpriseList
     plural: enterprises
+    shortNames:
+    - ent
     singular: enterprise
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Enterprise ID
+      jsonPath: .status.id
+      name: ID
+      type: string
+    - description: Status of the referenced pool
+      jsonPath: .status.poolIsRunning
+      name: Ready
+      type: string
+    - description: Time duration since creation of Enterprise
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Enterprise is the Schema for the enterprises API
@@ -34,16 +51,26 @@ spec:
           spec:
             description: EnterpriseSpec defines the desired state of Enterprise
             properties:
-              credentials_name:
+              credentialsName:
                 type: string
-              name:
+              webhookSecret:
                 type: string
             required:
-            - credentials_name
-            - name
+            - credentialsName
+            - webhookSecret
             type: object
           status:
             description: EnterpriseStatus defines the observed state of Enterprise
+            properties:
+              id:
+                type: string
+              poolManagerFailureReason:
+                type: string
+              poolManagerIsRunning:
+                type: boolean
+            required:
+            - id
+            - poolManagerIsRunning
             type: object
         type: object
     served: true
