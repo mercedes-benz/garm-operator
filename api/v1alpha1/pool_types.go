@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"encoding/json"
 	"github.com/cloudbase/garm/params"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -37,36 +36,43 @@ const (
 // PoolSpec defines the desired state of Pool
 // See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142
 type PoolSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Todo: Might replace with reference to Enterprise/Org/Repo CRD
 	// Defines in which Scope Runners a registered. Valid options are enterprise, organization, and repository
 	GitHubScope GitHubScope `json:"github_scope"`
 
 	// Garm Internal ID of the specified scope as reference
-	GitHubScopeID string `json:"github_scope"`
+	GitHubScopeID string `json:"github_scope_id"`
 
-	RunnerPrefix           string          `json:"runner_prefix"`
-	ProviderName           string          `json:"provider_name"`
-	MaxRunners             uint            `json:"max_runners"`
-	MinIdleRunners         uint            `json:"min_idle_runners"`
-	Image                  string          `json:"image"`
-	Flavor                 string          `json:"flavor"`
-	OSType                 params.OSType   `json:"os_type"`
-	OSArch                 params.OSArch   `json:"os_arch"`
-	Tags                   []string        `json:"tags"`
-	Enabled                bool            `json:"enabled"`
-	RunnerBootstrapTimeout uint            `json:"runner_bootstrap_timeout"`
-	ExtraSpecs             json.RawMessage `json:"extra_specs,omitempty"`
-	GitHubRunnerGroup      string          `json:"github-runner-group"`
+	RunnerPrefix           string        `json:"runner_prefix"`
+	ProviderName           string        `json:"provider_name"`
+	MaxRunners             uint          `json:"max_runners"`
+	MinIdleRunners         uint          `json:"min_idle_runners"`
+	Image                  string        `json:"image"`
+	Flavor                 string        `json:"flavor"`
+	OSType                 params.OSType `json:"os_type"`
+	OSArch                 params.OSArch `json:"os_arch"`
+	Tags                   []string      `json:"tags"`
+	Enabled                bool          `json:"enabled"`
+	RunnerBootstrapTimeout uint          `json:"runner_bootstrap_timeout"`
+	ExtraSpecs             string        `json:"extra_specs,omitempty"`
+	GitHubRunnerGroup      string        `json:"github-runner-group"`
 }
 
 // PoolStatus defines the observed state of Pool
 type PoolStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// +optional
 	ID string `json:"id"`
+	// +optional
+	Synced bool `json:"synced"`
+	// +optional
+	LastSyncTime metav1.Time `json:"lastSyncTime"`
+	// +optional
+	LastSyncError string `json:"lastSyncError,omitempty"`
+	// +optional
+	RunnerCount int `json:"runnerCount"`
+	// +optional
+	ActiveRunners int `json:"activeRunners"`
+	// +optional
+	IdleRunners int `json:"idleRunners"`
 }
 
 //+kubebuilder:object:root=true
@@ -93,3 +99,44 @@ type PoolList struct {
 func init() {
 	SchemeBuilder.Register(&Pool{}, &PoolList{})
 }
+
+type Predicate func(p Pool) bool
+
+func MatchesImage(image string) Predicate {
+	return func(p Pool) bool {
+		return p.Spec.Image == image
+	}
+}
+
+func MatchesFlavour(flavour string) Predicate {
+	return func(p Pool) bool {
+		return p.Spec.Flavor == flavour
+	}
+}
+
+func MatchesProvider(provider string) Predicate {
+	return func(p Pool) bool {
+		return p.Spec.ProviderName == provider
+	}
+}
+
+func (p *PoolList) FilterByFields(predicates ...Predicate) {
+	var filteredItems []Pool
+
+	for _, pool := range p.Items {
+		match := true
+		for _, predicate := range predicates {
+			if !predicate(pool) {
+				match = false
+				break
+			}
+		}
+		if match {
+			filteredItems = append(filteredItems, pool)
+		}
+	}
+
+	p.Items = filteredItems
+}
+
+// Todo: Might replace GitHubScope with reference to Enterprise/Org/Repo CRD

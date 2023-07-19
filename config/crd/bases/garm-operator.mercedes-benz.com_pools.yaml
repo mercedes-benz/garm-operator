@@ -37,16 +37,20 @@ spec:
               enabled:
                 type: boolean
               extra_specs:
-                description: RawMessage is a raw encoded JSON value. It implements
-                  Marshaler and Unmarshaler and can be used to delay JSON decoding
-                  or precompute a JSON encoding.
-                format: byte
                 type: string
               flavor:
                 type: string
               github-runner-group:
                 type: string
               github_scope:
+                description: Defines in which Scope Runners a registered. Valid options
+                  are enterprise, organization, and repository
+                enum:
+                - Enterprise
+                - Organization
+                - Repository
+                type: string
+              github_scope_id:
                 description: Garm Internal ID of the specified scope as reference
                 type: string
               image:
@@ -74,6 +78,7 @@ spec:
             - flavor
             - github-runner-group
             - github_scope
+            - github_scope_id
             - image
             - max_runners
             - min_idle_runners
@@ -87,13 +92,21 @@ spec:
           status:
             description: PoolStatus defines the observed state of Pool
             properties:
+              activeRunners:
+                type: integer
               id:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
                 type: string
-            required:
-            - id
+              idleRunners:
+                type: integer
+              lastSyncError:
+                type: string
+              lastSyncTime:
+                format: date-time
+                type: string
+              runnerCount:
+                type: integer
+              synced:
+                type: boolean
             type: object
         type: object
     served: true

@@ -1,0 +1,49 @@
+package poolutil
+
+import (
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+	"github.com/cloudbase/garm/params"
+)
+
+type Predicate func(params.Pool) bool
+
+func MatchesGitHubScope(scope v1alpha1.GitHubScope, id string) Predicate {
+	return func(p params.Pool) bool {
+		if scope == v1alpha1.EnterpriseScope {
+			return p.EnterpriseID == id
+		}
+
+		if scope == v1alpha1.OrganizationScope {
+			return p.OrgID == id
+		}
+
+		if scope == v1alpha1.RepositoryScope {
+			return p.RepoID == id
+		}
+		return false
+	}
+}
+func MatchesImageFlavorAndProvider(image, flavor, provider string) Predicate {
+	return func(p params.Pool) bool {
+		return p.Image == image && p.Flavor == flavor && p.ProviderName == provider
+	}
+}
+
+func FilterGarmPools(pools []params.Pool, predicates ...func(pool params.Pool) bool) []params.Pool {
+	var filteredPools []params.Pool
+
+	for _, pool := range pools {
+		match := true
+		for _, predicate := range predicates {
+			if !predicate(pool) {
+				match = false
+				break
+			}
+		}
+		if match {
+			filteredPools = append(filteredPools, pool)
+		}
+	}
+
+	return filteredPools
+}
