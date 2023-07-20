@@ -33,8 +33,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	garmoperatorv1alpha1 "GitHub-Actions/garm-operator/api/v1alpha1"
-	"GitHub-Actions/garm-operator/internal/controller"
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -57,6 +57,10 @@ func main() {
 		enableLeaderElection bool
 		probeAddr            string
 		syncPeriod           time.Duration
+
+		garmServer   string
+		garmUsername string
+		garmPassword string
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -66,6 +70,11 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.DurationVar(&syncPeriod, "sync-period", 5*time.Minute,
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
+
+	flag.StringVar(&garmServer, "garm-server", "", "The address of the GARM server")
+	flag.StringVar(&garmUsername, "garm-username", "", "The username for the GARM server")
+	flag.StringVar(&garmPassword, "garm-password", "", "The password for the GARM server")
+
 	opts := zap.Options{
 		Development: true,
 		TimeEncoder: zapcore.RFC3339TimeEncoder,
@@ -106,6 +115,10 @@ func main() {
 	if err = (&controller.EnterpriseReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+
+		BaseURL:  garmServer,
+		Username: garmUsername,
+		Password: garmPassword,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Enterprise")
 		os.Exit(1)

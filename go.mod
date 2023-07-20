@@ -1,4 +1,4 @@
-module GitHub-Actions/garm-operator
+module git.i.mercedes-benz.com/GitHub-Actions/garm-operator
 
 go 1.20
 
@@ -6,6 +6,7 @@ require (
 	github.com/cloudbase/garm v0.1.2
 	github.com/onsi/ginkgo/v2 v2.9.5
 	github.com/onsi/gomega v1.27.7
+	go.uber.org/zap v1.24.0
 	k8s.io/apimachinery v0.27.2
 	k8s.io/client-go v0.27.2
 	sigs.k8s.io/controller-runtime v0.15.0
@@ -54,7 +55,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect

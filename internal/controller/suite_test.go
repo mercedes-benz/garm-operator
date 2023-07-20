@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	garmoperatorv1alpha1 "GitHub-Actions/garm-operator/api/v1alpha1"
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
