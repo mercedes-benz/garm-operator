@@ -198,37 +198,52 @@ func (r *PoolReconciler) updatePool(pool garmoperatorv1alpha1.Pool, garmClient g
 
 func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmClient.Client, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
 	// pool does not exist in garm database yet as ID in Status is empty, so we can safely delete it
+	log := log.FromContext(ctx)
+	log.Info("Deleting Pool", "pool", pool.Name)
 	if pool.Status.ID == "" && controllerutil.ContainsFinalizer(pool, finalizer) {
 		controllerutil.RemoveFinalizer(pool, finalizer)
 		if err := r.Update(ctx, pool); err != nil {
-			return ctrl.Result{}, err
+			return r.handleUpdateError(ctx, pool, err)
 		}
+		log.Info("Successfully deleted pool", "pool", pool.Name)
 		return ctrl.Result{}, nil
 	}
 
 	if controllerutil.ContainsFinalizer(pool, finalizer) {
+
+		if pool.Spec.ForceDeleteRunners {
+			pool.Spec.MinIdleRunners = 0
+			err := r.Update(ctx, pool)
+			if err != nil {
+				return r.handleUpdateError(ctx, pool, err)
+			}
+			return ctrl.Result{Requeue: true}, nil
+		}
+
 		// only delete pool if no runners are left
 		runners, err := garmClient.ListPoolInstances(pool.Status.ID)
 		if err != nil {
-			return ctrl.Result{}, err
+			return r.handleUpdateError(ctx, pool, err)
 		}
 
 		// Todo: what to return if there are still runners left? => reque after x minutes and try again?
 		if len(runners) > 0 {
 			return ctrl.Result{Requeue: true}, nil
 		}
+
 	}
 
 	// remove finalizer so k8s can delete resource
 	controllerutil.RemoveFinalizer(pool, finalizer)
 	if err := r.Update(ctx, pool); err != nil {
-		return ctrl.Result{}, err
+		return r.handleUpdateError(ctx, pool, err)
 	}
 	err := garmClient.DeletePoolByID(pool.Status.ID)
 	if err != nil {
-		return ctrl.Result{}, err
+		return r.handleUpdateError(ctx, pool, err)
 	}
 
+	log.Info("Successfully deleted pool", "pool", pool.Name)
 	return ctrl.Result{}, nil
 }
 
@@ -253,13 +268,6 @@ func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperator
 func (r *PoolReconciler) syncPools(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.Client) (params.Pool, error) {
 	log := log.FromContext(ctx)
 
-	// before creating check if already exists in garm
-	// if yes and no crd with matching id found => update garm according to crd spec and write existing id back
-	// if no => create in garm db
-
-	// check if pool has status ID but no pool in garm
-	// create it
-
 	garmPools, err := garmClient.ListAllPools()
 	if err != nil {
 		return params.Pool{}, err
@@ -283,6 +291,7 @@ func (r *PoolReconciler) syncPools(ctx context.Context, pool *garmoperatorv1alph
 		garmoperatorv1alpha1.MatchesFlavour(pool.Spec.Flavor),
 		garmoperatorv1alpha1.MatchesImage(pool.Spec.Image),
 		garmoperatorv1alpha1.MatchesProvider(pool.Spec.ProviderName),
+		garmoperatorv1alpha1.MatchesGitHubScope(pool.Spec.GitHubScope, pool.Spec.GitHubScopeID),
 	)
 
 	if len(filteredGarmPools) > 1 {

@@ -42,7 +42,6 @@ type PoolSpec struct {
 	// Garm Internal ID of the specified scope as reference
 	GitHubScopeID string `json:"github_scope_id"`
 
-	RunnerPrefix           string        `json:"runner_prefix"`
 	ProviderName           string        `json:"provider_name"`
 	MaxRunners             uint          `json:"max_runners"`
 	MinIdleRunners         uint          `json:"min_idle_runners"`
@@ -53,30 +52,36 @@ type PoolSpec struct {
 	Tags                   []string      `json:"tags"`
 	Enabled                bool          `json:"enabled"`
 	RunnerBootstrapTimeout uint          `json:"runner_bootstrap_timeout"`
-	ExtraSpecs             string        `json:"extra_specs,omitempty"`
-	GitHubRunnerGroup      string        `json:"github-runner-group"`
+	ForceDeleteRunners     bool          `json:"force_delete_runners"`
+
+	// +optional
+	ExtraSpecs string `json:"extra_specs"`
+
+	// +optional
+	GitHubRunnerGroup string `json:"github_runner_group"`
+
+	// +optional
+	RunnerPrefix string `json:"runner_prefix"`
 }
 
 // PoolStatus defines the observed state of Pool
 type PoolStatus struct {
-	// +optional
-	ID string `json:"id"`
-	// +optional
-	Synced bool `json:"synced"`
-	// +optional
-	LastSyncTime metav1.Time `json:"lastSyncTime"`
-	// +optional
-	LastSyncError string `json:"lastSyncError,omitempty"`
-	// +optional
-	RunnerCount int `json:"runnerCount"`
-	// +optional
-	ActiveRunners int `json:"activeRunners"`
-	// +optional
-	IdleRunners int `json:"idleRunners"`
+	ID            string      `json:"id"`
+	Synced        bool        `json:"synced"`
+	LastSyncTime  metav1.Time `json:"lastSyncTime"`
+	LastSyncError string      `json:"lastSyncError,omitempty"`
+	RunnerCount   int         `json:"runnerCount"`
+	ActiveRunners int         `json:"activeRunners"`
+	IdleRunners   int         `json:"idleRunners"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
+// +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`
+// +kubebuilder:printcolumn:name="Flavour",type=string,JSONPath=`.spec.flavor`
+// +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.provider_name`
+// +kubebuilder:printcolumn:name="Scope",type=string,JSONPath=`.spec.github_scope`
 
 // Pool is the Schema for the pools API
 type Pool struct {
@@ -117,6 +122,12 @@ func MatchesFlavour(flavour string) Predicate {
 func MatchesProvider(provider string) Predicate {
 	return func(p Pool) bool {
 		return p.Spec.ProviderName == provider
+	}
+}
+
+func MatchesGitHubScope(scope GitHubScope, id string) Predicate {
+	return func(p Pool) bool {
+		return p.Spec.GitHubScope == scope && p.Spec.GitHubScopeID == id
 	}
 }
 
