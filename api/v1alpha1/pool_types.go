@@ -37,31 +37,31 @@ const (
 // See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142
 type PoolSpec struct {
 	// Defines in which Scope Runners a registered. Valid options are enterprise, organization, and repository
-	GitHubScope GitHubScope `json:"github_scope"`
+	GitHubScope GitHubScope `json:"githubScope"`
 
 	// Garm Internal ID of the specified scope as reference
-	GitHubScopeID string `json:"github_scope_id"`
+	GitHubScopeID string `json:"githubScopeId"`
 
-	ProviderName           string        `json:"provider_name"`
-	MaxRunners             uint          `json:"max_runners"`
-	MinIdleRunners         uint          `json:"min_idle_runners"`
+	ProviderName           string        `json:"providerName"`
+	MaxRunners             uint          `json:"maxRunners"`
+	MinIdleRunners         uint          `json:"minIdleRunners"`
 	Image                  string        `json:"image"`
 	Flavor                 string        `json:"flavor"`
-	OSType                 params.OSType `json:"os_type"`
-	OSArch                 params.OSArch `json:"os_arch"`
+	OSType                 params.OSType `json:"osType"`
+	OSArch                 params.OSArch `json:"osArch"`
 	Tags                   []string      `json:"tags"`
 	Enabled                bool          `json:"enabled"`
-	RunnerBootstrapTimeout uint          `json:"runner_bootstrap_timeout"`
-	ForceDeleteRunners     bool          `json:"force_delete_runners"`
+	RunnerBootstrapTimeout uint          `json:"runnerBootstrapTimeout"`
+	ForceDeleteRunners     bool          `json:"forceDeleteRunners"`
 
 	// +optional
-	ExtraSpecs string `json:"extra_specs"`
+	ExtraSpecs string `json:"extraSpecs"`
 
 	// +optional
-	GitHubRunnerGroup string `json:"github_runner_group"`
+	GitHubRunnerGroup string `json:"githubRunnerGroup"`
 
 	// +optional
-	RunnerPrefix string `json:"runner_prefix"`
+	RunnerPrefix string `json:"runnerPrefix"`
 }
 
 // PoolStatus defines the observed state of Pool
@@ -77,11 +77,12 @@ type PoolStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
-// +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`
-// +kubebuilder:printcolumn:name="Flavour",type=string,JSONPath=`.spec.flavor`
-// +kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.provider_name`
-// +kubebuilder:printcolumn:name="Scope",type=string,JSONPath=`.spec.github_scope`
+//+kubebuilder:resource:path=pool,scope=Namespaced,categories=garm
+//+kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
+//+kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`,priority=1
+//+kubebuilder:printcolumn:name="Flavour",type=string,JSONPath=`.spec.flavor`,priority=1
+//+kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.providerName`,priority=1
+//+kubebuilder:printcolumn:name="Scope",type=string,JSONPath=`.spec.githubScope`,priority=1
 
 // Pool is the Schema for the pools API
 type Pool struct {

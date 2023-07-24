@@ -52,15 +52,15 @@ spec:
             properties:
               enabled:
                 type: boolean
-              extra_specs:
+              extraSpecs:
                 type: string
               flavor:
                 type: string
-              force_delete_runners:
+              forceDeleteRunners:
                 type: boolean
-              github_runner_group:
+              githubRunnerGroup:
                 type: string
-              github_scope:
+              githubScope:
                 description: Defines in which Scope Runners a registered. Valid options
                   are enterprise, organization, and repository
                 enum:
@@ -68,24 +68,24 @@ spec:
                 - Organization
                 - Repository
                 type: string
-              github_scope_id:
+              githubScopeId:
                 description: Garm Internal ID of the specified scope as reference
                 type: string
               image:
                 type: string
-              max_runners:
+              maxRunners:
                 type: integer
-              min_idle_runners:
+              minIdleRunners:
                 type: integer
-              os_arch:
+              osArch:
                 type: string
-              os_type:
+              osType:
                 type: string
-              provider_name:
+              providerName:
                 type: string
-              runner_bootstrap_timeout:
+              runnerBootstrapTimeout:
                 type: integer
-              runner_prefix:
+              runnerPrefix:
                 type: string
               tags:
                 items:
@@ -94,16 +94,16 @@ spec:
             required:
             - enabled
             - flavor
-            - force_delete_runners
-            - github_scope
-            - github_scope_id
+            - forceDeleteRunners
+            - githubScope
+            - githubScopeId
             - image
-            - max_runners
-            - min_idle_runners
-            - os_arch
-            - os_type
-            - provider_name
-            - runner_bootstrap_timeout
+            - maxRunners
+            - minIdleRunners
+            - osArch
+            - osType
+            - providerName
+            - runnerBootstrapTimeout
             - tags
             type: object
           status:
