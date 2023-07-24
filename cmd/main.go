@@ -84,6 +84,20 @@ func main() {
 	pflag.Parse()
 	ctrl.SetLogger(klogr.New())
 
+	// configure garm client from environment variables
+	if len(os.Getenv("GARM_SERVER")) > 0 {
+		setupLog.Info("Using garm-server from environment variable")
+		garmServer = os.Getenv("GARM_SERVER")
+	}
+	if len(os.Getenv("GARM_USERNAME")) > 0 {
+		setupLog.Info("Using garm-username from environment variable")
+		garmUsername = os.Getenv("GARM_USERNAME")
+	}
+	if len(os.Getenv("GARM_PASSWORD")) > 0 {
+		setupLog.Info("Using garm-password from environment variable")
+		garmPassword = os.Getenv("GARM_PASSWORD")
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
