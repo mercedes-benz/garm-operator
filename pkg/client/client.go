@@ -20,15 +20,15 @@ const managerName = "admin"
 
 func newGarmClient(garmParams GarmScopeParams) (*client.Client, error) {
 	if garmParams.BaseURL == "" {
-		return nil, errors.New("BaseURL is mandatory to create a garm client")
+		return nil, errors.New("baseURL is mandatory to create a garm client")
 	}
 
 	if garmParams.Username == "" {
-		return nil, errors.New("Username is mandatory to create a garm client")
+		return nil, errors.New("username is mandatory to create a garm client")
 	}
 
 	if garmParams.Password == "" {
-		return nil, errors.New("Password is mandator")
+		return nil, errors.New("password is mandator")
 	}
 
 	manager := config.Manager{
