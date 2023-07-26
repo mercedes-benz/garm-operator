@@ -126,6 +126,10 @@ func main() {
 	if err = (&controller.PoolReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+
+		BaseURL:  garmServer,
+		Username: garmUsername,
+		Password: garmPassword,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Pool")
 		os.Exit(1)

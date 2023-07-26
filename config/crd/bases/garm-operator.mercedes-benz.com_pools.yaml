@@ -8,6 +8,8 @@ metadata:
 spec:
   group: garm-operator.mercedes-benz.com
   names:
+    categories:
+    - garm
     kind: Pool
     listKind: PoolList
     plural: pools
@@ -20,15 +22,19 @@ spec:
       type: string
     - jsonPath: .spec.image
       name: Image
+      priority: 1
       type: string
     - jsonPath: .spec.flavor
       name: Flavour
+      priority: 1
       type: string
-    - jsonPath: .spec.provider_name
+    - jsonPath: .spec.providerName
       name: Provider
+      priority: 1
       type: string
-    - jsonPath: .spec.github_scope
+    - jsonPath: .spec.githubScope
       name: Scope
+      priority: 1
       type: string
     name: v1alpha1
     schema:

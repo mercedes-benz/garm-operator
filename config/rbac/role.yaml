@@ -45,12 +45,6 @@ rules:
 - apiGroups:
   - garm-operator.mercedes-benz.com
   resources:
-  - pools/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - garm-operator.mercedes-benz.com
-  resources:
   - pools/status
   verbs:
   - get

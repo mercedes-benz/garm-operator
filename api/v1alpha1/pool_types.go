@@ -77,7 +77,7 @@ type PoolStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:path=pool,scope=Namespaced,categories=garm
+//+kubebuilder:resource:path=pools,scope=Namespaced,categories=garm
 //+kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
 //+kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`,priority=1
 //+kubebuilder:printcolumn:name="Flavour",type=string,JSONPath=`.spec.flavor`,priority=1

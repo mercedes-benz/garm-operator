@@ -21,9 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	garmClient "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
-	poolutil "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/pool"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/poolutil"
 	"github.com/cloudbase/garm/params"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +33,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
+
+	garmClient "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client"
 
 	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 )
@@ -288,7 +289,7 @@ func (r *PoolReconciler) syncPools(ctx context.Context, pool *garmoperatorv1alph
 
 	for _, garmPool := range filteredGarmPools {
 		for _, poolCR := range poolList.Items {
-			// we found a matching garm pool and its matching already existing poolCR => no need to create a pool with the same specs
+			// we found some matching garm pool and its matching already existing poolCR => no need to create a pool with the same specs
 			if poolCR.Status.ID == garmPool.ID {
 				return params.Pool{}, fmt.Errorf("pool with same specs already exists in garm: GarmPoolID=%s PoolCRD=%s", garmPool.ID, poolCR.Name)
 			}
@@ -323,6 +324,11 @@ func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmo
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
+}
+
+func (r *PoolReconciler) garmPoolExists(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) bool {
+	existingGarmPool, _ := garmClient.GetPool(pool.Status.ID)
+	return !reflect.DeepEqual(existingGarmPool, params.Pool{})
 }
 
 // SetupWithManager sets up the controller with the Manager.
