@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
@@ -32,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func TestEnterpriseReconciler_Reconcile(t *testing.T) {
+func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -41,6 +42,7 @@ func TestEnterpriseReconciler_Reconcile(t *testing.T) {
 		object            runtime.Object
 		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
 		wantErr           bool
+		expectedObject    *garmoperatorv1alpha1.Enterprise
 	}{
 		{
 			name: "enterprise exist - no op",
@@ -60,11 +62,75 @@ func TestEnterpriseReconciler_Reconcile(t *testing.T) {
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
+			expectedObject: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "existing-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "foobar",
+					WebhookSecret:   "foobar",
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{
+					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+				},
+			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
 				m.GetEnterprise("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").Return(params.Enterprise{
 					ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-					Name:            "another-non-operator-managed-enterprise",
-					CredentialsName: "existing-enterprise",
+					Name:            "existing-enterprise",
+					CredentialsName: "foobar",
+				}, nil)
+			},
+		},
+		{
+			name: "enterprise exist but pool status has changed - updating status",
+			object: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "existing-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "foobar",
+					WebhookSecret:   "foobar",
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{
+					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "existing-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "foobar",
+					WebhookSecret:   "foobar",
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{
+					ID:                       "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					PoolManagerIsRunning:     false,
+					PoolManagerFailureReason: "no resources available",
+				},
+			},
+			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
+				m.GetEnterprise("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").Return(params.Enterprise{
+					ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Name:            "existing-enterprise",
+					CredentialsName: "foobar",
+					PoolManagerStatus: params.PoolManagerStatus{
+						IsRunning:     false,
+						FailureReason: "no resources available",
+					},
 				}, nil)
 			},
 		},
@@ -78,6 +144,22 @@ func TestEnterpriseReconciler_Reconcile(t *testing.T) {
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "foobar",
 					WebhookSecret:   "foobar",
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "new-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "foobar",
+					WebhookSecret:   "foobar",
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{
+					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
@@ -102,15 +184,31 @@ func TestEnterpriseReconciler_Reconcile(t *testing.T) {
 			},
 		},
 		{
-			name: "enterprise exist in garm - adopt",
+			name: "enterprise already exist in garm - adopt",
 			object: &garmoperatorv1alpha1.Enterprise{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
+					CredentialsName: "totally-insecure",
 					WebhookSecret:   "foobar",
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "new-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "totally-insecure",
+					WebhookSecret:   "foobar",
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{
+					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
@@ -118,7 +216,7 @@ func TestEnterpriseReconciler_Reconcile(t *testing.T) {
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-enterprise",
-						CredentialsName: "totally-unsecure",
+						CredentialsName: "totally-insecure",
 					},
 				}, nil)
 			},
@@ -152,16 +250,91 @@ func TestEnterpriseReconciler_Reconcile(t *testing.T) {
 
 			_, err = reconciler.reconcileNormal(context.Background(), mockEnterprise, enterprise)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("EnterpriseReconciler.Reconcile() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("EnterpriseReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// empty resource version to avoid comparison errors
+			enterprise.ObjectMeta.ResourceVersion = ""
+			if !reflect.DeepEqual(enterprise, tt.expectedObject) {
+				t.Errorf("EnterpriseReconciler.reconcileNormal() got = %#v, want %#v", enterprise, tt.expectedObject)
+			}
+
+		})
+	}
+}
+
+func TestEnterpriseReconciler_ReconcileDelete(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	tests := []struct {
+		name              string
+		object            runtime.Object
+		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
+		wantErr           bool
+		expectedObject    *garmoperatorv1alpha1.Enterprise
+	}{
+		{
+			name: "delete enterprise",
+			object: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "delete-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "totally-insecure",
+					WebhookSecret:   "foobar",
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{
+					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
+				},
+			},
+			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
+				m.DeleteEnterprise("e1dbf9a6-a9f6-4594-a5ac-12345").Return(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			schemeBuilder := runtime.SchemeBuilder{
+				garmoperatorv1alpha1.AddToScheme,
+			}
+
+			err := schemeBuilder.AddToScheme(scheme.Scheme)
+			if err != nil {
+				t.Fatal(err)
+			}
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.object).Build()
+
+			// create a fake reconciler
+			reconciler := &EnterpriseReconciler{
+				Client:   client,
+				BaseURL:  "http://domain.does.not.exist:9997",
+				Username: "admin",
+				Password: "admin",
+			}
+
+			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Enterprise)
+
+			mockEnterprise := mock.NewMockEnterpriseClient(mockCtrl)
+			tt.expectGarmRequest(mockEnterprise.EXPECT())
+
+			_, err = reconciler.reconcileDelete(context.Background(), mockEnterprise, enterprise)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EnterpriseReconciler.reconcileDelete() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			//check for mandatory finalizer
-			if !controllerutil.ContainsFinalizer(enterprise, key.EnterpriseFinalizerName) {
-				t.Errorf("EnterpriseReconciler.Reconcile() finalizer not found")
+			if controllerutil.ContainsFinalizer(enterprise, key.EnterpriseFinalizerName) {
+				t.Errorf("EnterpriseReconciler.Reconcile() finalizer still exist")
 				return
 			}
-
 		})
 	}
 }
