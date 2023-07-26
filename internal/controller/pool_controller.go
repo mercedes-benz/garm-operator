@@ -21,9 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	newGarmClient "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/garmclient"
+	garmClient "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
 	poolutil "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/pool"
-	garmClient "github.com/cloudbase/garm/cmd/garm-cli/client"
 	"github.com/cloudbase/garm/params"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,15 +48,13 @@ type PoolReconciler struct {
 	Password string
 }
 
-const finalizer = "pools.garm-operator.mercedes-benz.com/finalizer"
-
 // +kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,resources=pools,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,resources=pools/status,verbs=get;update;patch
 
 func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	newClient, err := newGarmClient.NewGarmClient(newGarmClient.GarmClientParams{
+	poolClient, err := garmClient.NewPoolClient(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
@@ -76,21 +74,21 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	// handle deletion
 	if !pool.ObjectMeta.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, pool, *newClient)
+		return r.reconcileDelete(ctx, pool, poolClient)
 	}
 
 	// pool status id has been set, so we know that the pool is persisted in garm and needs to be updated
 	if pool.Status.ID != "" {
-		return r.reconcileUpdate(ctx, pool, *newClient)
+		return r.reconcileUpdate(ctx, pool, poolClient)
 	}
 
 	// no pool id yet, so pool needs to be created
-	return r.reconcileCreate(ctx, pool, *newClient)
+	return r.reconcileCreate(ctx, pool, poolClient)
 }
 
 // Todo: Write usefull Events foo
 // Todo: Write Error to Status Field
-func (r *PoolReconciler) reconcileCreate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.Client) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileCreate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("trying to create pool...")
 
@@ -107,7 +105,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, pool *garmoperator
 	return r.handleSuccessfulUpdate(ctx, pool, result.ID)
 }
 
-func createPool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.Client) (params.Pool, error) {
+func createPool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (params.Pool, error) {
 	log := log.FromContext(ctx)
 	log.Info("creating pool")
 	result := params.Pool{}
@@ -156,7 +154,7 @@ func createPool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient
 	return result, err
 }
 
-func (r *PoolReconciler) reconcileUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.Client) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("trying to update pool...")
 
@@ -169,7 +167,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, pool *garmoperator
 	return r.handleSuccessfulUpdate(ctx, pool, result.ID)
 }
 
-func updatePool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.Client) (params.Pool, error) {
+func updatePool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (params.Pool, error) {
 	result := params.Pool{}
 	var err error
 	id := pool.Status.ID
@@ -200,12 +198,12 @@ func updatePool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient
 	return result, err
 }
 
-func (r *PoolReconciler) reconcileDelete(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.Client) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileDelete(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (ctrl.Result, error) {
 	// pool does not exist in garm database yet as ID in Status is empty, so we can safely delete it
 	log := log.FromContext(ctx)
 	log.Info("Deleting Pool", "pool", pool.Name)
-	if pool.Status.ID == "" && controllerutil.ContainsFinalizer(pool, finalizer) {
-		controllerutil.RemoveFinalizer(pool, finalizer)
+	if pool.Status.ID == "" && controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) {
+		controllerutil.RemoveFinalizer(pool, key.PoolFinalizerName)
 		if err := r.Update(ctx, pool); err != nil {
 			return r.handleUpdateError(ctx, pool, err)
 		}
@@ -213,7 +211,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, pool *garmoperator
 		return ctrl.Result{}, nil
 	}
 
-	if controllerutil.ContainsFinalizer(pool, finalizer) && pool.Spec.ForceDeleteRunners {
+	if controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) && pool.Spec.ForceDeleteRunners {
 		pool.Spec.MinIdleRunners = 0
 		err := r.Update(ctx, pool)
 		if err != nil {
@@ -224,7 +222,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, pool *garmoperator
 	}
 
 	// remove finalizer so k8s can delete resource
-	controllerutil.RemoveFinalizer(pool, finalizer)
+	controllerutil.RemoveFinalizer(pool, key.PoolFinalizerName)
 	if err := r.Update(ctx, pool); err != nil {
 		return r.handleUpdateError(ctx, pool, err)
 	}
@@ -248,14 +246,14 @@ func (r *PoolReconciler) updatePoolStatus(ctx context.Context, pool *garmoperato
 }
 
 func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1alpha1.Pool) error {
-	if !controllerutil.ContainsFinalizer(pool, finalizer) {
-		controllerutil.AddFinalizer(pool, finalizer)
+	if !controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) {
+		controllerutil.AddFinalizer(pool, key.PoolFinalizerName)
 		return r.Update(ctx, pool)
 	}
 	return nil
 }
 
-func (r *PoolReconciler) syncPools(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.Client) (params.Pool, error) {
+func (r *PoolReconciler) syncPools(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (params.Pool, error) {
 	log := log.FromContext(ctx)
 
 	garmPools, err := garmClient.ListAllPools()
