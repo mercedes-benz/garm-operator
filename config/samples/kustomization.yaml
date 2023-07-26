@@ -1,4 +1,5 @@
 ## Append samples of your project ##
 resources:
 - garm-operator_v1alpha1_enterprise.yaml
+- garm-operator_v1alpha1_pool.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

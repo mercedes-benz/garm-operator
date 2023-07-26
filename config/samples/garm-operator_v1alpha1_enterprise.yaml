@@ -9,4 +9,5 @@ metadata:
     app.kubernetes.io/created-by: garm-operator
   name: enterprise-sample
 spec:
-  # TODO(user): Add fields here
+  Name:
+  CredentialsName:

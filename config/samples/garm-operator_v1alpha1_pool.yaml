@@ -1,0 +1,32 @@
+apiVersion: garm-operator.mercedes-benz.com/v1alpha1
+kind: Pool
+metadata:
+  labels:
+    app.kubernetes.io/created-by: garm-operator
+    app.kubernetes.io/instance: pool-sample
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: pool
+    app.kubernetes.io/part-of: garm-operator
+  name: kubernetes-pool-small
+  namespace: garm-operator-system
+spec:
+  enabled: true
+  extraSpecs: ""
+  flavor: small
+  forceDeleteRunners: false
+  githubRunnerGroup: ""
+  githubScope: Organization
+  githubScopeId: 71c126ee-fc18-424c-a2ce-282966720794
+  image: linux-ubuntu-22.04-arm64
+  maxRunners: 1
+  minIdleRunners: 0
+  osArch: arm64
+  osType: linux
+  providerName: kubernetes_external
+  runnerBootstrapTimeout: 20
+  runnerPrefix: ""
+  tags:
+  - kubernetes
+  - linux
+  - arm64
+  - rthalho

@@ -30,3 +30,23 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - pools
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - pools/status
+  verbs:
+  - get
+  - patch
+  - update
