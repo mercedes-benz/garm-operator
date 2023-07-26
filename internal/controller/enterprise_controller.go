@@ -109,7 +109,9 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 			}
 		}
 
-		// todo: after creation we might have all status information available, so we could update the CR here
+		if err := r.Update(ctx, enterprise); err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, nil
 	}
 
@@ -121,10 +123,11 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 	}
 
 	log.Info("Updating enterprise status")
-	//enterprise.Status.PoolManagerFailureReason = garmEnterprise.PoolManagerStatus.FailureReason
-	enterprise.Status.PoolManagerFailureReason = "mario was here"
+	enterprise.Status.PoolManagerFailureReason = garmEnterprise.PoolManagerStatus.FailureReason
 	enterprise.Status.PoolManagerIsRunning = garmEnterprise.PoolManagerStatus.IsRunning
-	r.Status().Update(ctx, enterprise)
+	if err := r.Update(ctx, enterprise); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -142,11 +145,11 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 
 	if controllerutil.ContainsFinalizer(enterprise, key.EnterpriseFinalizerName) {
 		controllerutil.RemoveFinalizer(enterprise, key.EnterpriseFinalizerName)
-	}
 
-	// update immediately
-	if err := r.Update(ctx, enterprise); err != nil {
-		return ctrl.Result{}, err
+		// update immediately
+		if err := r.Update(ctx, enterprise); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	log.Info("enterprise deletion done")
@@ -168,9 +171,6 @@ func (r *EnterpriseReconciler) createOrUpdate(ctx context.Context, scope garmCli
 	log.V(1).Info(fmt.Sprintf("enterprise %s created - return Value %v", enterprise.Name, retValue))
 	if err != nil {
 		log.Info("DEBUG", "client.CreateEnterprise error", err)
-		//enterprise.Status.PoolManagerFailureReason = err.Error()
-		//enterprise.Status.PoolManagerIsRunning = false
-		r.Status().Update(ctx, enterprise)
 		return err
 	}
 
@@ -199,8 +199,10 @@ func (r *EnterpriseReconciler) adoptExisting(ctx context.Context, scope garmClie
 			enterprise.Status.ID = garmEnterprise.ID
 			enterprise.Status.PoolManagerFailureReason = garmEnterprise.PoolManagerStatus.FailureReason
 			enterprise.Status.PoolManagerIsRunning = garmEnterprise.PoolManagerStatus.IsRunning
-			r.Status().Update(ctx, enterprise)
-			return true, err
+			//if err := r.Status().Update(ctx, enterprise); err != nil {
+			//	return false, err
+			//}
+			return true, nil
 		}
 	}
 
