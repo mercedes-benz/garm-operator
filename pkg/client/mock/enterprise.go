@@ -7,7 +7,7 @@ package mock
 import (
 	reflect "reflect"
 
-	params "github.com/cloudbase/garm/params"
+	enterprises "github.com/cloudbase/garm/client/enterprises"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -35,10 +35,10 @@ func (m *MockEnterpriseClient) EXPECT() *MockEnterpriseClientMockRecorder {
 }
 
 // CreateEnterprise mocks base method.
-func (m *MockEnterpriseClient) CreateEnterprise(param params.CreateEnterpriseParams) (params.Enterprise, error) {
+func (m *MockEnterpriseClient) CreateEnterprise(param *enterprises.CreateEnterpriseParams) (*enterprises.CreateEnterpriseOK, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateEnterprise", param)
-	ret0, _ := ret[0].(params.Enterprise)
+	ret0, _ := ret[0].(*enterprises.CreateEnterpriseOK)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -50,45 +50,45 @@ func (mr *MockEnterpriseClientMockRecorder) CreateEnterprise(param interface{}) 
 }
 
 // DeleteEnterprise mocks base method.
-func (m *MockEnterpriseClient) DeleteEnterprise(ID string) error {
+func (m *MockEnterpriseClient) DeleteEnterprise(param *enterprises.DeleteEnterpriseParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteEnterprise", ID)
+	ret := m.ctrl.Call(m, "DeleteEnterprise", param)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteEnterprise indicates an expected call of DeleteEnterprise.
-func (mr *MockEnterpriseClientMockRecorder) DeleteEnterprise(ID interface{}) *gomock.Call {
+func (mr *MockEnterpriseClientMockRecorder) DeleteEnterprise(param interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEnterprise", reflect.TypeOf((*MockEnterpriseClient)(nil).DeleteEnterprise), ID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEnterprise", reflect.TypeOf((*MockEnterpriseClient)(nil).DeleteEnterprise), param)
 }
 
 // GetEnterprise mocks base method.
-func (m *MockEnterpriseClient) GetEnterprise(ID string) (params.Enterprise, error) {
+func (m *MockEnterpriseClient) GetEnterprise(param *enterprises.GetEnterpriseParams) (*enterprises.GetEnterpriseOK, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEnterprise", ID)
-	ret0, _ := ret[0].(params.Enterprise)
+	ret := m.ctrl.Call(m, "GetEnterprise", param)
+	ret0, _ := ret[0].(*enterprises.GetEnterpriseOK)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEnterprise indicates an expected call of GetEnterprise.
-func (mr *MockEnterpriseClientMockRecorder) GetEnterprise(ID interface{}) *gomock.Call {
+func (mr *MockEnterpriseClientMockRecorder) GetEnterprise(param interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnterprise", reflect.TypeOf((*MockEnterpriseClient)(nil).GetEnterprise), ID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnterprise", reflect.TypeOf((*MockEnterpriseClient)(nil).GetEnterprise), param)
 }
 
 // ListEnterprises mocks base method.
-func (m *MockEnterpriseClient) ListEnterprises() ([]params.Enterprise, error) {
+func (m *MockEnterpriseClient) ListEnterprises(param *enterprises.ListEnterprisesParams) (*enterprises.ListEnterprisesOK, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEnterprises")
-	ret0, _ := ret[0].([]params.Enterprise)
+	ret := m.ctrl.Call(m, "ListEnterprises", param)
+	ret0, _ := ret[0].(*enterprises.ListEnterprisesOK)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListEnterprises indicates an expected call of ListEnterprises.
-func (mr *MockEnterpriseClientMockRecorder) ListEnterprises() *gomock.Call {
+func (mr *MockEnterpriseClientMockRecorder) ListEnterprises(param interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEnterprises", reflect.TypeOf((*MockEnterpriseClient)(nil).ListEnterprises))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEnterprises", reflect.TypeOf((*MockEnterpriseClient)(nil).ListEnterprises), param)
 }

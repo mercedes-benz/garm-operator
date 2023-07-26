@@ -24,6 +24,7 @@ import (
 	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
+	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/params"
 	"go.uber.org/mock/gomock"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,11 +80,15 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.GetEnterprise("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").Return(params.Enterprise{
-					ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-					Name:            "existing-enterprise",
-					CredentialsName: "foobar",
-				}, nil)
+				m.GetEnterprise(
+					enterprises.NewGetEnterpriseParams().
+						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
+				).Return(&enterprises.GetEnterpriseOK{
+					Payload: params.Enterprise{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-enterprise",
+						CredentialsName: "foobar",
+					}}, nil)
 			},
 		},
 		{
@@ -123,15 +128,19 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.GetEnterprise("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").Return(params.Enterprise{
-					ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-					Name:            "existing-enterprise",
-					CredentialsName: "foobar",
-					PoolManagerStatus: params.PoolManagerStatus{
-						IsRunning:     false,
-						FailureReason: "no resources available",
-					},
-				}, nil)
+				m.GetEnterprise(
+					enterprises.NewGetEnterpriseParams().
+						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
+				).Return(&enterprises.GetEnterpriseOK{
+					Payload: params.Enterprise{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-enterprise",
+						CredentialsName: "foobar",
+						PoolManagerStatus: params.PoolManagerStatus{
+							IsRunning:     false,
+							FailureReason: "no resources available",
+						},
+					}}, nil)
 			},
 		},
 		{
@@ -163,24 +172,26 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.ListEnterprises().Return([]params.Enterprise{
+				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "another-non-operator-managed-enterprise",
 						CredentialsName: "totally-unsecure",
 					},
-				}, nil)
+				}}, nil)
 
-				m.CreateEnterprise(params.CreateEnterpriseParams{
-					Name:            "new-enterprise",
-					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
-				}).Return(params.Enterprise{
-					Name:            "new-enterprise",
-					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
-					ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
-				}, nil)
+				m.CreateEnterprise(enterprises.NewCreateEnterpriseParams().WithBody(
+					params.CreateEnterpriseParams{
+						Name:            "new-enterprise",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&enterprises.CreateEnterpriseOK{
+					Payload: params.Enterprise{
+						Name:            "new-enterprise",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+					}}, nil)
 			},
 		},
 		{
@@ -212,13 +223,13 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.ListEnterprises().Return([]params.Enterprise{
+				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-enterprise",
 						CredentialsName: "totally-insecure",
 					},
-				}, nil)
+				}}, nil)
 			},
 		},
 	}
@@ -233,7 +244,7 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.object).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.object).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
 
 			// create a fake reconciler
 			reconciler := &EnterpriseReconciler{
@@ -294,7 +305,10 @@ func TestEnterpriseReconciler_ReconcileDelete(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.DeleteEnterprise("e1dbf9a6-a9f6-4594-a5ac-12345").Return(nil)
+				m.DeleteEnterprise(
+					enterprises.NewDeleteEnterpriseParams().
+						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-12345"),
+				).Return(nil)
 			},
 		},
 	}
@@ -309,7 +323,7 @@ func TestEnterpriseReconciler_ReconcileDelete(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.object).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.object).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
 
 			// create a fake reconciler
 			reconciler := &EnterpriseReconciler{

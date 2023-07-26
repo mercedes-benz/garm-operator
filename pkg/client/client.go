@@ -2,9 +2,16 @@ package client
 
 import (
 	"errors"
+	"fmt"
+	"net/url"
 
-	"github.com/cloudbase/garm/cmd/garm-cli/client"
-	"github.com/cloudbase/garm/cmd/garm-cli/config"
+	"github.com/cloudbase/garm/client"
+	apiClientLogin "github.com/cloudbase/garm/client/login"
+	"github.com/go-openapi/runtime"
+	openapiRuntimeClient "github.com/go-openapi/runtime/client"
+
+	//"github.com/cloudbase/garm/cmd/garm-cli/client"
+
 	"github.com/cloudbase/garm/params"
 )
 
@@ -15,49 +22,51 @@ type GarmScopeParams struct {
 	Debug    bool
 }
 
-// TODO: make managerName configurable
-const managerName = "admin"
-
-func newGarmClient(garmParams GarmScopeParams) (*client.Client, error) {
+func newGarmClient(garmParams GarmScopeParams) (*client.GarmAPI, runtime.ClientAuthInfoWriter, error) {
 	if garmParams.BaseURL == "" {
-		return nil, errors.New("baseURL is mandatory to create a garm client")
+		return nil, nil, errors.New("baseURL is mandatory to create a garm client")
 	}
 
 	if garmParams.Username == "" {
-		return nil, errors.New("username is mandatory to create a garm client")
+		return nil, nil, errors.New("username is mandatory to create a garm client")
 	}
 
 	if garmParams.Password == "" {
-		return nil, errors.New("password is mandator")
+		return nil, nil, errors.New("password is mandator")
 	}
 
-	manager := config.Manager{
-		Name:    managerName, // TODO: check scope/idea of manager name. ATM it's equal to the username
-		BaseURL: garmParams.BaseURL,
+	baseUrlParsed, err := url.Parse(garmParams.BaseURL)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse base url %s: %s", garmParams.BaseURL, err)
 	}
 
-	// initiate a new client instance
-	garmClient := client.NewClient(manager.Name, manager, garmParams.Debug)
+	apiPath, err := url.JoinPath(baseUrlParsed.Path, client.DefaultBasePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to join base url path %s with %s: %s", baseUrlParsed.Path, client.DefaultBasePath, err)
+	}
 
-	// login to garm with the operator given credentials to fetch a token
-	// for further requests
-	token, err := garmClient.Login(garmParams.BaseURL, params.PasswordLoginParams{
+	transportCfg := client.DefaultTransportConfig().
+		WithHost(baseUrlParsed.Host).
+		WithBasePath(apiPath).
+		WithSchemes([]string{baseUrlParsed.Scheme})
+	apiCli := client.NewHTTPClientWithConfig(nil, transportCfg)
+	authToken := openapiRuntimeClient.BearerToken("")
+
+	newLoginParamsReq := apiClientLogin.NewLoginParams()
+	newLoginParamsReq.Body = params.PasswordLoginParams{
 		Username: garmParams.Username,
 		Password: garmParams.Password,
-	})
+	}
+
+	// login with empty token and login params
+	// this will return a new token in response
+	resp, err := apiCli.Login.Login(newLoginParamsReq, authToken)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	garmClient.Config = config.Manager{
-		BaseURL: garmParams.BaseURL,
-		Token:   token,
-		Name:    managerName,
-	}
-	garmClient.ManagerName = managerName
+	// update token from login response
+	authToken = openapiRuntimeClient.BearerToken(resp.Payload.Token)
 
-	// update the client to make use of the generated token
-	garmClient = client.NewClient(garmClient.ManagerName, garmClient.Config, garmParams.Debug)
-
-	return garmClient, nil
+	return apiCli, authToken, nil
 }

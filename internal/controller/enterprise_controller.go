@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/params"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -109,7 +110,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 			}
 		}
 
-		if err := r.Update(ctx, enterprise); err != nil {
+		if err := r.Status().Update(ctx, enterprise); err != nil {
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
@@ -117,15 +118,19 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 
 	// update status fields
 	// reflect enterprise status into CR
-	garmEnterprise, err := scope.GetEnterprise(enterprise.Status.ID)
+	garmEnterprise, err := scope.GetEnterprise(
+		enterprises.NewGetEnterpriseParams().
+			WithEnterpriseID(enterprise.Status.ID),
+	)
+
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	log.Info("Updating enterprise status")
-	enterprise.Status.PoolManagerFailureReason = garmEnterprise.PoolManagerStatus.FailureReason
-	enterprise.Status.PoolManagerIsRunning = garmEnterprise.PoolManagerStatus.IsRunning
-	if err := r.Update(ctx, enterprise); err != nil {
+	enterprise.Status.PoolManagerFailureReason = garmEnterprise.Payload.PoolManagerStatus.FailureReason
+	enterprise.Status.PoolManagerIsRunning = garmEnterprise.Payload.PoolManagerStatus.IsRunning
+	if err := r.Status().Update(ctx, enterprise); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -138,7 +143,10 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 
 	log.Info("start deleting enterprise")
 
-	err := scope.DeleteEnterprise(enterprise.Status.ID)
+	err := scope.DeleteEnterprise(
+		enterprises.NewDeleteEnterpriseParams().
+			WithEnterpriseID(enterprise.Status.ID),
+	)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -162,12 +170,12 @@ func (r *EnterpriseReconciler) createOrUpdate(ctx context.Context, scope garmCli
 
 	log.Info("enterprise doesn't exist yet, creating...")
 	retValue, err := scope.CreateEnterprise(
-		params.CreateEnterpriseParams{
-			Name:            enterprise.Name,
-			CredentialsName: enterprise.Spec.CredentialsName,
-			WebhookSecret:   enterprise.Spec.WebhookSecret, // gh hook secret
-		},
-	)
+		enterprises.NewCreateEnterpriseParams().
+			WithBody(params.CreateEnterpriseParams{
+				Name:            enterprise.Name,
+				CredentialsName: enterprise.Spec.CredentialsName,
+				WebhookSecret:   enterprise.Spec.WebhookSecret, // gh hook secret
+			}))
 	log.V(1).Info(fmt.Sprintf("enterprise %s created - return Value %v", enterprise.Name, retValue))
 	if err != nil {
 		log.Info("DEBUG", "client.CreateEnterprise error", err)
@@ -175,9 +183,12 @@ func (r *EnterpriseReconciler) createOrUpdate(ctx context.Context, scope garmCli
 	}
 
 	// reflect enterprise status into CR
-	enterprise.Status.ID = retValue.ID
-	enterprise.Status.PoolManagerFailureReason = retValue.PoolManagerStatus.FailureReason
-	enterprise.Status.PoolManagerIsRunning = retValue.PoolManagerStatus.IsRunning
+	enterprise.Status.ID = retValue.Payload.ID
+	enterprise.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
+	enterprise.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
+	if err := r.Status().Update(ctx, enterprise); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -185,23 +196,24 @@ func (r *EnterpriseReconciler) createOrUpdate(ctx context.Context, scope garmCli
 func (r *EnterpriseReconciler) adoptExisting(ctx context.Context, scope garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (bool, error) {
 	log := log.FromContext(ctx)
 
-	enterprises, err := scope.ListEnterprises()
+	enterprises, err := scope.ListEnterprises(enterprises.NewListEnterprisesParams())
 	if err != nil {
 		return false, err
 	}
 
 	// TODO: better logging and additional information in debug log
-	log.Info(fmt.Sprintf("%d enterprises discovered", len(enterprises)))
+	log.Info(fmt.Sprintf("%d enterprises discovered", len(enterprises.Payload)))
 
-	for _, garmEnterprise := range enterprises {
+	for _, garmEnterprise := range enterprises.Payload {
 		if garmEnterprise.Name == enterprise.Name {
 			log.Info("garm enterprise object found for given enterprise CR")
+			log.Info(fmt.Sprintf("enterprise: %#v", garmEnterprise))
 			enterprise.Status.ID = garmEnterprise.ID
 			enterprise.Status.PoolManagerFailureReason = garmEnterprise.PoolManagerStatus.FailureReason
 			enterprise.Status.PoolManagerIsRunning = garmEnterprise.PoolManagerStatus.IsRunning
-			//if err := r.Status().Update(ctx, enterprise); err != nil {
-			//	return false, err
-			//}
+			if err := r.Status().Update(ctx, enterprise); err != nil {
+				return false, err
+			}
 			return true, nil
 		}
 	}
