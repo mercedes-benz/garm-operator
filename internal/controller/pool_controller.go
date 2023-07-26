@@ -78,12 +78,12 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return r.reconcileDelete(ctx, pool, poolClient)
 	}
 
-	// pool status id has been set, so we know that the pool is persisted in garm and needs to be updated
-	if pool.Status.ID != "" {
+	// pool status id has been set and id matches existing garm pool, so we know that the pool is persisted in garm and needs to be updated
+	if pool.Status.ID != "" && r.garmPoolExists(ctx, pool.Status.ID, poolClient) {
 		return r.reconcileUpdate(ctx, pool, poolClient)
 	}
 
-	// no pool id yet, so pool needs to be created
+	// no pool id yet or the existing pool id is outdated, so pool cr needs by either synced to match garm pool or created
 	return r.reconcileCreate(ctx, pool, poolClient)
 }
 
@@ -157,7 +157,7 @@ func createPool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient
 
 func (r *PoolReconciler) reconcileUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
-	log.Info("trying to update pool...")
+	log.Info("existing pool found in garm, updating...", "ID", pool.Status.ID)
 
 	result, err := updatePool(ctx, pool, garmClient)
 	if err != nil {
@@ -256,6 +256,51 @@ func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperator
 
 func (r *PoolReconciler) syncPools(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (params.Pool, error) {
 	log := log.FromContext(ctx)
+	matchingGarmPool, err := r.getExistingGarmPoolBySpecs(ctx, pool, garmClient)
+	if err != nil {
+		return params.Pool{}, err
+	}
+
+	isGarmPoolEmpty := matchingGarmPool.ID == ""
+
+	// we found a garm pool, return it to sync ids
+	if !isGarmPoolEmpty {
+		log.Info("Found garm pool with matching specs", "garmID", matchingGarmPool.ID)
+		return matchingGarmPool, err
+	}
+
+	log.Info("Pool with specified specs does not yet exist, creating pool in garm")
+	// no matching pool in garm found, just create it
+	return createPool(ctx, pool, garmClient)
+}
+
+func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperatorv1alpha1.Pool, err error) (ctrl.Result, error) {
+	status := pool.Status
+	status.Synced = false
+	status.LastSyncTime = metav1.Now()
+	status.LastSyncError = err.Error()
+
+	if updateErr := r.updatePoolStatus(ctx, pool, &status); updateErr != nil {
+		return ctrl.Result{}, updateErr
+	}
+	return ctrl.Result{}, err
+}
+
+func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, poolID string) (ctrl.Result, error) {
+	status := pool.Status
+	status.ID = poolID
+	status.Synced = true
+	status.LastSyncTime = metav1.Now()
+	status.LastSyncError = ""
+
+	if err := r.updatePoolStatus(ctx, pool, &status); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{}, nil
+}
+
+func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (params.Pool, error) {
+	log := log.FromContext(ctx)
 
 	garmPools, err := garmClient.ListAllPools()
 	if err != nil {
@@ -284,7 +329,7 @@ func (r *PoolReconciler) syncPools(ctx context.Context, pool *garmoperatorv1alph
 	)
 
 	if len(filteredGarmPools) > 1 {
-		r.handleUpdateError(ctx, pool, errors.New("can not create pool, multiple instances matching flavour, image and provider found in garm"))
+		return params.Pool{}, errors.New("can not create pool, multiple instances matching flavour, image and provider found in garm")
 	}
 
 	for _, garmPool := range filteredGarmPools {
@@ -297,38 +342,13 @@ func (r *PoolReconciler) syncPools(ctx context.Context, pool *garmoperatorv1alph
 		// found matching garm pool, but no pool CR yet => no need for creating, just sync IDs
 		return garmPool, nil
 	}
-
-	// no matching pool in garm found, just create it
-	return createPool(ctx, pool, garmClient)
+	// no pool in garm found, so we need to create one
+	return params.Pool{}, nil
 }
 
-func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperatorv1alpha1.Pool, err error) (ctrl.Result, error) {
-	status := pool.Status
-	status.Synced = false
-	status.LastSyncError = err.Error()
-
-	if updateErr := r.updatePoolStatus(ctx, pool, &status); updateErr != nil {
-		return ctrl.Result{}, updateErr
-	}
-	return ctrl.Result{}, err
-}
-
-func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, poolID string) (ctrl.Result, error) {
-	status := pool.Status
-	status.ID = poolID
-	status.Synced = true
-	status.LastSyncTime = metav1.Now()
-	status.LastSyncError = ""
-
-	if err := r.updatePoolStatus(ctx, pool, &status); err != nil {
-		return ctrl.Result{}, err
-	}
-	return ctrl.Result{}, nil
-}
-
-func (r *PoolReconciler) garmPoolExists(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) bool {
-	existingGarmPool, _ := garmClient.GetPool(pool.Status.ID)
-	return !reflect.DeepEqual(existingGarmPool, params.Pool{})
+func (r *PoolReconciler) garmPoolExists(ctx context.Context, poolID string, garmClient garmClient.PoolClient) bool {
+	result, _ := garmClient.GetPool(poolID)
+	return result.ID != ""
 }
 
 // SetupWithManager sets up the controller with the Manager.

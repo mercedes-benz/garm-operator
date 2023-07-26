@@ -36,6 +36,10 @@ spec:
       name: Scope
       priority: 1
       type: string
+    - jsonPath: .status.lastSyncError
+      name: Error
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:

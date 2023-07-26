@@ -83,6 +83,7 @@ type PoolStatus struct {
 //+kubebuilder:printcolumn:name="Flavour",type=string,JSONPath=`.spec.flavor`,priority=1
 //+kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.providerName`,priority=1
 //+kubebuilder:printcolumn:name="Scope",type=string,JSONPath=`.spec.githubScope`,priority=1
+//+kubebuilder:printcolumn:name="Error",type=string,JSONPath=`.status.lastSyncError`,priority=1
 
 // Pool is the Schema for the pools API
 type Pool struct {
