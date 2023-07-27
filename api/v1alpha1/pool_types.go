@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/cloudbase/garm/params"
+	commonParams "github.com/cloudbase/garm-provider-common/params"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -42,17 +42,17 @@ type PoolSpec struct {
 	// Garm Internal ID of the specified scope as reference
 	GitHubScopeID string `json:"githubScopeId"`
 
-	ProviderName           string        `json:"providerName"`
-	MaxRunners             uint          `json:"maxRunners"`
-	MinIdleRunners         uint          `json:"minIdleRunners"`
-	Image                  string        `json:"image"`
-	Flavor                 string        `json:"flavor"`
-	OSType                 params.OSType `json:"osType"`
-	OSArch                 params.OSArch `json:"osArch"`
-	Tags                   []string      `json:"tags"`
-	Enabled                bool          `json:"enabled"`
-	RunnerBootstrapTimeout uint          `json:"runnerBootstrapTimeout"`
-	ForceDeleteRunners     bool          `json:"forceDeleteRunners"`
+	ProviderName           string              `json:"providerName"`
+	MaxRunners             uint                `json:"maxRunners"`
+	MinIdleRunners         uint                `json:"minIdleRunners"`
+	Image                  string              `json:"image"`
+	Flavor                 string              `json:"flavor"`
+	OSType                 commonParams.OSType `json:"osType"`
+	OSArch                 commonParams.OSArch `json:"osArch"`
+	Tags                   []string            `json:"tags"`
+	Enabled                bool                `json:"enabled"`
+	RunnerBootstrapTimeout uint                `json:"runnerBootstrapTimeout"`
+	ForceDeleteRunners     bool                `json:"forceDeleteRunners"`
 
 	// +optional
 	ExtraSpecs string `json:"extraSpecs"`

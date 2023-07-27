@@ -1,81 +1,88 @@
 package client
 
 import (
-	"github.com/cloudbase/garm/cmd/garm-cli/client"
-	"github.com/cloudbase/garm/params"
+	"github.com/cloudbase/garm/client"
+	"github.com/cloudbase/garm/client/enterprises"
+	"github.com/cloudbase/garm/client/organizations"
+	"github.com/cloudbase/garm/client/pools"
+	"github.com/cloudbase/garm/client/repositories"
+	"github.com/go-openapi/runtime"
 )
 
 type PoolClient interface {
-	ListAllPools() ([]params.Pool, error)
-	CreateRepoPool(repoId string, param params.CreatePoolParams) (params.Pool, error)
-	CreateOrgPool(orgId string, param params.CreatePoolParams) (params.Pool, error)
-	CreateEnterprisePool(enterpriseId string, param params.CreatePoolParams) (params.Pool, error)
-	UpdatePoolByID(ID string, param params.UpdatePoolParams) (params.Pool, error)
-	GetPool(ID string) (params.Pool, error)
-	DeletePoolByID(ID string) error
+	ListAllPools(param *pools.ListPoolsParams) (*pools.ListPoolsOK, error)
+	CreateRepoPool(param *repositories.CreateRepoPoolParams) (*repositories.CreateRepoPoolOK, error)
+	CreateOrgPool(param *organizations.CreateOrgPoolParams) (*organizations.CreateOrgPoolOK, error)
+	CreateEnterprisePool(param *enterprises.CreateEnterprisePoolParams) (*enterprises.CreateEnterprisePoolOK, error)
+	UpdateEnterprisePool(param *enterprises.UpdateEnterprisePoolParams) (*enterprises.UpdateEnterprisePoolOK, error)
+	GetEnterprisePool(param *enterprises.GetEnterprisePoolParams) (*enterprises.GetEnterprisePoolOK, error)
+	DeleteEnterprisePool(param *enterprises.DeleteEnterprisePoolParams) error
 }
 
-type poolClient struct{ client *client.Client }
+type poolClient struct {
+	client *client.GarmAPI
+	token  runtime.ClientAuthInfoWriter
+}
 
 func NewPoolClient(garmParams GarmScopeParams) (PoolClient, error) {
-	garmClient, err := newGarmClient(garmParams)
+	garmClient, token, err := newGarmClient(garmParams)
 	if err != nil {
 		return nil, err
 	}
 
-	return &poolClient{garmClient}, nil
+	return &poolClient{garmClient, token}, nil
 }
 
-func (p *poolClient) ListAllPools() ([]params.Pool, error) {
-	pools, err := p.client.ListAllPools()
+func (p *poolClient) ListAllPools(param *pools.ListPoolsParams) (*pools.ListPoolsOK, error) {
+	pools, err := p.client.Pools.ListPools(param, p.token)
 	if err != nil {
-		return []params.Pool{}, err
+		return nil, err
 	}
 	return pools, nil
 }
 
-func (p *poolClient) CreateRepoPool(repoId string, param params.CreatePoolParams) (params.Pool, error) {
-	pool, err := p.client.CreateRepoPool(repoId, param)
+func (p *poolClient) CreateRepoPool(param *repositories.CreateRepoPoolParams) (*repositories.CreateRepoPoolOK, error) {
+	pool, err := p.client.Repositories.CreateRepoPool(param, p.token)
 	if err != nil {
-		return params.Pool{}, err
+		return nil, err
 	}
 	return pool, nil
 }
 
-func (p *poolClient) CreateOrgPool(orgId string, param params.CreatePoolParams) (params.Pool, error) {
-	pool, err := p.client.CreateOrgPool(orgId, param)
+func (p *poolClient) CreateOrgPool(param *organizations.CreateOrgPoolParams) (*organizations.CreateOrgPoolOK, error) {
+	pool, err := p.client.Organizations.CreateOrgPool(param, p.token)
 	if err != nil {
-		return params.Pool{}, err
+		return nil, err
 	}
 	return pool, nil
 }
 
-func (p *poolClient) CreateEnterprisePool(enterpriseId string, param params.CreatePoolParams) (params.Pool, error) {
-	pool, err := p.client.CreateEnterprisePool(enterpriseId, param)
+func (p *poolClient) CreateEnterprisePool(param *enterprises.CreateEnterprisePoolParams) (*enterprises.CreateEnterprisePoolOK, error) {
+	pool, err := p.client.Enterprises.CreateEnterprisePool(param, p.token)
 	if err != nil {
-		return params.Pool{}, err
+		return nil, err
 	}
 	return pool, nil
 }
 
-func (p *poolClient) UpdatePoolByID(ID string, param params.UpdatePoolParams) (params.Pool, error) {
-	pool, err := p.client.UpdatePoolByID(ID, param)
+func (p *poolClient) UpdateEnterprisePool(param *enterprises.UpdateEnterprisePoolParams) (*enterprises.UpdateEnterprisePoolOK, error) {
+	pool, err := p.client.Enterprises.UpdateEnterprisePool(param, p.token)
 	if err != nil {
-		return params.Pool{}, err
+		return nil, err
 	}
 	return pool, nil
 }
 
-func (p *poolClient) GetPool(ID string) (params.Pool, error) {
-	pool, err := p.client.GetPoolByID(ID)
+func (p *poolClient) GetEnterprisePool(param *enterprises.GetEnterprisePoolParams) (*enterprises.GetEnterprisePoolOK, error) {
+	pool, err := p.client.Enterprises.GetEnterprisePool(param, p.token)
 	if err != nil {
-		return params.Pool{}, err
+		return nil, err
 	}
 	return pool, nil
 }
 
-func (p *poolClient) DeletePoolByID(ID string) error {
-	err := p.client.DeletePoolByID(ID)
+func (p *poolClient) DeleteEnterprisePool(param *enterprises.DeleteEnterprisePoolParams) error {
+	err := p.client.Enterprises.DeleteEnterprisePool(param, p.token)
 	if err != nil {
 		return err
 	}
