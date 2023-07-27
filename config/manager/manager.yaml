@@ -44,7 +44,7 @@ spec:
         args:
         - --garm-server=http://garm-server.garm-server.svc:9997
         - --garm-username=admin
-        - --garm-password=REPLACE
+        - --garm-password=LmrBG1KcBOsDfNKq4cQTGpc0hJ0kejkk
         image: controller:latest
         name: manager
         securityContext:
