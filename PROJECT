@@ -6,7 +6,7 @@ domain: mercedes-benz.com
 layout:
 - go.kubebuilder.io/v4
 projectName: garm-operator
-repo: GitHub-Actions/garm-operator
+repo: git.i.mercedes-benz.com/GitHub-Actions/garm-operator
 resources:
 - api:
     crdVersion: v1
@@ -15,7 +15,7 @@ resources:
   domain: mercedes-benz.com
   group: garm-operator
   kind: Enterprise
-  path: GitHub-Actions/garm-operator/api/v1alpha1
+  path: git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -24,6 +24,6 @@ resources:
   domain: mercedes-benz.com
   group: garm-operator
   kind: Pool
-  path: GitHub-Actions/garm-operator/api/v1alpha1
+  path: git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1
   version: v1alpha1
 version: "3"

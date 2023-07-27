@@ -107,6 +107,7 @@ func init() {
 	SchemeBuilder.Register(&Pool{}, &PoolList{})
 }
 
+// +k8s:deepcopy-gen=false
 type Predicate func(p Pool) bool
 
 func MatchesImage(image string) Predicate {
