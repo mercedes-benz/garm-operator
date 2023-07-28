@@ -32,6 +32,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	"k8s.io/klog/v2"
@@ -62,6 +63,8 @@ func main() {
 		probeAddr            string
 		syncPeriod           time.Duration
 
+		watchNamespace string
+
 		garmServer   string
 		garmUsername string
 		garmPassword string
@@ -74,6 +77,9 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.DurationVar(&syncPeriod, "sync-period", 5*time.Minute,
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
+
+	flag.StringVar(&watchNamespace, "namespace", "",
+		"Namespace that the controller watches to reconcile cluster-api objects. If unspecified, the controller watches for cluster-api objects across all namespaces.")
 
 	flag.StringVar(&garmServer, "garm-server", "", "The address of the GARM server")
 	flag.StringVar(&garmUsername, "garm-username", "", "The username for the GARM server")
@@ -96,6 +102,15 @@ func main() {
 	if len(os.Getenv("GARM_PASSWORD")) > 0 {
 		setupLog.Info("Using garm-password from environment variable")
 		garmPassword = os.Getenv("GARM_PASSWORD")
+	}
+	if len(os.Getenv("WATCH_NAMESPACE")) > 0 {
+		setupLog.Info("using watch-namespace from environment variable")
+		watchNamespace = os.Getenv("WATCH_NAMESPACE")
+	}
+
+	var watchNamespaces []string
+	if watchNamespace != "" {
+		watchNamespaces = []string{watchNamespace}
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
@@ -120,6 +135,10 @@ func main() {
 		// Default Sync Period = 10 hours.
 		// Set default via flag to 5 minutes
 		SyncPeriod: &syncPeriod,
+		Cache: cache.Options{
+			Namespaces: watchNamespaces,
+			SyncPeriod: &syncPeriod,
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
