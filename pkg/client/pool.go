@@ -14,8 +14,11 @@ type PoolClient interface {
 	CreateRepoPool(param *repositories.CreateRepoPoolParams) (*repositories.CreateRepoPoolOK, error)
 	CreateOrgPool(param *organizations.CreateOrgPoolParams) (*organizations.CreateOrgPoolOK, error)
 	CreateEnterprisePool(param *enterprises.CreateEnterprisePoolParams) (*enterprises.CreateEnterprisePoolOK, error)
+	UpdatePool(param *pools.UpdatePoolParams) (*pools.UpdatePoolOK, error)
 	UpdateEnterprisePool(param *enterprises.UpdateEnterprisePoolParams) (*enterprises.UpdateEnterprisePoolOK, error)
+	GetPool(param *pools.GetPoolParams) (*pools.GetPoolOK, error)
 	GetEnterprisePool(param *enterprises.GetEnterprisePoolParams) (*enterprises.GetEnterprisePoolOK, error)
+	DeletePool(param *pools.DeletePoolParams) error
 	DeleteEnterprisePool(param *enterprises.DeleteEnterprisePoolParams) error
 }
 
@@ -73,12 +76,36 @@ func (p *poolClient) UpdateEnterprisePool(param *enterprises.UpdateEnterprisePoo
 	return pool, nil
 }
 
+func (p *poolClient) UpdatePool(param *pools.UpdatePoolParams) (*pools.UpdatePoolOK, error) {
+	pool, err := p.client.Pools.UpdatePool(param, p.token)
+	if err != nil {
+		return nil, err
+	}
+	return pool, nil
+}
+
 func (p *poolClient) GetEnterprisePool(param *enterprises.GetEnterprisePoolParams) (*enterprises.GetEnterprisePoolOK, error) {
 	pool, err := p.client.Enterprises.GetEnterprisePool(param, p.token)
 	if err != nil {
 		return nil, err
 	}
 	return pool, nil
+}
+
+func (p *poolClient) GetPool(param *pools.GetPoolParams) (*pools.GetPoolOK, error) {
+	pool, err := p.client.Pools.GetPool(param, p.token)
+	if err != nil {
+		return nil, err
+	}
+	return pool, nil
+}
+
+func (p *poolClient) DeletePool(param *pools.DeletePoolParams) error {
+	err := p.client.Pools.DeletePool(param, p.token)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *poolClient) DeleteEnterprisePool(param *enterprises.DeleteEnterprisePoolParams) error {

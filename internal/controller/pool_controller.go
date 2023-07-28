@@ -114,7 +114,6 @@ func createPool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient
 	log := log.FromContext(ctx)
 	log.Info("creating pool")
 	poolResult := params.Pool{}
-	var err error
 
 	id := pool.Spec.GitHubScopeID
 	scope := pool.Spec.GitHubScope
@@ -173,7 +172,7 @@ func createPool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient
 		}
 		poolResult = result.Payload
 	default:
-		err = fmt.Errorf("no valid scope specified: %s", scope)
+		err := fmt.Errorf("no valid scope specified: %s", scope)
 		if err != nil {
 			return params.Pool{}, err
 		}
@@ -219,8 +218,7 @@ func updatePool(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient
 		ExtraSpecs:             extraSpecs,
 		GitHubRunnerGroup:      &pool.Spec.GitHubRunnerGroup,
 	}
-	// TODO: handle different pool types (org, repo, enterprise)
-	result, err := garmClient.UpdateEnterprisePool(enterprises.NewUpdateEnterprisePoolParams().WithPoolID(id).WithBody(poolParams))
+	result, err := garmClient.UpdatePool(pools.NewUpdatePoolParams().WithPoolID(id).WithBody(poolParams))
 	if err != nil {
 		return params.Pool{}, err
 	}
@@ -257,8 +255,8 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, pool *garmoperator
 		return r.handleUpdateError(ctx, pool, err)
 	}
 	// TODO: handle different pool types (org, repo, enterprise)
-	err := garmClient.DeleteEnterprisePool(
-		enterprises.NewDeleteEnterprisePoolParams().
+	err := garmClient.DeletePool(
+		pools.NewDeletePoolParams().
 			WithPoolID(pool.Status.ID),
 	)
 	if err != nil {
@@ -269,9 +267,8 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, pool *garmoperator
 	return ctrl.Result{}, nil
 }
 
-func (r *PoolReconciler) updatePoolStatus(ctx context.Context, pool *garmoperatorv1alpha1.Pool, newStatus *garmoperatorv1alpha1.PoolStatus) error {
+func (r *PoolReconciler) updatePoolStatus(ctx context.Context, pool *garmoperatorv1alpha1.Pool) error {
 	log := log.FromContext(ctx)
-	pool.Status = *newStatus
 	if err := r.Status().Update(ctx, pool); err != nil {
 		log.Error(err, "unable to update Pool status")
 		return err
@@ -308,25 +305,23 @@ func (r *PoolReconciler) syncPools(ctx context.Context, pool *garmoperatorv1alph
 }
 
 func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperatorv1alpha1.Pool, err error) (ctrl.Result, error) {
-	status := pool.Status
-	status.Synced = false
-	status.LastSyncTime = metav1.Now()
-	status.LastSyncError = err.Error()
+	pool.Status.Synced = false
+	pool.Status.LastSyncTime = metav1.Now()
+	pool.Status.LastSyncError = err.Error()
 
-	if updateErr := r.updatePoolStatus(ctx, pool, &status); updateErr != nil {
+	if updateErr := r.updatePoolStatus(ctx, pool); updateErr != nil {
 		return ctrl.Result{}, updateErr
 	}
 	return ctrl.Result{}, err
 }
 
 func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, poolID string) (ctrl.Result, error) {
-	status := pool.Status
-	status.ID = poolID
-	status.Synced = true
-	status.LastSyncTime = metav1.Now()
-	status.LastSyncError = ""
+	pool.Status.ID = poolID
+	pool.Status.Synced = true
+	pool.Status.LastSyncTime = metav1.Now()
+	pool.Status.LastSyncError = ""
 
-	if err := r.updatePoolStatus(ctx, pool, &status); err != nil {
+	if err := r.updatePoolStatus(ctx, pool); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
@@ -380,10 +375,10 @@ func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, pool *g
 }
 
 func (r *PoolReconciler) garmPoolExists(ctx context.Context, poolID string, garmClient garmClient.PoolClient) bool {
-	result, _ := garmClient.GetEnterprisePool(
-		enterprises.NewGetEnterprisePoolParams().
-			WithPoolID(poolID),
-	)
+	result, err := garmClient.GetPool(pools.NewGetPoolParams().WithPoolID(poolID))
+	if err != nil {
+		return false
+	}
 	return result.Payload.ID != ""
 }
 
