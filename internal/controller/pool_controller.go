@@ -329,48 +329,29 @@ func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmo
 
 func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmClient garmClient.PoolClient) (params.Pool, error) {
 	log := log.FromContext(ctx)
+	log.Info("Getting existing garm pools by pool.spec")
 
 	garmPools, err := garmClient.ListAllPools(pools.NewListPoolsParams())
 	if err != nil {
 		return params.Pool{}, err
 	}
 	filteredGarmPools := poolutil.FilterGarmPools(garmPools.Payload,
-		poolutil.MatchesImageFlavorAndProvider(pool.Spec.Image, pool.Spec.Flavor, pool.Spec.ProviderName),
+		poolutil.MatchesImage(pool.Spec.Image),
+		poolutil.MatchesFlavor(pool.Spec.Flavor),
+		poolutil.MatchesProvider(pool.Spec.ProviderName),
 		poolutil.MatchesGitHubScope(pool.Spec.GitHubScope, pool.Spec.GitHubScopeID),
-	)
-
-	listOpts := &client.ListOptions{
-		Namespace: pool.Namespace,
-	}
-
-	poolList := &garmoperatorv1alpha1.PoolList{}
-	if err := r.List(ctx, poolList, listOpts); err != nil {
-		log.Error(err, "cannot fetch Pools", "error", err)
-		return params.Pool{}, err
-	}
-
-	poolList.FilterByFields(
-		garmoperatorv1alpha1.MatchesFlavour(pool.Spec.Flavor),
-		garmoperatorv1alpha1.MatchesImage(pool.Spec.Image),
-		garmoperatorv1alpha1.MatchesProvider(pool.Spec.ProviderName),
-		garmoperatorv1alpha1.MatchesGitHubScope(pool.Spec.GitHubScope, pool.Spec.GitHubScopeID),
 	)
 
 	if len(filteredGarmPools) > 1 {
 		return params.Pool{}, errors.New("can not create pool, multiple instances matching flavour, image and provider found in garm")
 	}
 
-	for _, garmPool := range filteredGarmPools {
-		for _, poolCR := range poolList.Items {
-			// we found some matching garm pool and its matching already existing poolCR => no need to create a pool with the same specs
-			if poolCR.Status.ID == garmPool.ID {
-				return params.Pool{}, fmt.Errorf("pool with same specs already exists in garm: GarmPoolID=%s PoolCRD=%s", garmPool.ID, poolCR.Name)
-			}
-		}
-		// found matching garm pool, but no pool CR yet => no need for creating, just sync IDs
-		return garmPool, nil
+	//sync
+	if len(filteredGarmPools) == 1 {
+		return filteredGarmPools[0], nil
 	}
-	// no pool in garm found, so we need to create one
+
+	// create
 	return params.Pool{}, nil
 }
 

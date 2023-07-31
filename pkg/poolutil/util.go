@@ -23,9 +23,22 @@ func MatchesGitHubScope(scope v1alpha1.GitHubScope, id string) Predicate {
 		return false
 	}
 }
-func MatchesImageFlavorAndProvider(image, flavor, provider string) Predicate {
+
+func MatchesImage(image string) Predicate {
 	return func(p params.Pool) bool {
-		return p.Image == image && p.Flavor == flavor && p.ProviderName == provider
+		return p.Image == image
+	}
+}
+
+func MatchesFlavor(flavor string) Predicate {
+	return func(p params.Pool) bool {
+		return p.Flavor == flavor
+	}
+}
+
+func MatchesProvider(provider string) Predicate {
+	return func(p params.Pool) bool {
+		return p.ProviderName == provider
 	}
 }
 

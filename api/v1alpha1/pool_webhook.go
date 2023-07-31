@@ -17,13 +17,14 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -31,8 +32,10 @@ import (
 
 // log is for logging in this package.
 var poollog = logf.Log.WithName("pool-resource")
+var c client.Client
 
 func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	c = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -55,35 +58,58 @@ var _ webhook.Validator = &Pool{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	poollog.Info("validate create", "name", r.Name)
+	ctx := context.TODO()
+	pool := r
+
+	listOpts := &client.ListOptions{
+		Namespace: pool.Namespace,
+	}
+
+	poolList := &PoolList{}
+	if err := c.List(ctx, poolList, listOpts); err != nil {
+		poollog.Error(err, "cannot fetch Pools", "error", err)
+		return nil, err
+	}
+
+	poolList.FilterByFields(
+		MatchesFlavour(pool.Spec.Flavor),
+		MatchesImage(pool.Spec.Image),
+		MatchesProvider(pool.Spec.ProviderName),
+		MatchesGitHubScope(pool.Spec.GitHubScope, pool.Spec.GitHubScopeID),
+	)
+
+	if len(poolList.Items) > 0 {
+		existing := poolList.Items[0]
+		return nil, apierrors.NewBadRequest(
+			fmt.Sprintf("can not create pool, pool=%s with same image=%s , flavor=%s  and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.Image, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScope))
+	}
+
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	var errList field.ErrorList
 	poollog.Info("validate update", "name", r.Name)
 
 	oldCRD, ok := old.(*Pool)
 	if !ok {
-		return nil, errors.New("failed to convert runtime.Object to Pool CRD")
+		return nil, apierrors.NewBadRequest("failed to convert runtime.Object to Pool CRD")
 	}
 
-	errList = append(errList, r.validateProviderName(oldCRD))
-	if len(errList) == 0 {
-		return nil, nil
+	if err := r.validateProviderName(oldCRD); err != nil {
+		return nil, apierrors.NewInvalid(
+			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+			r.Name,
+			field.ErrorList{err},
+		)
 	}
 
-	err := apierrors.NewInvalid(
-		schema.GroupKind{Group: "garm-operator.mercedes-benz.com", Kind: "Pool"},
-		r.Name,
-		errList,
-	)
-
-	return nil, err
+	return nil, nil
 }
 
 func (r *Pool) validateProviderName(old *Pool) *field.Error {
-	fieldPath := field.NewPath("spec").Child("provider_name")
+	poollog.Info("validate spec.providerName", "spec.providerName", r.Spec.ProviderName)
+	fieldPath := field.NewPath("spec").Child("providerName")
 	n := r.Spec.ProviderName
 	o := old.Spec.ProviderName
 	if n != o {
