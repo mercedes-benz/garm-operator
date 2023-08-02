@@ -1,0 +1,27 @@
+# permissions for end users to view organizations.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: organization-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: garm-operator
+    app.kubernetes.io/part-of: garm-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: organization-viewer-role
+rules:
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - organizations
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - organizations/status
+  verbs:
+  - get

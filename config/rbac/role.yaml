@@ -33,6 +33,32 @@ rules:
 - apiGroups:
   - garm-operator.mercedes-benz.com
   resources:
+  - organizations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - organizations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - organizations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
   - pools
   verbs:
   - create

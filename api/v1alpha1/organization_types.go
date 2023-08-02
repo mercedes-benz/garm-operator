@@ -20,44 +20,44 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EnterpriseSpec defines the desired state of Enterprise
-type EnterpriseSpec struct {
+// OrganizationSpec defines the desired state of Organization
+type OrganizationSpec struct {
 	CredentialsName string `json:"credentialsName"`
 	WebhookSecret   string `json:"webhookSecret"`
 }
 
-// EnterpriseStatus defines the observed state of Enterprise
-type EnterpriseStatus struct {
+// OrganizationStatus defines the observed state of Organization
+type OrganizationStatus struct {
 	ID                       string `json:"id"`
 	PoolManagerIsRunning     bool   `json:"poolManagerIsRunning"`
 	PoolManagerFailureReason string `json:"poolManagerFailureReason,omitempty"`
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=enterprises,scope=Namespaced,categories=garm,shortName=ent
+//+kubebuilder:resource:path=organizations,scope=Namespaced,categories=garm,shortName=org
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Enterprise ID"
+//+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Organization ID"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.poolManagerIsRunning",description="Status of the referenced pool"
-//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Enterprise"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Organization"
 
-// Enterprise is the Schema for the enterprises API
-type Enterprise struct {
+// Organization is the Schema for the organizations API
+type Organization struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EnterpriseSpec   `json:"spec,omitempty"`
-	Status EnterpriseStatus `json:"status,omitempty"`
+	Spec   OrganizationSpec   `json:"spec,omitempty"`
+	Status OrganizationStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// EnterpriseList contains a list of Enterprise
-type EnterpriseList struct {
+// OrganizationList contains a list of Organization
+type OrganizationList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Enterprise `json:"items"`
+	Items           []Organization `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Enterprise{}, &EnterpriseList{})
+	SchemeBuilder.Register(&Organization{}, &OrganizationList{})
 }

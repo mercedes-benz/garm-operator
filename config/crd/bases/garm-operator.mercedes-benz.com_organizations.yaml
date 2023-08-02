@@ -4,22 +4,22 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.12.0
-  name: enterprises.garm-operator.mercedes-benz.com
+  name: organizations.garm-operator.mercedes-benz.com
 spec:
   group: garm-operator.mercedes-benz.com
   names:
     categories:
     - garm
-    kind: Enterprise
-    listKind: EnterpriseList
-    plural: enterprises
+    kind: Organization
+    listKind: OrganizationList
+    plural: organizations
     shortNames:
-    - ent
-    singular: enterprise
+    - org
+    singular: organization
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - description: Enterprise ID
+    - description: Organization ID
       jsonPath: .status.id
       name: ID
       type: string
@@ -27,14 +27,14 @@ spec:
       jsonPath: .status.poolManagerIsRunning
       name: Ready
       type: string
-    - description: Time duration since creation of Enterprise
+    - description: Time duration since creation of Organization
       jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Enterprise is the Schema for the enterprises API
+        description: Organization is the Schema for the organizations API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -49,7 +49,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: EnterpriseSpec defines the desired state of Enterprise
+            description: OrganizationSpec defines the desired state of Organization
             properties:
               credentialsName:
                 type: string
@@ -60,7 +60,7 @@ spec:
             - webhookSecret
             type: object
           status:
-            description: EnterpriseStatus defines the observed state of Enterprise
+            description: OrganizationStatus defines the observed state of Organization
             properties:
               id:
                 type: string

@@ -134,12 +134,21 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Pool")
 		os.Exit(1)
 	}
-
 	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "Pool")
 		os.Exit(1)
 	}
+	if err = (&controller.OrganizationReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 
+		BaseURL:  garmServer,
+		Username: garmUsername,
+		Password: garmPassword,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Organization")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
