@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/params"
@@ -205,7 +206,7 @@ func (r *EnterpriseReconciler) adoptExisting(ctx context.Context, scope garmClie
 	log.Info(fmt.Sprintf("%d enterprises discovered", len(enterprises.Payload)))
 
 	for _, garmEnterprise := range enterprises.Payload {
-		if garmEnterprise.Name == enterprise.Name {
+		if strings.EqualFold(garmEnterprise.Name, enterprise.Name) {
 			log.Info("garm enterprise object found for given enterprise CR")
 			log.Info(fmt.Sprintf("enterprise: %#v", garmEnterprise))
 			enterprise.Status.ID = garmEnterprise.ID

@@ -27,6 +27,11 @@ spec:
       jsonPath: .status.poolManagerIsRunning
       name: Ready
       type: string
+    - description: Error description
+      jsonPath: .status.poolManagerFailureReason
+      name: Error
+      priority: 1
+      type: string
     - description: Time duration since creation of Organization
       jsonPath: .metadata.creationTimestamp
       name: Age

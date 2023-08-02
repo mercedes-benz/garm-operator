@@ -75,13 +75,13 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 		MatchesFlavour(pool.Spec.Flavor),
 		MatchesImage(pool.Spec.Image),
 		MatchesProvider(pool.Spec.ProviderName),
-		MatchesGitHubScope(pool.Spec.GitHubScope, pool.Spec.GitHubScopeID),
+		MatchesGitHubScope(pool.Spec.GitHubScopeRef.Name, pool.Spec.GitHubScopeRef.Kind),
 	)
 
 	if len(poolList.Items) > 0 {
 		existing := poolList.Items[0]
 		return nil, apierrors.NewBadRequest(
-			fmt.Sprintf("can not create pool, pool=%s with same image=%s , flavor=%s  and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.Image, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScope))
+			fmt.Sprintf("can not create pool, pool=%s with same image=%s , flavor=%s  and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.Image, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScopeRef.Name))
 	}
 
 	return nil, nil

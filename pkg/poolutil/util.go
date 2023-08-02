@@ -1,23 +1,23 @@
 package poolutil
 
 import (
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/shared"
 	"github.com/cloudbase/garm/params"
 )
 
 type Predicate func(params.Pool) bool
 
-func MatchesGitHubScope(scope v1alpha1.GitHubScope, id string) Predicate {
+func MatchesGitHubScope(scope shared.GitHubScopeKind, id string) Predicate {
 	return func(p params.Pool) bool {
-		if scope == v1alpha1.EnterpriseScope {
+		if scope == shared.EnterpriseScope {
 			return p.EnterpriseID == id
 		}
 
-		if scope == v1alpha1.OrganizationScope {
+		if scope == shared.OrganizationScope {
 			return p.OrgID == id
 		}
 
-		if scope == v1alpha1.RepositoryScope {
+		if scope == shared.RepositoryScope {
 			return p.RepoID == id
 		}
 		return false

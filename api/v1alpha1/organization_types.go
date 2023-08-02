@@ -38,6 +38,7 @@ type OrganizationStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Organization ID"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.poolManagerIsRunning",description="Status of the referenced pool"
+//+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.poolManagerFailureReason",description="Error description",priority=1
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Organization"
 
 // Organization is the Schema for the organizations API
@@ -47,6 +48,26 @@ type Organization struct {
 
 	Spec   OrganizationSpec   `json:"spec,omitempty"`
 	Status OrganizationStatus `json:"status,omitempty"`
+}
+
+func (o *Organization) GetCredentialsName() string {
+	return o.Spec.CredentialsName
+}
+
+func (o *Organization) GetID() string {
+	return o.Status.ID
+}
+
+func (o *Organization) GetPoolManagerIsRunning() bool {
+	return o.Status.PoolManagerIsRunning
+}
+
+func (o *Organization) GetPoolManagerFailureReason() string {
+	return o.Status.PoolManagerFailureReason
+}
+
+func (o *Organization) GetKind() string {
+	return o.Kind
 }
 
 //+kubebuilder:object:root=true

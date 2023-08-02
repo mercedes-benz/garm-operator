@@ -41,6 +41,9 @@ spec:
       containers:
       - command:
         - /manager
+        env:
+          - name: CREATE_WEBHOOK
+            value: "true"
         args:
         - --garm-server=http://garm-server.garm-server.svc:9997
         - --garm-username=admin

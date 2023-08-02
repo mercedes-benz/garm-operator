@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cloudbase/garm/client/organizations"
 	"github.com/cloudbase/garm/params"
@@ -205,7 +206,7 @@ func (r *OrganizationReconciler) adoptExisting(ctx context.Context, scope garmCl
 	log.Info(fmt.Sprintf("%d organizations discovered", len(organizations.Payload)))
 
 	for _, garmOrganization := range organizations.Payload {
-		if garmOrganization.Name == organization.Name {
+		if strings.EqualFold(garmOrganization.Name, organization.Name) {
 			log.Info("garm organization object found for given organization CR")
 			log.Info(fmt.Sprintf("organization: %#v", garmOrganization))
 			organization.Status.ID = garmOrganization.ID

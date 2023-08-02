@@ -32,7 +32,7 @@ spec:
       name: Provider
       priority: 1
       type: string
-    - jsonPath: .spec.githubScope
+    - jsonPath: .spec.githubScopeRef.kind
       name: Scope
       priority: 1
       type: string
@@ -40,6 +40,9 @@ spec:
       name: Error
       priority: 1
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -70,17 +73,27 @@ spec:
                 type: boolean
               githubRunnerGroup:
                 type: string
-              githubScope:
-                description: Defines in which Scope Runners a registered. Valid options
-                  are enterprise, organization, and repository
-                enum:
-                - Enterprise
-                - Organization
-                - Repository
-                type: string
-              githubScopeId:
-                description: Garm Internal ID of the specified scope as reference
-                type: string
+              githubScopeRef:
+                description: Defines in which Scope Runners a registered. Has a reference
+                  to either an Enterprise, Org or Repo CRD
+                properties:
+                  apiGroup:
+                    description: APIGroup is the group for the resource being referenced.
+                      If APIGroup is not specified, the specified Kind must be in
+                      the core API group. For any other third-party types, APIGroup
+                      is required.
+                    type: string
+                  kind:
+                    description: Kind is the type of resource being referenced
+                    type: string
+                  name:
+                    description: Name is the name of resource being referenced
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+                x-kubernetes-map-type: atomic
               image:
                 type: string
               maxRunners:
@@ -105,8 +118,7 @@ spec:
             - enabled
             - flavor
             - forceDeleteRunners
-            - githubScope
-            - githubScopeId
+            - githubScopeRef
             - image
             - maxRunners
             - minIdleRunners

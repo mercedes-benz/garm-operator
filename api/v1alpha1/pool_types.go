@@ -18,41 +18,29 @@ package v1alpha1
 
 import (
 	commonParams "github.com/cloudbase/garm-provider-common/params"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// +kubebuilder:validation:Enum=Enterprise;Organization;Repository
-type GitHubScope string
-
-const (
-	EnterpriseScope   GitHubScope = "Enterprise"
-	OrganizationScope GitHubScope = "Organization"
-	RepositoryScope   GitHubScope = "Repository"
-)
-
 // PoolSpec defines the desired state of Pool
 // See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142
 type PoolSpec struct {
-	// Defines in which Scope Runners a registered. Valid options are enterprise, organization, and repository
-	GitHubScope GitHubScope `json:"githubScope"`
-
-	// Garm Internal ID of the specified scope as reference
-	GitHubScopeID string `json:"githubScopeId"`
-
-	ProviderName           string              `json:"providerName"`
-	MaxRunners             uint                `json:"maxRunners"`
-	MinIdleRunners         uint                `json:"minIdleRunners"`
-	Image                  string              `json:"image"`
-	Flavor                 string              `json:"flavor"`
-	OSType                 commonParams.OSType `json:"osType"`
-	OSArch                 commonParams.OSArch `json:"osArch"`
-	Tags                   []string            `json:"tags"`
-	Enabled                bool                `json:"enabled"`
-	RunnerBootstrapTimeout uint                `json:"runnerBootstrapTimeout"`
-	ForceDeleteRunners     bool                `json:"forceDeleteRunners"`
+	// Defines in which Scope Runners a registered. Has a reference to either an Enterprise, Org or Repo CRD
+	GitHubScopeRef         corev1.TypedLocalObjectReference `json:"githubScopeRef"`
+	ProviderName           string                           `json:"providerName"`
+	MaxRunners             uint                             `json:"maxRunners"`
+	MinIdleRunners         uint                             `json:"minIdleRunners"`
+	Image                  string                           `json:"image"`
+	Flavor                 string                           `json:"flavor"`
+	OSType                 commonParams.OSType              `json:"osType"`
+	OSArch                 commonParams.OSArch              `json:"osArch"`
+	Tags                   []string                         `json:"tags"`
+	Enabled                bool                             `json:"enabled"`
+	RunnerBootstrapTimeout uint                             `json:"runnerBootstrapTimeout"`
+	ForceDeleteRunners     bool                             `json:"forceDeleteRunners"`
 
 	// +optional
 	ExtraSpecs string `json:"extraSpecs"`
@@ -82,8 +70,9 @@ type PoolStatus struct {
 //+kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`,priority=1
 //+kubebuilder:printcolumn:name="Flavour",type=string,JSONPath=`.spec.flavor`,priority=1
 //+kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.providerName`,priority=1
-//+kubebuilder:printcolumn:name="Scope",type=string,JSONPath=`.spec.githubScope`,priority=1
+//+kubebuilder:printcolumn:name="Scope",type=string,JSONPath=`.spec.githubScopeRef.kind`,priority=1
 //+kubebuilder:printcolumn:name="Error",type=string,JSONPath=`.status.lastSyncError`,priority=1
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Pool is the Schema for the pools API
 type Pool struct {
@@ -128,9 +117,9 @@ func MatchesProvider(provider string) Predicate {
 	}
 }
 
-func MatchesGitHubScope(scope GitHubScope, id string) Predicate {
+func MatchesGitHubScope(name, kind string) Predicate {
 	return func(p Pool) bool {
-		return p.Spec.GitHubScope == scope && p.Spec.GitHubScopeID == id
+		return p.Spec.GitHubScopeRef.Name == name && p.Spec.GitHubScopeRef.Kind == kind
 	}
 }
 
