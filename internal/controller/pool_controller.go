@@ -95,6 +95,14 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return r.reconcileDelete(ctx, poolClient, pool)
 	}
 
+	return r.reconcileNormal(ctx, poolClient, pool, gitHubScopeRef)
+}
+
+func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef shared.GitHubScope) (ctrl.Result, error) {
+	if err := r.ensureFinalizer(ctx, pool); err != nil {
+		return r.handleUpdateError(ctx, pool, err)
+	}
+
 	// pool status id has been set and id matches existing garm pool, so we know that the pool is persisted in garm and needs to be updated
 	if pool.Status.ID != "" && r.garmPoolExists(ctx, poolClient, pool.Status.ID) {
 		return r.reconcileUpdate(ctx, poolClient, pool)
@@ -109,10 +117,6 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef shared.GitHubScope) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("trying to create pool...")
-
-	if err := r.ensureFinalizer(ctx, pool); err != nil {
-		return r.handleUpdateError(ctx, pool, err)
-	}
 
 	result, err := r.syncPools(ctx, garmClient, pool, gitHubScopeRef)
 	if err != nil {
@@ -162,8 +166,7 @@ func createPool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 		result, err := garmClient.CreateEnterprisePool(
 			enterprises.NewCreateEnterprisePoolParams().
 				WithEnterpriseID(id).
-				WithBody(
-					poolParams))
+				WithBody(poolParams))
 		if err != nil {
 			return params.Pool{}, err
 		}
@@ -405,6 +408,12 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, req ctrl.Reque
 		if err := r.Get(ctx, gitHubScopeNamespacedName, gitHubScope); err != nil {
 			return nil, err
 		}
+
+	//case string(shared.RepositoryScope):
+	//	gitHubScope = &garmoperatorv1alpha1.Repository{}
+	//	if err := r.Get(ctx, gitHubScopeNamespacedName, gitHubScope); err != nil {
+	//		return nil, err
+	//	}
 
 	default:
 		return nil, fmt.Errorf("unsupported GitHubScopeRef kind: %s", pool.Spec.GitHubScopeRef.Kind)
