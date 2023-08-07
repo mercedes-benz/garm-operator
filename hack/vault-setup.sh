@@ -5,7 +5,7 @@ set -e
 VAULT_NAMESPACE=Action-Runners
 VAULT_HOST=https://hcvault.app.corpintra.net
 
-vault write auth/jwt/role/road-runner - <<EOF
+vault write auth/jwt/role/garm-operator - <<EOF
 {
   "role_type": "jwt",
   "user_claim": "actor",

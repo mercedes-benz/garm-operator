@@ -41,21 +41,18 @@ spec:
       containers:
       - command:
         - /manager
-        env:
-          - name: CREATE_WEBHOOK
-            value: "true"
         args:
         - --garm-server=http://garm-server.garm-server.svc:9997
         - --garm-username=admin
-        #- --garm-password=LmrBG1KcBOsDfNKq4cQTGpc0hJ0kejkk
+        - --garm-password=LmrBG1KcBOsDfNKq4cQTGpc0hJ0kejkk
         image: controller:latest
         env:
-        #- name: WATCH_NAMESPACE
-        #  valueFrom:
-        #    fieldRef:
-        #      fieldPath: metadata.namespace
-        - name: GARM_PASSWORD
-          value: LmrBG1KcBOsDfNKq4cQTGpc0hJ0kejkk
+        - name: CREATE_WEBHOOK
+          value: "true"
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
