@@ -46,9 +46,9 @@ type EnterpriseReconciler struct {
 	Password string
 }
 
-//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,resources=enterprises,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,resources=enterprises/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,resources=enterprises/finalizers,verbs=update
+//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=enterprises,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=enterprises/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=enterprises/finalizers,verbs=update
 
 func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)

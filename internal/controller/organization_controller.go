@@ -46,9 +46,9 @@ type OrganizationReconciler struct {
 	Password string
 }
 
-//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,resources=organizations,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,resources=organizations/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,resources=organizations/finalizers,verbs=update
+//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/finalizers,verbs=update
 
 func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
