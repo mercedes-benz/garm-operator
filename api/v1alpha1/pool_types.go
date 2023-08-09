@@ -33,7 +33,6 @@ type PoolSpec struct {
 	ProviderName           string                           `json:"providerName"`
 	MaxRunners             uint                             `json:"maxRunners"`
 	MinIdleRunners         uint                             `json:"minIdleRunners"`
-	Image                  string                           `json:"image"`
 	Flavor                 string                           `json:"flavor"`
 	OSType                 commonParams.OSType              `json:"osType"`
 	OSArch                 commonParams.OSArch              `json:"osArch"`
@@ -41,6 +40,9 @@ type PoolSpec struct {
 	Enabled                bool                             `json:"enabled"`
 	RunnerBootstrapTimeout uint                             `json:"runnerBootstrapTimeout"`
 	ForceDeleteRunners     bool                             `json:"forceDeleteRunners"`
+
+	// The name of the image resource
+	ImageName string `json:"imageName"`
 
 	// +optional
 	ExtraSpecs string `json:"extraSpecs"`
@@ -67,7 +69,7 @@ type PoolStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:path=pools,scope=Namespaced,categories=garm
 //+kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
-//+kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.image`,priority=1
+//+kubebuilder:printcolumn:name="ImageName",type=string,JSONPath=`.spec.imageName`,priority=1
 //+kubebuilder:printcolumn:name="Flavour",type=string,JSONPath=`.spec.flavor`,priority=1
 //+kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.providerName`,priority=1
 //+kubebuilder:printcolumn:name="Scope",type=string,JSONPath=`.spec.githubScopeRef.kind`,priority=1
@@ -101,7 +103,7 @@ type Predicate func(p Pool) bool
 
 func MatchesImage(image string) Predicate {
 	return func(p Pool) bool {
-		return p.Spec.Image == image
+		return p.Spec.ImageName == image
 	}
 }
 

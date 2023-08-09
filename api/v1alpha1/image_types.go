@@ -28,8 +28,11 @@ type ImageSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Image. Edit image_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Tag is the Name of the image in its registry
+	// e.g.
+	// - in openstack it can be the image name or id
+	// - in k8s it can be the docker image name + tag
+	Tag string `json:"tag,omitempty"`
 }
 
 // ImageStatus defines the observed state of Image

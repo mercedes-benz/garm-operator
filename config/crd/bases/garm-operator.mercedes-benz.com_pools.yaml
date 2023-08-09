@@ -20,8 +20,8 @@ spec:
     - jsonPath: .status.id
       name: ID
       type: string
-    - jsonPath: .spec.image
-      name: Image
+    - jsonPath: .spec.imageName
+      name: ImageName
       priority: 1
       type: string
     - jsonPath: .spec.flavor
@@ -94,7 +94,8 @@ spec:
                 - name
                 type: object
                 x-kubernetes-map-type: atomic
-              image:
+              imageName:
+                description: The name of the image resource
                 type: string
               maxRunners:
                 type: integer
@@ -119,7 +120,7 @@ spec:
             - flavor
             - forceDeleteRunners
             - githubScopeRef
-            - image
+            - imageName
             - maxRunners
             - minIdleRunners
             - osArch
