@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
 	"strings"
 
 	"github.com/cloudbase/garm/client/organizations"
@@ -169,13 +170,21 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garm
 func (r *OrganizationReconciler) createOrUpdate(ctx context.Context, scope garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) error {
 	log := log.FromContext(ctx)
 
+	webhookSecret, err := secret.TryGet(
+		organization.Spec.WebhookSecret,
+		secret.FetchRef(ctx, r.Client, &organization.Spec.WebhookSecretRef, organization.Namespace),
+	)
+	if err != nil {
+		return err
+	}
+
 	log.Info("organization doesn't exist yet, creating...")
 	retValue, err := scope.CreateOrganization(
 		organizations.NewCreateOrgParams().
 			WithBody(params.CreateOrgParams{
 				Name:            organization.Name,
 				CredentialsName: organization.Spec.CredentialsName,
-				WebhookSecret:   organization.Spec.WebhookSecret, // gh hook secret
+				WebhookSecret:   webhookSecret, // gh hook secret
 			}))
 	log.V(1).Info(fmt.Sprintf("organization %s created - return Value %v", organization.Name, retValue))
 	if err != nil {

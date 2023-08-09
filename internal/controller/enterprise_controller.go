@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
 	"strings"
 
 	"github.com/cloudbase/garm/client/enterprises"
@@ -169,13 +170,21 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 func (r *EnterpriseReconciler) createOrUpdate(ctx context.Context, scope garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) error {
 	log := log.FromContext(ctx)
 
+	webhookSecret, err := secret.TryGet(
+		enterprise.Spec.WebhookSecret,
+		secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace),
+	)
+	if err != nil {
+		return err
+	}
+
 	log.Info("enterprise doesn't exist yet, creating...")
 	retValue, err := scope.CreateEnterprise(
 		enterprises.NewCreateEnterpriseParams().
 			WithBody(params.CreateEnterpriseParams{
 				Name:            enterprise.Name,
 				CredentialsName: enterprise.Spec.CredentialsName,
-				WebhookSecret:   enterprise.Spec.WebhookSecret, // gh hook secret
+				WebhookSecret:   webhookSecret, // gh hook secret
 			}))
 	log.V(1).Info(fmt.Sprintf("enterprise %s created - return Value %v", enterprise.Name, retValue))
 	if err != nil {

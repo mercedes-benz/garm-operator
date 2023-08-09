@@ -22,8 +22,9 @@ import (
 
 // EnterpriseSpec defines the desired state of Enterprise
 type EnterpriseSpec struct {
-	CredentialsName string `json:"credentialsName"`
-	WebhookSecret   string `json:"webhookSecret"`
+	CredentialsName  string    `json:"credentialsName"`
+	WebhookSecret    string    `json:"webhookSecret,omitempty"`
+	WebhookSecretRef SecretRef `json:"webhookSecretRef,omitempty"`
 }
 
 // EnterpriseStatus defines the observed state of Enterprise

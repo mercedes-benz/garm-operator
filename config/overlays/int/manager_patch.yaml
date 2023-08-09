@@ -12,10 +12,11 @@ spec:
         vault.hashicorp.com/agent-inject-secret-config: secrets/data/garm-int
         vault.hashicorp.com/role: garm-infra-stage-int_garm-operator-controller-manager
         vault.hashicorp.com/namespace: Action-Runners
-        vault.hashicorp.com/agent-inject-template-config: |
+        vault.hashicorp.com/agent-inject-secret-garmPassword: 'secrets/data/garm-int'
+        vault.hashicorp.com/agent-inject-template-garmPassword: |
           {{- with secret "secrets/data/garm-int" -}}
-            export GARM_PASSWORD="{{ .Data.data.cli_password }}"
-          {{- end }}
+          {{ .Data.data.cli_password }}
+          {{- end -}}
     spec:
       containers:
         - name: manager
@@ -23,31 +24,7 @@ spec:
           env:
           - name: GARM_USERNAME
             value: "admin"
-          - name: GARM_PASSWORD
-            value: "g8uBN5Ord0DcTMkQMSQ97b4ZhWBhVeOI"
+          - name: GARM_PASSWORD_SECRET_PATH
+            value: "/vault/secrets/garmPassword"
           - name: GARM_SERVER
             value: "http://garm.garm-infra-stage-int.svc:9997"
-          volumeMounts:
-            - name: serviceaccount-volume
-              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      volumes:
-        # use a custom token with specified expiration time - this implementation behaves like the default token mechanism
-        # see: https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/#bound-service-account-token-volume
-        - name: serviceaccount-volume
-          projected:
-            sources:
-              - serviceAccountToken:
-                  path: token
-                  expirationSeconds: 600 # dont set exact to 3607 otherwise the token will be valid for 1 year
-              - configMap:
-                  items:
-                    - key: ca.crt
-                      path: ca.crt
-                  name: kube-root-ca.crt
-              - downwardAPI:
-                  items:
-                    - fieldRef:
-                        apiVersion: v1
-                        fieldPath: metadata.namespace
-                      path: namespace
-

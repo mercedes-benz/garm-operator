@@ -22,8 +22,9 @@ import (
 
 // OrganizationSpec defines the desired state of Organization
 type OrganizationSpec struct {
-	CredentialsName string `json:"credentialsName"`
-	WebhookSecret   string `json:"webhookSecret"`
+	CredentialsName  string    `json:"credentialsName"`
+	WebhookSecret    string    `json:"webhookSecret,omitempty"`
+	WebhookSecretRef SecretRef `json:"webhookSecretRef,omitempty"`
 }
 
 // OrganizationStatus defines the observed state of Organization

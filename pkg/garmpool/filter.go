@@ -1,23 +1,23 @@
-package poolutil
+package garmpool
 
 import (
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/shared"
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 	"github.com/cloudbase/garm/params"
 )
 
 type Predicate func(params.Pool) bool
 
-func MatchesGitHubScope(scope shared.GitHubScopeKind, id string) Predicate {
+func MatchesGitHubScope(scope garmoperatorv1alpha1.GitHubScopeKind, id string) Predicate {
 	return func(p params.Pool) bool {
-		if scope == shared.EnterpriseScope {
+		if scope == garmoperatorv1alpha1.EnterpriseScope {
 			return p.EnterpriseID == id
 		}
 
-		if scope == shared.OrganizationScope {
+		if scope == garmoperatorv1alpha1.OrganizationScope {
 			return p.OrgID == id
 		}
 
-		if scope == shared.RepositoryScope {
+		if scope == garmoperatorv1alpha1.RepositoryScope {
 			return p.RepoID == id
 		}
 		return false
@@ -42,7 +42,7 @@ func MatchesProvider(provider string) Predicate {
 	}
 }
 
-func FilterGarmPools(pools []params.Pool, predicates ...func(pool params.Pool) bool) []params.Pool {
+func Filter(pools []params.Pool, predicates ...func(pool params.Pool) bool) []params.Pool {
 	var filteredPools []params.Pool
 
 	for _, pool := range pools {

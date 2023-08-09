@@ -60,9 +60,18 @@ spec:
                 type: string
               webhookSecret:
                 type: string
+              webhookSecretRef:
+                properties:
+                  key:
+                    type: string
+                  secretName:
+                    type: string
+                required:
+                - key
+                - secretName
+                type: object
             required:
             - credentialsName
-            - webhookSecret
             type: object
           status:
             description: EnterpriseStatus defines the observed state of Enterprise

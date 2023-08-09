@@ -21,13 +21,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/garmpool"
+	"k8s.io/apimachinery/pkg/types"
 	"time"
 
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/shared"
-	"k8s.io/apimachinery/pkg/types"
-
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/poolutil"
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/client/organizations"
 	"github.com/cloudbase/garm/client/pools"
@@ -104,7 +102,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	return r.reconcileNormal(ctx, poolClient, pool, gitHubScopeRef)
 }
 
-func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef shared.GitHubScope) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (ctrl.Result, error) {
 	if err := r.ensureFinalizer(ctx, pool); err != nil {
 		return r.handleUpdateError(ctx, pool, err)
 	}
@@ -120,7 +118,7 @@ func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmCli
 
 // Todo: Write usefull Events foo
 // Todo: Write Error to Status Field
-func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef shared.GitHubScope) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("trying to create pool...")
 
@@ -133,13 +131,13 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	return r.handleSuccessfulUpdate(ctx, pool, result.ID)
 }
 
-func createPool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef shared.GitHubScope) (params.Pool, error) {
+func createPool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (params.Pool, error) {
 	log := log.FromContext(ctx)
 	log.Info("creating pool")
 	poolResult := params.Pool{}
 
 	id := gitHubScopeRef.GetID()
-	scope, err := shared.ToGitHubScopeKind(gitHubScopeRef.GetKind())
+	scope, err := garmoperatorv1alpha1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
 	if err != nil {
 		return poolResult, err
 	}
@@ -168,7 +166,7 @@ func createPool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 	}
 
 	switch scope {
-	case shared.EnterpriseScope:
+	case garmoperatorv1alpha1.EnterpriseScope:
 		result, err := garmClient.CreateEnterprisePool(
 			enterprises.NewCreateEnterprisePoolParams().
 				WithEnterpriseID(id).
@@ -178,7 +176,7 @@ func createPool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 		}
 
 		poolResult = result.Payload
-	case shared.OrganizationScope:
+	case garmoperatorv1alpha1.OrganizationScope:
 		result, err := garmClient.CreateOrgPool(
 			organizations.NewCreateOrgPoolParams().
 				WithOrgID(id).
@@ -187,7 +185,7 @@ func createPool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 			return params.Pool{}, err
 		}
 		poolResult = result.Payload
-	case shared.RepositoryScope:
+	case garmoperatorv1alpha1.RepositoryScope:
 		result, err := garmClient.CreateRepoPool(
 			repositories.NewCreateRepoPoolParams().
 				WithRepoID(id).
@@ -325,7 +323,7 @@ func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperator
 	return nil
 }
 
-func (r *PoolReconciler) syncPools(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef shared.GitHubScope) (params.Pool, error) {
+func (r *PoolReconciler) syncPools(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (params.Pool, error) {
 	log := log.FromContext(ctx)
 
 	// get image cr object by name
@@ -376,12 +374,12 @@ func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmo
 	return ctrl.Result{}, nil
 }
 
-func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef shared.GitHubScope) (params.Pool, error) {
+func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (params.Pool, error) {
 	log := log.FromContext(ctx)
 	log.Info("Getting existing garm pools by pool.spec")
 
 	id := gitHubScopeRef.GetID()
-	scope, err := shared.ToGitHubScopeKind(gitHubScopeRef.GetKind())
+	scope, err := garmoperatorv1alpha1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
 	if err != nil {
 		return params.Pool{}, err
 	}
@@ -390,11 +388,11 @@ func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, garmCli
 	if err != nil {
 		return params.Pool{}, err
 	}
-	filteredGarmPools := poolutil.FilterGarmPools(garmPools.Payload,
-		poolutil.MatchesImage(image.Spec.Tag),
-		poolutil.MatchesFlavor(pool.Spec.Flavor),
-		poolutil.MatchesProvider(pool.Spec.ProviderName),
-		poolutil.MatchesGitHubScope(scope, id),
+	filteredGarmPools := garmpool.Filter(garmPools.Payload,
+		garmpool.MatchesImage(image.Spec.Tag),
+		garmpool.MatchesFlavor(pool.Spec.Flavor),
+		garmpool.MatchesProvider(pool.Spec.ProviderName),
+		garmpool.MatchesGitHubScope(scope, id),
 	)
 
 	if len(filteredGarmPools) > 1 {
@@ -418,7 +416,7 @@ func (r *PoolReconciler) garmPoolExists(ctx context.Context, garmClient garmClie
 	return result.Payload.ID != ""
 }
 
-func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, req ctrl.Request, pool *garmoperatorv1alpha1.Pool) (shared.GitHubScope, error) {
+func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, req ctrl.Request, pool *garmoperatorv1alpha1.Pool) (garmoperatorv1alpha1.GitHubScope, error) {
 	gitHubScopeNamespacedName := types.NamespacedName{
 		Namespace: req.Namespace,
 		Name:      pool.Spec.GitHubScopeRef.Name,
@@ -427,13 +425,13 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, req ctrl.Reque
 	var gitHubScope client.Object
 
 	switch pool.Spec.GitHubScopeRef.Kind {
-	case string(shared.EnterpriseScope):
+	case string(garmoperatorv1alpha1.EnterpriseScope):
 		gitHubScope = &garmoperatorv1alpha1.Enterprise{}
 		if err := r.Get(ctx, gitHubScopeNamespacedName, gitHubScope); err != nil {
 			return nil, err
 		}
 
-	case string(shared.OrganizationScope):
+	case string(garmoperatorv1alpha1.OrganizationScope):
 		gitHubScope = &garmoperatorv1alpha1.Organization{}
 		if err := r.Get(ctx, gitHubScopeNamespacedName, gitHubScope); err != nil {
 			return nil, err
@@ -449,7 +447,7 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, req ctrl.Reque
 		return nil, fmt.Errorf("unsupported GitHubScopeRef kind: %s", pool.Spec.GitHubScopeRef.Kind)
 	}
 
-	return gitHubScope.(shared.GitHubScope), nil
+	return gitHubScope.(garmoperatorv1alpha1.GitHubScope), nil
 }
 
 const (

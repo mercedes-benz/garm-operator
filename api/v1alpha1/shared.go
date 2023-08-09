@@ -1,4 +1,4 @@
-package shared
+package v1alpha1
 
 import (
 	"fmt"
@@ -27,4 +27,9 @@ func ToGitHubScopeKind(kind string) (GitHubScopeKind, error) {
 	default:
 		return GitHubScopeKind(""), fmt.Errorf("can not convert kind %s to valid GitHubScopeKind: Enterprise, Organization, Repository", kind)
 	}
+}
+
+type SecretRef struct {
+	SecretName string `json:"secretName"`
+	Key        string `json:"key"`
 }
