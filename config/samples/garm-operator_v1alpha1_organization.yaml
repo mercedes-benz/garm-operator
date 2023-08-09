@@ -10,5 +10,34 @@ metadata:
   name: github-actions
   namespace: garm-operator-system
 spec:
-  webhookSecret: "mysecret"
+  webhookSecret: "myothersecret"
+  webhookSecretRef:
+    key: "webhookSecret"
+    secretName: "org-webhook-secret"
   credentialsName: "GitHub-Actions"
+---
+apiVersion: garm-operator.mercedes-benz.com/v1alpha1
+kind: Organization
+metadata:
+  labels:
+    app.kubernetes.io/name: organization
+    app.kubernetes.io/instance: organization-sample
+    app.kubernetes.io/part-of: garm-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: garm-operator
+  name: github-actions-2
+  namespace: garm-operator-system
+spec:
+  webhookSecret: "myothersecret"
+  webhookSecretRef:
+    key: "webhookSecret"
+    secretName: "org-webhook-secret"
+  credentialsName: "GitHub-Actions"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: org-webhook-secret
+  namespace: garm-operator-system
+data:
+  webhookSecret: bXlzZWNyZXQ=

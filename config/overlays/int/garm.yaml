@@ -1,3 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: webhook-secret-github-actions-org
+  namespace: garm-infra-stage-int
+data:
+  webhookSecret: cTBnNkVVOXc3ODhNb1RlVnowdmFuNTB2YXhmeFJRRkUK
+---
 apiVersion: garm-operator.mercedes-benz.com/v1alpha1
 kind: Organization
 metadata:
@@ -10,7 +18,9 @@ metadata:
   name: github-actions
   namespace: garm-infra-stage-int
 spec:
-  webhookSecret: "q0g6EU9w788MoTeVz0van50vaxfxRQFE"
+  webhookSecretRef:
+    secretName: webhook-secret-github-actions-org
+    key: webhookSecret
   credentialsName: "pida2af"
 ---
 apiVersion: garm-operator.mercedes-benz.com/v1alpha1

@@ -80,5 +80,26 @@ spec:
           requests:
             cpu: 10m
             memory: 64Mi
-      serviceAccountName: controller-manager
-      terminationGracePeriodSeconds: 10
+        volumeMounts:
+          - name: serviceaccount-volume
+            mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      volumes:
+        # use a custom token with specified expiration time - this implementation behaves like the default token mechanism
+        # see: https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/#bound-service-account-token-volume
+        - name: serviceaccount-volume
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 600 # dont set exact to 3607 otherwise the token will be valid for 1 year
+              - configMap:
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+                  name: kube-root-ca.crt
+              - downwardAPI:
+                  items:
+                    - fieldRef:
+                        apiVersion: v1
+                        fieldPath: metadata.namespace
+                      path: namespace

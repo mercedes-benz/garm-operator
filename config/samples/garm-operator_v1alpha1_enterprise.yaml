@@ -26,4 +26,14 @@ metadata:
   namespace: garm-operator-system
 spec:
   credentialsName: GitHub-Actions
-  webhookSecret: mysecret
+  webhookSecretRef:
+    key: "webhookSecret"
+    secretName: "enterprise-webhook-secret"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: enterprise-webhook-secret
+  namespace: garm-operator-system
+data:
+  webhookSecret: bXlzZWNyZXQ=

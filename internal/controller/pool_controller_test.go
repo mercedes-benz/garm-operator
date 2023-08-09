@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"testing"
 
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/shared"
 	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
@@ -59,7 +58,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: v1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
-						Kind:     string(shared.EnterpriseScope),
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
 					},
 					ProviderName:           "kubernetes_external",
@@ -91,7 +90,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: v1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
-						Kind:     string(shared.EnterpriseScope),
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
 					},
 					ProviderName:           "kubernetes_external",
@@ -227,7 +226,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: v1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
-						Kind:     string(shared.EnterpriseScope),
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
 					},
 					ProviderName:           "kubernetes_external",
@@ -268,7 +267,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: v1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
-						Kind:     string(shared.EnterpriseScope),
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
 					},
 					ProviderName:           "kubernetes_external",
@@ -384,7 +383,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: v1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
-						Kind:     string(shared.EnterpriseScope),
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
 					},
 					ProviderName:           "kubernetes_external",
@@ -425,7 +424,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: v1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
-						Kind:     string(shared.EnterpriseScope),
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
 					},
 					ProviderName:           "kubernetes_external",
@@ -610,7 +609,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			}
 
 			pool := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Pool)
-			gitHubScopeRef := tt.gitHubScopeRef.(shared.GitHubScope)
+			gitHubScopeRef := tt.gitHubScopeRef.(garmoperatorv1alpha1.GitHubScope)
 
 			mockPoolClient := mock.NewMockPoolClient(mockCtrl)
 			tt.expectGarmRequest(mockPoolClient.EXPECT())

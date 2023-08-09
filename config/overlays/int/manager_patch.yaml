@@ -12,19 +12,19 @@ spec:
         vault.hashicorp.com/agent-inject-secret-config: secrets/data/garm-int
         vault.hashicorp.com/role: garm-infra-stage-int_garm-operator-controller-manager
         vault.hashicorp.com/namespace: Action-Runners
-        vault.hashicorp.com/agent-inject-secret-garmPassword: 'secrets/data/garm-int'
-        vault.hashicorp.com/agent-inject-template-garmPassword: |
+        vault.hashicorp.com/agent-inject-secret-garmpassword: 'secrets/data/garm-int'
+        vault.hashicorp.com/agent-inject-template-garmpassword: |
           {{- with secret "secrets/data/garm-int" -}}
           {{ .Data.data.cli_password }}
           {{- end -}}
     spec:
       containers:
         - name: manager
-          image: registry-emea.app.corpintra.net/roadrunner/garm-operator:feat-rbac
+          image: registry-emea.app.corpintra.net/roadrunner/garm-operator:feat-secret-handling
           env:
           - name: GARM_USERNAME
             value: "admin"
           - name: GARM_PASSWORD_SECRET_PATH
-            value: "/vault/secrets/garmPassword"
+            value: "/vault/secrets/garmpassword"
           - name: GARM_SERVER
             value: "http://garm.garm-infra-stage-int.svc:9997"
