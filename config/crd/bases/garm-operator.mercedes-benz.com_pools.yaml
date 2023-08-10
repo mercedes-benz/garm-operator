@@ -95,7 +95,8 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
               imageName:
-                description: The name of the image resource
+                description: The name of the image resource, this image resource must
+                  exists in the same namespace as the pool
                 type: string
               maxRunners:
                 type: integer

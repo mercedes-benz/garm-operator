@@ -41,7 +41,7 @@ type PoolSpec struct {
 	RunnerBootstrapTimeout uint                             `json:"runnerBootstrapTimeout"`
 	ForceDeleteRunners     bool                             `json:"forceDeleteRunners"`
 
-	// The name of the image resource
+	// The name of the image resource, this image resource must exists in the same namespace as the pool
 	ImageName string `json:"imageName"`
 
 	// +optional
