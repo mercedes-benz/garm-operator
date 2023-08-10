@@ -38,6 +38,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		object         client.Object
 		gitHubScopeRef client.Object
 		// a list of objects to initialize the fake client with
+		// this can be used to define other existing objects that are referenced by the object to reconcile
+		// e.g. images or other pools ..
 		runtimeObjects    []runtime.Object
 		expectGarmRequest func(m *mock.MockPoolClientMockRecorder)
 		wantErr           bool
@@ -231,7 +233,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					ProviderName:           "kubernetes_external",
 					MaxRunners:             5,
 					MinIdleRunners:         3,
-					ImageName:              "linux-ubuntu-22.04-arm64",
+					ImageName:              "ubuntu-image",
 					Flavor:                 "medium",
 					OSType:                 "linux",
 					OSArch:                 "arm64",
@@ -272,7 +274,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					ProviderName:           "kubernetes_external",
 					MaxRunners:             5,
 					MinIdleRunners:         3,
-					ImageName:              "linux-ubuntu-22.04-arm64",
+					ImageName:              "ubuntu-image",
 					Flavor:                 "medium",
 					OSType:                 "linux",
 					OSArch:                 "arm64",
@@ -290,6 +292,17 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					RunnerCount:   0,
 					ActiveRunners: 0,
 					IdleRunners:   0,
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&garmoperatorv1alpha1.Image{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "ubuntu-image",
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.ImageSpec{
+						Tag: "linux-ubuntu-22.04-arm64",
+					},
 				},
 			},
 			gitHubScopeRef: &garmoperatorv1alpha1.Enterprise{
