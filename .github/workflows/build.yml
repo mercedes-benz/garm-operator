@@ -1,7 +1,9 @@
 name: build
 on:
-  # push:
-  # pull_request:
+  push:
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -37,11 +39,11 @@ jobs:
         with:
           go-version: '1.20'
 
-      # - name: make lint
-      #   run: make golangci-lint && GOLANGCI_LINT_EXTRA_ARGS=--timeout=1h make lint
+      - name: make lint
+        run: make golangci-lint && GOLANGCI_LINT_EXTRA_ARGS=--timeout=1h make lint
       
-      # - name: make test
-      #   run: make test
+      - name: make test
+        run: make test
 
       - name: Login to harbor
         uses: docker/login-action@v2
