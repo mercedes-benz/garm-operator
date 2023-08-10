@@ -62,7 +62,7 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	ctx := context.TODO()
 	pool := r
 
-	err := validateImageName(ctx, pool)
+	image, err := validateImageName(ctx, pool)
 	if err != nil {
 		return nil, apierrors.NewInvalid(
 			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
@@ -83,7 +83,7 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 
 	poolList.FilterByFields(
 		MatchesFlavour(pool.Spec.Flavor),
-		MatchesImage(pool.Spec.ImageName),
+		MatchesImage(image.Spec.Tag),
 		MatchesProvider(pool.Spec.ProviderName),
 		MatchesGitHubScope(pool.Spec.GitHubScopeRef.Name, pool.Spec.GitHubScopeRef.Kind),
 	)
@@ -106,7 +106,7 @@ func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 		return nil, apierrors.NewBadRequest("failed to convert runtime.Object to Pool CRD")
 	}
 
-	err := validateImageName(context.Background(), r)
+	_, err := validateImageName(context.Background(), r)
 	if err != nil {
 		return nil, apierrors.NewInvalid(
 			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
@@ -126,17 +126,17 @@ func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
-func validateImageName(ctx context.Context, r *Pool) *field.Error {
+func validateImageName(ctx context.Context, r *Pool) (*Image, *field.Error) {
 	image := Image{}
 	err := c.Get(ctx, client.ObjectKey{Name: r.Spec.ImageName, Namespace: r.Namespace}, &image)
 	if err != nil {
-		return field.Invalid(
+		return nil, field.Invalid(
 			field.NewPath("spec").Child("imageName"),
 			r.Spec.ImageName,
 			err.Error(),
 		)
 	}
-	return nil
+	return &image, nil
 }
 
 func (r *Pool) validateProviderName(old *Pool) *field.Error {

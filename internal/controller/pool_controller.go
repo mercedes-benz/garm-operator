@@ -327,7 +327,14 @@ func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperator
 
 func (r *PoolReconciler) syncPools(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef shared.GitHubScope) (params.Pool, error) {
 	log := log.FromContext(ctx)
-	matchingGarmPool, err := r.getExistingGarmPoolBySpecs(ctx, garmClient, pool, gitHubScopeRef)
+
+	// get image cr object by name
+	image, err := r.getImage(ctx, pool)
+	if err != nil {
+		return params.Pool{}, err
+	}
+
+	matchingGarmPool, err := r.getExistingGarmPoolBySpecs(ctx, garmClient, pool, image, gitHubScopeRef)
 	if err != nil {
 		return params.Pool{}, err
 	}
@@ -343,11 +350,6 @@ func (r *PoolReconciler) syncPools(ctx context.Context, garmClient garmClient.Po
 	log.Info("Pool with specified specs does not yet exist, creating pool in garm")
 	// no matching pool in garm found, just create it
 
-	// get image cr object by name
-	image, err := r.getImage(ctx, pool)
-	if err != nil {
-		return params.Pool{}, err
-	}
 	return createPool(ctx, garmClient, pool, image, gitHubScopeRef)
 }
 
@@ -374,7 +376,7 @@ func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmo
 	return ctrl.Result{}, nil
 }
 
-func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef shared.GitHubScope) (params.Pool, error) {
+func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef shared.GitHubScope) (params.Pool, error) {
 	log := log.FromContext(ctx)
 	log.Info("Getting existing garm pools by pool.spec")
 
@@ -389,7 +391,7 @@ func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, garmCli
 		return params.Pool{}, err
 	}
 	filteredGarmPools := poolutil.FilterGarmPools(garmPools.Payload,
-		poolutil.MatchesImage(pool.Spec.ImageName),
+		poolutil.MatchesImage(image.Spec.Tag),
 		poolutil.MatchesFlavor(pool.Spec.Flavor),
 		poolutil.MatchesProvider(pool.Spec.ProviderName),
 		poolutil.MatchesGitHubScope(scope, id),
