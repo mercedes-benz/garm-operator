@@ -18,6 +18,8 @@ package controller
 
 import (
 	"context"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 	"testing"
 
@@ -42,6 +44,7 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 		name              string
 		object            runtime.Object
 		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
+		runtimeObjects    []runtime.Object
 		wantErr           bool
 		expectedObject    *garmoperatorv1alpha1.Enterprise
 	}{
@@ -57,10 +60,24 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("foobar"),
+					},
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Enterprise{
@@ -73,7 +90,10 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
@@ -103,7 +123,10 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
@@ -119,12 +142,26 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID:                       "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 					PoolManagerIsRunning:     false,
 					PoolManagerFailureReason: "no resources available",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("foobar"),
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
@@ -152,7 +189,10 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Enterprise{
@@ -165,10 +205,24 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("foobar"),
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
@@ -203,7 +257,10 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "totally-insecure",
-					WebhookSecret:   "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Enterprise{
@@ -216,10 +273,24 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "totally-insecure",
-					WebhookSecret:   "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("foobar"),
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
@@ -244,7 +315,9 @@ func TestEnterpriseReconciler_ReconcileNormal(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.object).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
+			runtimeObjects := []runtime.Object{tt.object}
+			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
 
 			// create a fake reconciler
 			reconciler := &EnterpriseReconciler{
@@ -282,6 +355,7 @@ func TestEnterpriseReconciler_ReconcileDelete(t *testing.T) {
 	tests := []struct {
 		name              string
 		object            runtime.Object
+		runtimeObjects    []runtime.Object
 		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
 		wantErr           bool
 		expectedObject    *garmoperatorv1alpha1.Enterprise
@@ -298,10 +372,24 @@ func TestEnterpriseReconciler_ReconcileDelete(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.EnterpriseSpec{
 					CredentialsName: "totally-insecure",
-					WebhookSecret:   "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("foobar"),
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
@@ -323,7 +411,10 @@ func TestEnterpriseReconciler_ReconcileDelete(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.object).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
+
+			runtimeObjects := []runtime.Object{tt.object}
+			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
 
 			// create a fake reconciler
 			reconciler := &EnterpriseReconciler{

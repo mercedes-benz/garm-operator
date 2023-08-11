@@ -83,7 +83,18 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	gitHubScopeRef, err := r.fetchGitHubScopeCRD(ctx, req, pool)
+	// handle deletion
+	if !pool.ObjectMeta.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, poolClient, pool)
+	}
+
+	return r.reconcileNormal(ctx, poolClient, pool)
+}
+
+func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+
+	gitHubScopeRef, err := r.fetchGitHubScopeCRD(ctx, pool)
 	if err != nil {
 		msg := fmt.Sprintf("referenced GitHubScopeRef %s/%s not found", pool.Spec.GitHubScopeRef.Kind, pool.Spec.GitHubScopeRef.Name)
 		log.Error(err, msg)
@@ -94,15 +105,6 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return r.handleUpdateError(ctx, pool, fmt.Errorf("referenced GitHubScopeRef %s/%s not ready yet", pool.Spec.GitHubScopeRef.Kind, pool.Spec.GitHubScopeRef.Name))
 	}
 
-	// handle deletion
-	if !pool.ObjectMeta.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, poolClient, pool)
-	}
-
-	return r.reconcileNormal(ctx, poolClient, pool, gitHubScopeRef)
-}
-
-func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (ctrl.Result, error) {
 	if err := r.ensureFinalizer(ctx, pool); err != nil {
 		return r.handleUpdateError(ctx, pool, err)
 	}
@@ -416,9 +418,9 @@ func (r *PoolReconciler) garmPoolExists(ctx context.Context, garmClient garmClie
 	return result.Payload.ID != ""
 }
 
-func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, req ctrl.Request, pool *garmoperatorv1alpha1.Pool) (garmoperatorv1alpha1.GitHubScope, error) {
+func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (garmoperatorv1alpha1.GitHubScope, error) {
 	gitHubScopeNamespacedName := types.NamespacedName{
-		Namespace: req.Namespace,
+		Namespace: pool.Namespace,
 		Name:      pool.Spec.GitHubScopeRef.Name,
 	}
 

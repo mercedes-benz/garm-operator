@@ -13,6 +13,7 @@ import (
 	"github.com/cloudbase/garm/client/pools"
 	"github.com/cloudbase/garm/params"
 	"go.uber.org/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,7 +36,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		name string
 		// the object to reconcile
 		object         client.Object
-		gitHubScopeRef client.Object
 		// a list of objects to initialize the fake client with
 		// this can be used to define other existing objects that are referenced by the object to reconcile
 		// e.g. images or other pools ..
@@ -117,6 +117,15 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceName,
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("supersecretvalue"),
+					},
+				},
 				&garmoperatorv1alpha1.Image{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "ubuntu-image",
@@ -126,24 +135,27 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						Tag: "linux-ubuntu-22.04-arm64",
 					},
 				},
-			},
-			gitHubScopeRef: &garmoperatorv1alpha1.Enterprise{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Enterprise",
-					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      enterpriseName,
-					Namespace: namespaceName,
-				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
-				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
-					ID:                       enterpriseId,
-					PoolManagerIsRunning:     false,
-					PoolManagerFailureReason: "no resources available",
+				&garmoperatorv1alpha1.Enterprise{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Enterprise",
+						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      enterpriseName,
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.EnterpriseSpec{
+						CredentialsName: "foobar",
+						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "my-webhook-secret",
+							Key:  "webhookSecret",
+						},
+					},
+					Status: garmoperatorv1alpha1.EnterpriseStatus{
+						ID:                       enterpriseId,
+						PoolManagerIsRunning:     false,
+						PoolManagerFailureReason: "no resources available",
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
@@ -294,6 +306,15 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceName,
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("supersecretvalue"),
+					},
+				},
 				&garmoperatorv1alpha1.Image{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "ubuntu-image",
@@ -303,24 +324,27 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						Tag: "linux-ubuntu-22.04-arm64",
 					},
 				},
-			},
-			gitHubScopeRef: &garmoperatorv1alpha1.Enterprise{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Enterprise",
-					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      enterpriseName,
-					Namespace: namespaceName,
-				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
-				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
-					ID:                       enterpriseId,
-					PoolManagerIsRunning:     false,
-					PoolManagerFailureReason: "no resources available",
+				&garmoperatorv1alpha1.Enterprise{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Enterprise",
+						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      enterpriseName,
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.EnterpriseSpec{
+						CredentialsName: "foobar",
+						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "my-webhook-secret",
+							Key:  "webhookSecret",
+						},
+					},
+					Status: garmoperatorv1alpha1.EnterpriseStatus{
+						ID:                       enterpriseId,
+						PoolManagerIsRunning:     false,
+						PoolManagerFailureReason: "no resources available",
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
@@ -451,6 +475,15 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceName,
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("supersecretvalue"),
+					},
+				},
 				&garmoperatorv1alpha1.Image{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "ubuntu-image",
@@ -460,24 +493,27 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						Tag: "linux-ubuntu-22.04-arm64",
 					},
 				},
-			},
-			gitHubScopeRef: &garmoperatorv1alpha1.Enterprise{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Enterprise",
-					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      enterpriseName,
-					Namespace: namespaceName,
-				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecret:   "foobar",
-				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
-					ID:                       enterpriseId,
-					PoolManagerIsRunning:     false,
-					PoolManagerFailureReason: "no resources available",
+				&garmoperatorv1alpha1.Enterprise{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Enterprise",
+						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      enterpriseName,
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.EnterpriseSpec{
+						CredentialsName: "foobar",
+						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "my-webhook-secret",
+							Key:  "webhookSecret",
+						},
+					},
+					Status: garmoperatorv1alpha1.EnterpriseStatus{
+						ID:                       enterpriseId,
+						PoolManagerIsRunning:     false,
+						PoolManagerFailureReason: "no resources available",
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
@@ -609,12 +645,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			}
 
 			pool := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Pool)
-			gitHubScopeRef := tt.gitHubScopeRef.(garmoperatorv1alpha1.GitHubScope)
 
 			mockPoolClient := mock.NewMockPoolClient(mockCtrl)
 			tt.expectGarmRequest(mockPoolClient.EXPECT())
 
-			_, err = reconciler.reconcileNormal(context.Background(), mockPoolClient, pool, gitHubScopeRef)
+			_, err = reconciler.reconcileNormal(context.Background(), mockPoolClient, pool)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PoolReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
