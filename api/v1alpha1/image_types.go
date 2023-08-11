@@ -42,6 +42,7 @@ type ImageStatus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:path=images,scope=Namespaced,categories=garm
 
 // Image is the Schema for the images API
 type Image struct {
