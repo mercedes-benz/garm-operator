@@ -19,7 +19,7 @@ env:
 
 jobs:
   build:
-    name: lint and test
+    name: lint, test, build & deploy
     runs-on: [ road-runner, medium ] # could run on a k8s pod in the future
     steps:
       - name: setup vault
@@ -33,7 +33,7 @@ jobs:
           secrets: |
             secrets/data/road-runner-technical-user harbor_password | HARBOR_PASSWORD ;
             secrets/data/road-runner-technical-user harbor_username | HARBOR_USERNAME ;
-            secrets/data/kubeconfigs c51p171 | KUBECONFIG ;
+            secrets/data/kubeconfigs c51p171 | KUBECONFIG_YAML ;
 
       - uses: actions/checkout@v3
 
@@ -84,3 +84,17 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
+      - name: configure kubeconfig to default location
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          mkdir -p ~/.kube
+          chmod 700 ~/.kube
+          echo "$KUBECONFIG_YAML" > ~/.kube/config
+          chmod 700 ~/.kube/config
+
+      - name: deploy to garm-infra-stage-int namespace
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          kustomize build config/overlays/int | kubectl apply -n garm-infra-stage-int -f -

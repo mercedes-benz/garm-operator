@@ -20,7 +20,8 @@ spec:
     spec:
       containers:
         - name: manager
-          image: registry-emea.app.corpintra.net/roadrunner/garm-operator:feat-secret-handling
+          image: registry-emea.app.corpintra.net/roadrunner/garm-operator:main
+          args:
           env:
           - name: GARM_USERNAME
             value: "admin"
@@ -28,3 +29,4 @@ spec:
             value: "/vault/secrets/garmpassword"
           - name: GARM_SERVER
             value: "http://garm.garm-infra-stage-int.svc:9997"
+          imagePullPolicy: Always
