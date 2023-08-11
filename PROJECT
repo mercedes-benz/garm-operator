@@ -35,4 +35,12 @@ resources:
   kind: Organization
   path: git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: mercedes-benz.com
+  group: garm-operator
+  kind: Image
+  path: git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

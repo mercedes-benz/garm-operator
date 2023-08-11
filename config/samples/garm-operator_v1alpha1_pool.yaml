@@ -19,7 +19,7 @@ spec:
   flavor: small
   forceDeleteRunners: false
   githubRunnerGroup: ""
-  image: linux-ubuntu-22.04-arm64
+  imageName: runner-default
   maxRunners: 1
   minIdleRunners: 0
   osArch: arm64
@@ -54,7 +54,7 @@ spec:
   flavor: large
   forceDeleteRunners: false
   githubRunnerGroup: ""
-  image: linux-ubuntu-22.04-arm64
+  imageName: runner-default
   maxRunners: 1
   minIdleRunners: 0
   osArch: arm64
@@ -89,7 +89,7 @@ spec:
   flavor: medium
   forceDeleteRunners: false
   githubRunnerGroup: ""
-  image: linux-ubuntu-22.04-arm64
+  imageName: runner-default
   maxRunners: 1
   minIdleRunners: 0
   osArch: arm64

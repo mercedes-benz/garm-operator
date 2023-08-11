@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -61,6 +62,15 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	ctx := context.TODO()
 	pool := r
 
+	image, err := validateImageName(ctx, pool)
+	if err != nil {
+		return nil, apierrors.NewInvalid(
+			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+			pool.Name,
+			field.ErrorList{err},
+		)
+	}
+
 	listOpts := &client.ListOptions{
 		Namespace: pool.Namespace,
 	}
@@ -73,7 +83,7 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 
 	poolList.FilterByFields(
 		MatchesFlavour(pool.Spec.Flavor),
-		MatchesImage(pool.Spec.Image),
+		MatchesImage(image.Spec.Tag),
 		MatchesProvider(pool.Spec.ProviderName),
 		MatchesGitHubScope(pool.Spec.GitHubScopeRef.Name, pool.Spec.GitHubScopeRef.Kind),
 	)
@@ -81,7 +91,7 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	if len(poolList.Items) > 0 {
 		existing := poolList.Items[0]
 		return nil, apierrors.NewBadRequest(
-			fmt.Sprintf("can not create pool, pool=%s with same image=%s , flavor=%s  and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.Image, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScopeRef.Name))
+			fmt.Sprintf("can not create pool, pool=%s with same image=%s , flavor=%s  and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.ImageName, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScopeRef.Name))
 	}
 
 	return nil, nil
@@ -89,11 +99,20 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	poollog.Info("validate update", "name", r.Name)
+	poollog.Info("validate update", "name", r)
 
 	oldCRD, ok := old.(*Pool)
 	if !ok {
 		return nil, apierrors.NewBadRequest("failed to convert runtime.Object to Pool CRD")
+	}
+
+	_, err := validateImageName(context.Background(), r)
+	if err != nil {
+		return nil, apierrors.NewInvalid(
+			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+			r.Name,
+			field.ErrorList{err},
+		)
 	}
 
 	if err := r.validateProviderName(oldCRD); err != nil {
@@ -105,6 +124,19 @@ func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	}
 
 	return nil, nil
+}
+
+func validateImageName(ctx context.Context, r *Pool) (*Image, *field.Error) {
+	image := Image{}
+	err := c.Get(ctx, client.ObjectKey{Name: r.Spec.ImageName, Namespace: r.Namespace}, &image)
+	if err != nil {
+		return nil, field.Invalid(
+			field.NewPath("spec").Child("imageName"),
+			r.Spec.ImageName,
+			err.Error(),
+		)
+	}
+	return &image, nil
 }
 
 func (r *Pool) validateProviderName(old *Pool) *field.Error {
