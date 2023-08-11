@@ -13,7 +13,7 @@ spec:
   credentialsName: GitHub-Actions
   webhookSecretRef:
     key: "webhookSecret"
-    secretName: "enterprise-webhook-secret"
+    name: "enterprise-webhook-secret"
 ---
 apiVersion: garm-operator.mercedes-benz.com/v1alpha1
 kind: Enterprise
@@ -30,7 +30,7 @@ spec:
   credentialsName: GitHub-Actions
   webhookSecretRef:
     key: "webhookSecret"
-    secretName: "enterprise-webhook-secret"
+    name: "enterprise-webhook-secret"
 ---
 apiVersion: v1
 kind: Secret
