@@ -35,7 +35,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 	tests := []struct {
 		name string
 		// the object to reconcile
-		object         client.Object
+		object client.Object
 		// a list of objects to initialize the fake client with
 		// this can be used to define other existing objects that are referenced by the object to reconcile
 		// e.g. images or other pools ..

@@ -12,6 +12,7 @@ const (
 	RepositoryScope   GitHubScopeKind = "Repository"
 )
 
+// +k8s:deepcopy-gen=false
 type GitHubScope interface {
 	GetKind() string
 	GetCredentialsName() string

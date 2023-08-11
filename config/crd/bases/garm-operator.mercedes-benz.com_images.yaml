@@ -8,6 +8,8 @@ metadata:
 spec:
   group: garm-operator.mercedes-benz.com
   names:
+    categories:
+    - garm
     kind: Image
     listKind: ImageList
     plural: images
@@ -46,5 +48,3 @@ spec:
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}

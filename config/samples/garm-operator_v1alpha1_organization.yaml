@@ -10,7 +10,6 @@ metadata:
   name: github-actions
   namespace: garm-operator-system
 spec:
-  webhookSecret: "myothersecret"
   webhookSecretRef:
     key: "webhookSecret"
     secretName: "org-webhook-secret"
@@ -28,7 +27,6 @@ metadata:
   name: github-actions-2
   namespace: garm-operator-system
 spec:
-  webhookSecret: "myothersecret"
   webhookSecretRef:
     key: "webhookSecret"
     secretName: "org-webhook-secret"
