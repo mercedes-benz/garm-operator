@@ -92,3 +92,18 @@ func (mr *MockEnterpriseClientMockRecorder) ListEnterprises(param interface{}) *
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEnterprises", reflect.TypeOf((*MockEnterpriseClient)(nil).ListEnterprises), param)
 }
+
+// UpdateEnterprise mocks base method.
+func (m *MockEnterpriseClient) UpdateEnterprise(param *enterprises.UpdateEnterpriseParams) (*enterprises.UpdateEnterpriseOK, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEnterprise", param)
+	ret0, _ := ret[0].(*enterprises.UpdateEnterpriseOK)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateEnterprise indicates an expected call of UpdateEnterprise.
+func (mr *MockEnterpriseClientMockRecorder) UpdateEnterprise(param interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEnterprise", reflect.TypeOf((*MockEnterpriseClient)(nil).UpdateEnterprise), param)
+}

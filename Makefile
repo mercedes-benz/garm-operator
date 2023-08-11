@@ -191,5 +191,5 @@ tilt-up: kind-cluster ## Start tilt and build kind cluster
 	tilt up
 
 .PHONY: cert-manager
-cert-manager: kind-cluster
+cert-manager: kind-cluster ## Install cert-manager for local development
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml

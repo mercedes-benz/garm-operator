@@ -21,15 +21,14 @@ import (
 	"reflect"
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
-	"github.com/cloudbase/garm/client/enterprises"
+	"github.com/cloudbase/garm/client/organizations"
 	"github.com/cloudbase/garm/params"
 	"go.uber.org/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -37,36 +36,36 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
+func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	tests := []struct {
 		name              string
 		object            runtime.Object
-		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
 		runtimeObjects    []runtime.Object
+		expectGarmRequest func(m *mock.MockOrganizationClientMockRecorder)
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Enterprise
+		expectedObject    *garmoperatorv1alpha1.Organization
 	}{
 		{
-			name: "enterprise exist - no op",
-			object: &garmoperatorv1alpha1.Enterprise{
+			name: "organization exist - no op",
+			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "existing-enterprise",
+					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
-						key.EnterpriseFinalizerName,
+						key.OrganizationFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
 					CredentialsName: "foobar",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
@@ -81,55 +80,55 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
+			expectedObject: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "existing-enterprise",
+					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
-						key.EnterpriseFinalizerName,
+						key.OrganizationFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
 					CredentialsName: "foobar",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
-			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.GetEnterprise(
-					enterprises.NewGetEnterpriseParams().
-						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&enterprises.GetEnterpriseOK{
-					Payload: params.Enterprise{
+			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
+				m.GetOrganization(
+					organizations.NewGetOrgParams().
+						WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
+				).Return(&organizations.GetOrgOK{
+					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-						Name:            "existing-enterprise",
+						Name:            "existing-organization",
 						CredentialsName: "foobar",
 					}}, nil)
 			},
 		},
 		{
-			name: "enterprise exist - but spec has changed",
-			object: &garmoperatorv1alpha1.Enterprise{
+			name: "organization exist - but spec has changed",
+			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "existing-enterprise",
+					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
-						key.EnterpriseFinalizerName,
+						key.OrganizationFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
 					CredentialsName: "has-changed",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
@@ -144,46 +143,46 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
+			expectedObject: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "existing-enterprise",
+					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
-						key.EnterpriseFinalizerName,
+						key.OrganizationFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
 					CredentialsName: "has-changed",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
-			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.GetEnterprise(
-					enterprises.NewGetEnterpriseParams().
-						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&enterprises.GetEnterpriseOK{
-					Payload: params.Enterprise{
+			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
+				m.GetOrganization(
+					organizations.NewGetOrgParams().
+						WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
+				).Return(&organizations.GetOrgOK{
+					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-						Name:            "existing-enterprise",
+						Name:            "existing-organization",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
 					}}, nil)
 
-				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
-					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").WithBody(params.UpdateEntityParams{
+				m.UpdateOrganization(organizations.NewUpdateOrgParams().
+					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").WithBody(params.UpdateEntityParams{
 					CredentialsName: "has-changed",
 					WebhookSecret:   "has-changed",
 				}),
-				).Return(&enterprises.UpdateEnterpriseOK{
-					Payload: params.Enterprise{
+				).Return(&organizations.UpdateOrgOK{
+					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-						Name:            "existing-enterprise",
+						Name:            "existing-organization",
 						CredentialsName: "has-changed",
 						WebhookSecret:   "has-changed",
 					},
@@ -191,45 +190,24 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			},
 		},
 		{
-			name: "enterprise exist but pool status has changed - updating status",
-			object: &garmoperatorv1alpha1.Enterprise{
+			name: "organization exist but pool status has changed - updating status",
+			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "existing-enterprise",
+					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
-						key.EnterpriseFinalizerName,
+						key.OrganizationFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
 					CredentialsName: "foobar",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-				},
-			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "existing-enterprise",
-					Namespace: "default",
-					Finalizers: []string{
-						key.EnterpriseFinalizerName,
-					},
-				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
-						Name: "my-webhook-secret",
-						Key:  "webhookSecret",
-					},
-				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
-					ID:                       "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-					PoolManagerIsRunning:     false,
-					PoolManagerFailureReason: "no resources available",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -243,14 +221,35 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.GetEnterprise(
-					enterprises.NewGetEnterpriseParams().
-						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&enterprises.GetEnterpriseOK{
-					Payload: params.Enterprise{
+			expectedObject: &garmoperatorv1alpha1.Organization{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "existing-organization",
+					Namespace: "default",
+					Finalizers: []string{
+						key.OrganizationFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.OrganizationStatus{
+					ID:                       "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					PoolManagerIsRunning:     false,
+					PoolManagerFailureReason: "no resources available",
+				},
+			},
+			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
+				m.GetOrganization(
+					organizations.NewGetOrgParams().
+						WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
+				).Return(&organizations.GetOrgOK{
+					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-						Name:            "existing-enterprise",
+						Name:            "existing-organization",
 						CredentialsName: "foobar",
 						PoolManagerStatus: params.PoolManagerStatus{
 							IsRunning:     false,
@@ -260,37 +259,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			},
 		},
 		{
-			name: "enterprise does not exist - create",
-			object: &garmoperatorv1alpha1.Enterprise{
+			name: "organization does not exist - create",
+			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "new-enterprise",
+					Name:      "new-organization",
 					Namespace: "default",
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
 					CredentialsName: "foobar",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
-				},
-			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "new-enterprise",
-					Namespace: "default",
-					Finalizers: []string{
-						key.EnterpriseFinalizerName,
-					},
-				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
-						Name: "my-webhook-secret",
-						Key:  "webhookSecret",
-					},
-				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
-					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -304,23 +284,42 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
+			expectedObject: &garmoperatorv1alpha1.Organization{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "new-organization",
+					Namespace: "default",
+					Finalizers: []string{
+						key.OrganizationFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.OrganizationStatus{
+					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+				},
+			},
+			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
+				m.ListOrganizations(organizations.NewListOrgsParams()).Return(&organizations.ListOrgsOK{Payload: params.Organizations{
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
-						Name:            "another-non-operator-managed-enterprise",
+						Name:            "another-non-operator-managed-organization",
 						CredentialsName: "totally-unsecure",
 					},
 				}}, nil)
 
-				m.CreateEnterprise(enterprises.NewCreateEnterpriseParams().WithBody(
-					params.CreateEnterpriseParams{
-						Name:            "new-enterprise",
+				m.CreateOrganization(organizations.NewCreateOrgParams().WithBody(
+					params.CreateOrgParams{
+						Name:            "new-organization",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
-					})).Return(&enterprises.CreateEnterpriseOK{
-					Payload: params.Enterprise{
-						Name:            "new-enterprise",
+					})).Return(&organizations.CreateOrgOK{
+					Payload: params.Organization{
+						Name:            "new-organization",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
@@ -328,37 +327,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			},
 		},
 		{
-			name: "enterprise already exist in garm - adopt",
-			object: &garmoperatorv1alpha1.Enterprise{
+			name: "organization already exist in garm - adopt",
+			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "new-enterprise",
+					Name:      "new-organization",
 					Namespace: "default",
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
 					CredentialsName: "totally-insecure",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
-				},
-			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "new-enterprise",
-					Namespace: "default",
-					Finalizers: []string{
-						key.EnterpriseFinalizerName,
-					},
-				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "totally-insecure",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
-						Name: "my-webhook-secret",
-						Key:  "webhookSecret",
-					},
-				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
-					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -372,11 +352,30 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
+			expectedObject: &garmoperatorv1alpha1.Organization{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "new-organization",
+					Namespace: "default",
+					Finalizers: []string{
+						key.OrganizationFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
+					CredentialsName: "totally-insecure",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.OrganizationStatus{
+					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
+				},
+			},
+			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
+				m.ListOrganizations(organizations.NewListOrgsParams()).Return(&organizations.ListOrgsOK{Payload: params.Organizations{
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
-						Name:            "new-enterprise",
+						Name:            "new-organization",
 						CredentialsName: "totally-insecure",
 					},
 				}}, nil)
@@ -396,38 +395,38 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			}
 			runtimeObjects := []runtime.Object{tt.object}
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Organization{}).Build()
 
 			// create a fake reconciler
-			reconciler := &EnterpriseReconciler{
+			reconciler := &OrganizationReconciler{
 				Client:   client,
 				BaseURL:  "http://domain.does.not.exist:9997",
 				Username: "admin",
 				Password: "admin",
 			}
 
-			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Enterprise)
+			organization := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Organization)
 
-			mockEnterprise := mock.NewMockEnterpriseClient(mockCtrl)
-			tt.expectGarmRequest(mockEnterprise.EXPECT())
+			mockOrganization := mock.NewMockOrganizationClient(mockCtrl)
+			tt.expectGarmRequest(mockOrganization.EXPECT())
 
-			_, err = reconciler.reconcileNormal(context.Background(), mockEnterprise, enterprise)
+			_, err = reconciler.reconcileNormal(context.Background(), mockOrganization, organization)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("EnterpriseReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("OrganizationReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			// empty resource version to avoid comparison errors
-			enterprise.ObjectMeta.ResourceVersion = ""
-			if !reflect.DeepEqual(enterprise, tt.expectedObject) {
-				t.Errorf("EnterpriseReconciler.reconcileNormal() got = %#v, want %#v", enterprise, tt.expectedObject)
+			organization.ObjectMeta.ResourceVersion = ""
+			if !reflect.DeepEqual(organization, tt.expectedObject) {
+				t.Errorf("OrganizationReconciler.reconcileNormal() got = %#v, want %#v", organization, tt.expectedObject)
 			}
 
 		})
 	}
 }
 
-func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
+func TestOrganizationReconciler_reconcileDelete(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -435,28 +434,28 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 		name              string
 		object            runtime.Object
 		runtimeObjects    []runtime.Object
-		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
+		expectGarmRequest func(m *mock.MockOrganizationClientMockRecorder)
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Enterprise
+		expectedObject    *garmoperatorv1alpha1.Organization
 	}{
 		{
-			name: "delete enterprise",
-			object: &garmoperatorv1alpha1.Enterprise{
+			name: "delete organization",
+			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "delete-enterprise",
+					Name:      "delete-organization",
 					Namespace: "default",
 					Finalizers: []string{
-						key.EnterpriseFinalizerName,
+						key.OrganizationFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
 					CredentialsName: "totally-insecure",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
 				},
 			},
@@ -471,10 +470,10 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.DeleteEnterprise(
-					enterprises.NewDeleteEnterpriseParams().
-						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-12345"),
+			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
+				m.DeleteOrganization(
+					organizations.NewDeleteOrgParams().
+						WithOrgID("e1dbf9a6-a9f6-4594-a5ac-12345"),
 				).Return(nil)
 			},
 		},
@@ -490,33 +489,32 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-
 			runtimeObjects := []runtime.Object{tt.object}
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Organization{}).Build()
 
 			// create a fake reconciler
-			reconciler := &EnterpriseReconciler{
+			reconciler := &OrganizationReconciler{
 				Client:   client,
 				BaseURL:  "http://domain.does.not.exist:9997",
 				Username: "admin",
 				Password: "admin",
 			}
 
-			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Enterprise)
+			organization := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Organization)
 
-			mockEnterprise := mock.NewMockEnterpriseClient(mockCtrl)
-			tt.expectGarmRequest(mockEnterprise.EXPECT())
+			mockOrganization := mock.NewMockOrganizationClient(mockCtrl)
+			tt.expectGarmRequest(mockOrganization.EXPECT())
 
-			_, err = reconciler.reconcileDelete(context.Background(), mockEnterprise, enterprise)
+			_, err = reconciler.reconcileDelete(context.Background(), mockOrganization, organization)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("EnterpriseReconciler.reconcileDelete() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("OrganizationReconciler.reconcileDelete() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			//check for mandatory finalizer
-			if controllerutil.ContainsFinalizer(enterprise, key.EnterpriseFinalizerName) {
-				t.Errorf("EnterpriseReconciler.Reconcile() finalizer still exist")
+			if controllerutil.ContainsFinalizer(organization, key.OrganizationFinalizerName) {
+				t.Errorf("OrganizationReconciler.Reconcile() finalizer still exist")
 				return
 			}
 		})
