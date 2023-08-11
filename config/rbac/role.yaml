@@ -6,6 +6,14 @@ metadata:
   namespace: xxxxx
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - garm-operator.mercedes-benz.com
   resources:
   - enterprises
