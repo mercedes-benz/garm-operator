@@ -42,7 +42,6 @@ type ImageStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
 
 // Image is the Schema for the images API
 type Image struct {
