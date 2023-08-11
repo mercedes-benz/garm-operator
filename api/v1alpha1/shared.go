@@ -31,6 +31,8 @@ func ToGitHubScopeKind(kind string) (GitHubScopeKind, error) {
 }
 
 type SecretRef struct {
-	Name string `json:"secretName"`
-	Key  string `json:"key"`
+	// Name of the kubernetes secret to use
+	Name string `json:"name"`
+	// Key is the key in the secret's data map for this value
+	Key string `json:"key"`
 }

@@ -22,7 +22,9 @@ import (
 
 // EnterpriseSpec defines the desired state of Enterprise
 type EnterpriseSpec struct {
-	CredentialsName  string    `json:"credentialsName"`
+	CredentialsName string `json:"credentialsName"`
+
+	// WebhookSecretRef represents a secret that should be used for the webhook
 	WebhookSecretRef SecretRef `json:"webhookSecretRef"`
 }
 

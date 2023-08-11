@@ -59,14 +59,19 @@ spec:
               credentialsName:
                 type: string
               webhookSecretRef:
+                description: WebhookSecretRef represents a secret that should be used
+                  for the webhook
                 properties:
                   key:
+                    description: Key is the key in the secret's data map for this
+                      value
                     type: string
-                  secretName:
+                  name:
+                    description: Name of the kubernetes secret to use
                     type: string
                 required:
                 - key
-                - secretName
+                - name
                 type: object
             required:
             - credentialsName
