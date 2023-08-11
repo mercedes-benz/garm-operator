@@ -19,8 +19,9 @@ package controller
 import (
 	"context"
 	"fmt"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
 	"strings"
+
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
 
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/params"
@@ -85,10 +86,11 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 // func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmClient.EnterpriseScope) (ctrl.Result, error) {
 func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
+	log.WithValues("enterprise", enterprise.Name)
 
 	// If the Enterprise doesn't has our finalizer, add it.
 	if !controllerutil.ContainsFinalizer(enterprise, key.EnterpriseFinalizerName) {
-
+		log.V(1).Info(fmt.Sprintf("enterprise doesn't have the %s finalizer, adding it", key.EnterpriseFinalizerName))
 		controllerutil.AddFinalizer(enterprise, key.EnterpriseFinalizerName)
 
 		// Update the object immediately
@@ -97,59 +99,143 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 		}
 	}
 
-	// if enterprise has no ID, it means it was not created yet or it was already created and the status field is just empty (after e.g. restore)
-	// let's check if we could discover the ID by listing all enterprises
-	if enterprise.Status.ID == "" {
-		// try to adopt existing enterprise
-		adopted, err := r.adoptExisting(ctx, scope, enterprise)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		if !adopted {
-			// if adoption failed, create new enterprise
-			if err := r.createOrUpdate(ctx, scope, enterprise); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-		if err := r.Status().Update(ctx, enterprise); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{}, nil
-	}
-
-	// update status fields
-	// reflect enterprise status into CR
-	garmEnterprise, err := scope.GetEnterprise(
-		enterprises.NewGetEnterpriseParams().
-			WithEnterpriseID(enterprise.Status.ID),
-	)
-
+	webhookSecret, err := secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Updating enterprise status")
-	enterprise.Status.PoolManagerFailureReason = garmEnterprise.Payload.PoolManagerStatus.FailureReason
-	enterprise.Status.PoolManagerIsRunning = garmEnterprise.Payload.PoolManagerStatus.IsRunning
-	if err := r.Status().Update(ctx, enterprise); err != nil {
-		return ctrl.Result{}, err
+	if enterprise.Status.ID == "" {
+		log.Info("status.ID is empty, checking if enterprise already exists on garm side")
+		enterprises, err := scope.ListEnterprises(enterprises.NewListEnterprisesParams())
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		log.Info(fmt.Sprintf("%d enterprises discovered", len(enterprises.Payload)))
+		log.V(1).Info(fmt.Sprintf("enterprises on garm side: %#v", enterprises.Payload))
+
+		for _, garmEnterprise := range enterprises.Payload {
+			if strings.EqualFold(garmEnterprise.Name, enterprise.Name) {
+
+				if !strings.EqualFold(garmEnterprise.CredentialsName, enterprise.Spec.CredentialsName) &&
+					!strings.EqualFold(garmEnterprise.WebhookSecret, webhookSecret) {
+					return ctrl.Result{}, fmt.Errorf("enterprise with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing enterprise first")
+				}
+
+				log.Info("garm enterprise object found for given enterprise CR")
+
+				enterprise.Status.ID = garmEnterprise.ID
+				enterprise.Status.PoolManagerFailureReason = garmEnterprise.PoolManagerStatus.FailureReason
+				enterprise.Status.PoolManagerIsRunning = garmEnterprise.PoolManagerStatus.IsRunning
+
+				if err := r.Status().Update(ctx, enterprise); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				log.Info("existing garm enterprise object successfully adopted")
+
+				return ctrl.Result{}, nil
+			}
+		}
 	}
+
+	switch {
+	case enterprise.Status.ID == "":
+
+		log.Info("status.ID is empty and enterprise doesn't exist on garm side. Creating new enterprise in garm")
+
+		retValue, err := scope.CreateEnterprise(
+			enterprises.NewCreateEnterpriseParams().
+				WithBody(params.CreateEnterpriseParams{
+					Name:            enterprise.Name,
+					CredentialsName: enterprise.Spec.CredentialsName,
+					WebhookSecret:   webhookSecret, // gh hook secret
+				}))
+		log.V(1).Info(fmt.Sprintf("enterprise %s created - return Value %v", enterprise.Name, retValue))
+		if err != nil {
+			log.V(1).Info(fmt.Sprintf("client.CreateEnterprise error: %s", err))
+			return ctrl.Result{}, err
+		}
+
+		enterprise.Status.ID = retValue.Payload.ID
+		enterprise.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
+		enterprise.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
+
+		if err := r.Status().Update(ctx, enterprise); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		log.Info("creating enterprise in garm succeeded")
+
+		return ctrl.Result{}, nil
+
+	case enterprise.Status.ID != "":
+
+		log.Info("comparing enterprise with garm enterprise object")
+		garmEnterprise, err := scope.GetEnterprise(
+			enterprises.NewGetEnterpriseParams().
+				WithEnterpriseID(enterprise.Status.ID),
+		)
+		if err != nil {
+			log.V(1).Info(fmt.Sprintf("client.GetEnterprise error: %s", err))
+			return ctrl.Result{}, err
+		}
+
+		enterprise.Status.PoolManagerFailureReason = garmEnterprise.Payload.PoolManagerStatus.FailureReason
+		enterprise.Status.PoolManagerIsRunning = garmEnterprise.Payload.PoolManagerStatus.IsRunning
+
+		if err := r.Status().Update(ctx, enterprise); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		log.V(1).Info("compare credentials and webhook secret with garm enterprise object")
+
+		if enterprise.Spec.CredentialsName != garmEnterprise.Payload.CredentialsName &&
+			webhookSecret != garmEnterprise.Payload.WebhookSecret {
+
+			log.Info("enterprise credentials or webhook secret has changed, updating garm enterprise object")
+
+			// update credentials and webhook secret
+			retValue, err := scope.UpdateEnterprise(
+				enterprises.NewUpdateEnterpriseParams().
+					WithEnterpriseID(enterprise.Status.ID).
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: enterprise.Spec.CredentialsName,
+						WebhookSecret:   webhookSecret, // gh hook secret
+					}))
+			if err != nil {
+				log.V(1).Info(fmt.Sprintf("client.UpdateEnterprise error: %s", err))
+				return ctrl.Result{}, err
+			}
+
+			enterprise.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
+			enterprise.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
+
+			if err := r.Status().Update(ctx, enterprise); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			return ctrl.Result{}, nil
+		}
+	}
+
+	log.Info("reconciling enterprise successfully done")
 
 	return ctrl.Result{}, nil
 }
 
 func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (ctrl.Result, error) {
-
 	log := log.FromContext(ctx)
+	log.WithValues("enterprise", enterprise.Name)
 
-	log.Info("start deleting enterprise")
+	log.Info("starting enterprise deletion")
 
 	err := scope.DeleteEnterprise(
 		enterprises.NewDeleteEnterpriseParams().
 			WithEnterpriseID(enterprise.Status.ID),
 	)
 	if err != nil {
+		log.V(1).Info(fmt.Sprintf("client.DeleteEnterprise error: %s", err))
 		return ctrl.Result{}, err
 	}
 
@@ -165,67 +251,6 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	log.Info("enterprise deletion done")
 
 	return ctrl.Result{}, nil
-}
-
-func (r *EnterpriseReconciler) createOrUpdate(ctx context.Context, scope garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) error {
-	log := log.FromContext(ctx)
-
-	webhookSecret, err := secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace)
-	if err != nil {
-		return err
-	}
-
-	log.Info("enterprise doesn't exist yet, creating...")
-	retValue, err := scope.CreateEnterprise(
-		enterprises.NewCreateEnterpriseParams().
-			WithBody(params.CreateEnterpriseParams{
-				Name:            enterprise.Name,
-				CredentialsName: enterprise.Spec.CredentialsName,
-				WebhookSecret:   webhookSecret, // gh hook secret
-			}))
-	log.V(1).Info(fmt.Sprintf("enterprise %s created - return Value %v", enterprise.Name, retValue))
-	if err != nil {
-		log.Info("DEBUG", "client.CreateEnterprise error", err)
-		return err
-	}
-
-	// reflect enterprise status into CR
-	enterprise.Status.ID = retValue.Payload.ID
-	enterprise.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
-	enterprise.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-	if err := r.Status().Update(ctx, enterprise); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *EnterpriseReconciler) adoptExisting(ctx context.Context, scope garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (bool, error) {
-	log := log.FromContext(ctx)
-
-	enterprises, err := scope.ListEnterprises(enterprises.NewListEnterprisesParams())
-	if err != nil {
-		return false, err
-	}
-
-	// TODO: better logging and additional information in debug log
-	log.Info(fmt.Sprintf("%d enterprises discovered", len(enterprises.Payload)))
-
-	for _, garmEnterprise := range enterprises.Payload {
-		if strings.EqualFold(garmEnterprise.Name, enterprise.Name) {
-			log.Info("garm enterprise object found for given enterprise CR")
-			log.Info(fmt.Sprintf("enterprise: %#v", garmEnterprise))
-			enterprise.Status.ID = garmEnterprise.ID
-			enterprise.Status.PoolManagerFailureReason = garmEnterprise.PoolManagerStatus.FailureReason
-			enterprise.Status.PoolManagerIsRunning = garmEnterprise.PoolManagerStatus.IsRunning
-			if err := r.Status().Update(ctx, enterprise); err != nil {
-				return false, err
-			}
-			return true, nil
-		}
-	}
-
-	return false, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

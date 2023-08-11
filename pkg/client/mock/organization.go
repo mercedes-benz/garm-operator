@@ -92,3 +92,18 @@ func (mr *MockOrganizationClientMockRecorder) ListOrganizations(param interface{
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockOrganizationClient)(nil).ListOrganizations), param)
 }
+
+// UpdateOrganization mocks base method.
+func (m *MockOrganizationClient) UpdateOrganization(param *organizations.UpdateOrgParams) (*organizations.UpdateOrgOK, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateOrganization", param)
+	ret0, _ := ret[0].(*organizations.UpdateOrgOK)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateOrganization indicates an expected call of UpdateOrganization.
+func (mr *MockOrganizationClientMockRecorder) UpdateOrganization(param interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockOrganizationClient)(nil).UpdateOrganization), param)
+}

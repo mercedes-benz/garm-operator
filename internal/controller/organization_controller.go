@@ -19,8 +19,9 @@ package controller
 import (
 	"context"
 	"fmt"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
 	"strings"
+
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
 
 	"github.com/cloudbase/garm/client/organizations"
 	"github.com/cloudbase/garm/params"
@@ -85,10 +86,11 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 // func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garmClient.OrganizationScope) (ctrl.Result, error) {
 func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
+	log.WithValues("organization", organization.Name)
 
 	// If the Organization doesn't has our finalizer, add it.
 	if !controllerutil.ContainsFinalizer(organization, key.OrganizationFinalizerName) {
-
+		log.V(1).Info(fmt.Sprintf("organization doesn't have the %s finalizer, adding it", key.OrganizationFinalizerName))
 		controllerutil.AddFinalizer(organization, key.OrganizationFinalizerName)
 
 		// Update the object immediately
@@ -97,59 +99,139 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 		}
 	}
 
-	// if organization has no ID, it means it was not created yet or it was already created and the status field is just empty (after e.g. restore)
-	// let's check if we could discover the ID by listing all organizations
-	if organization.Status.ID == "" {
-		// try to adopt existing organization
-		adopted, err := r.adoptExisting(ctx, scope, organization)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		if !adopted {
-			// if adoption failed, create new organization
-			if err := r.createOrUpdate(ctx, scope, organization); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-		if err := r.Status().Update(ctx, organization); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{}, nil
-	}
-
-	// update status fields
-	// reflect organization status into CR
-	garmOrganization, err := scope.GetOrganization(
-		organizations.NewGetOrgParams().
-			WithOrgID(organization.Status.ID),
-	)
-
+	webhookSecret, err := secret.FetchRef(ctx, r.Client, &organization.Spec.WebhookSecretRef, organization.Namespace)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Updating organization status")
-	organization.Status.PoolManagerFailureReason = garmOrganization.Payload.PoolManagerStatus.FailureReason
-	organization.Status.PoolManagerIsRunning = garmOrganization.Payload.PoolManagerStatus.IsRunning
-	if err := r.Status().Update(ctx, organization); err != nil {
-		return ctrl.Result{}, err
+	if organization.Status.ID == "" {
+		log.Info("status.ID is empty, checking if organization already exists on garm side")
+		organizations, err := scope.ListOrganizations(organizations.NewListOrgsParams())
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		log.Info(fmt.Sprintf("%d organizations discovered", len(organizations.Payload)))
+		log.V(1).Info(fmt.Sprintf("organizations on garm side: %#v", organizations.Payload))
+
+		for _, garmOrganization := range organizations.Payload {
+			if strings.EqualFold(garmOrganization.Name, organization.Name) {
+
+				if !strings.EqualFold(garmOrganization.CredentialsName, organization.Spec.CredentialsName) &&
+					!strings.EqualFold(garmOrganization.WebhookSecret, webhookSecret) {
+					return ctrl.Result{}, fmt.Errorf("organization with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing organization first")
+				}
+
+				log.Info("garm organization object found for given organization CR")
+
+				organization.Status.ID = garmOrganization.ID
+				organization.Status.PoolManagerFailureReason = garmOrganization.PoolManagerStatus.FailureReason
+				organization.Status.PoolManagerIsRunning = garmOrganization.PoolManagerStatus.IsRunning
+
+				if err := r.Status().Update(ctx, organization); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				log.Info("existing garm organization object successfully adopted")
+
+				return ctrl.Result{}, nil
+			}
+		}
 	}
 
+	switch {
+	case organization.Status.ID == "":
+
+		log.Info("status.ID is empty and organization doesn't exist on garm side. Creating new organization in garm")
+		retValue, err := scope.CreateOrganization(
+			organizations.NewCreateOrgParams().
+				WithBody(params.CreateOrgParams{
+					Name:            organization.Name,
+					CredentialsName: organization.Spec.CredentialsName,
+					WebhookSecret:   webhookSecret, // gh hook secret
+				}))
+		log.V(1).Info(fmt.Sprintf("organization %s created - return Value %v", organization.Name, retValue))
+		if err != nil {
+			log.V(1).Info(fmt.Sprintf("client.CreateOrganization error: %s", err))
+			return ctrl.Result{}, err
+		}
+
+		organization.Status.ID = retValue.Payload.ID
+		organization.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
+		organization.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
+
+		if err := r.Status().Update(ctx, organization); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		log.Info("creating organization in garm succeeded")
+
+		return ctrl.Result{}, nil
+
+	case organization.Status.ID != "":
+
+		log.Info("comparing organization with garm organization object")
+		garmOrganization, err := scope.GetOrganization(
+			organizations.NewGetOrgParams().
+				WithOrgID(organization.Status.ID),
+		)
+		if err != nil {
+			log.V(1).Info(fmt.Sprintf("client.GetOrganization error: %s", err))
+			return ctrl.Result{}, err
+		}
+
+		organization.Status.PoolManagerFailureReason = garmOrganization.Payload.PoolManagerStatus.FailureReason
+		organization.Status.PoolManagerIsRunning = garmOrganization.Payload.PoolManagerStatus.IsRunning
+
+		log.V(1).Info("compare credentials and webhook secret with garm organization object")
+
+		if organization.Spec.CredentialsName != garmOrganization.Payload.CredentialsName &&
+			webhookSecret != garmOrganization.Payload.WebhookSecret {
+
+			log.Info("organization credentials or webhook secret has changed, updating garm organization object")
+
+			// update credentials and webhook secret
+			retValue, err := scope.UpdateOrganization(
+				organizations.NewUpdateOrgParams().
+					WithOrgID(organization.Status.ID).
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: organization.Spec.CredentialsName,
+						WebhookSecret:   webhookSecret, // gh hook secret
+					}))
+			if err != nil {
+				log.V(1).Info(fmt.Sprintf("client.UpdateOrganization error: %s", err))
+				return ctrl.Result{}, err
+			}
+
+			organization.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
+			organization.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
+
+			if err := r.Status().Update(ctx, organization); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			return ctrl.Result{}, nil
+		}
+	}
+
+	log.Info("reconciling organization successfully done")
+
 	return ctrl.Result{}, nil
+
 }
 
 func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (ctrl.Result, error) {
-
 	log := log.FromContext(ctx)
+	log.WithValues("organization", organization.Name)
 
-	log.Info("start deleting organization")
+	log.Info("starting organization deletion")
 
 	err := scope.DeleteOrganization(
 		organizations.NewDeleteOrgParams().
 			WithOrgID(organization.Status.ID),
 	)
 	if err != nil {
+		log.V(1).Info(fmt.Sprintf("client.DeleteOrganization error: %s", err))
 		return ctrl.Result{}, err
 	}
 
@@ -165,67 +247,6 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garm
 	log.Info("organization deletion done")
 
 	return ctrl.Result{}, nil
-}
-
-func (r *OrganizationReconciler) createOrUpdate(ctx context.Context, scope garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) error {
-	log := log.FromContext(ctx)
-
-	webhookSecret, err := secret.FetchRef(ctx, r.Client, &organization.Spec.WebhookSecretRef, organization.Namespace)
-	if err != nil {
-		return err
-	}
-
-	log.Info("organization doesn't exist yet, creating...")
-	retValue, err := scope.CreateOrganization(
-		organizations.NewCreateOrgParams().
-			WithBody(params.CreateOrgParams{
-				Name:            organization.Name,
-				CredentialsName: organization.Spec.CredentialsName,
-				WebhookSecret:   webhookSecret, // gh hook secret
-			}))
-	log.V(1).Info(fmt.Sprintf("organization %s created - return Value %v", organization.Name, retValue))
-	if err != nil {
-		log.Info("DEBUG", "client.CreateOrganization error", err)
-		return err
-	}
-
-	// reflect organization status into CR
-	organization.Status.ID = retValue.Payload.ID
-	organization.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
-	organization.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-	if err := r.Status().Update(ctx, organization); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *OrganizationReconciler) adoptExisting(ctx context.Context, scope garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (bool, error) {
-	log := log.FromContext(ctx)
-
-	organizations, err := scope.ListOrganizations(organizations.NewListOrgsParams())
-	if err != nil {
-		return false, err
-	}
-
-	// TODO: better logging and additional information in debug log
-	log.Info(fmt.Sprintf("%d organizations discovered", len(organizations.Payload)))
-
-	for _, garmOrganization := range organizations.Payload {
-		if strings.EqualFold(garmOrganization.Name, organization.Name) {
-			log.Info("garm organization object found for given organization CR")
-			log.Info(fmt.Sprintf("organization: %#v", garmOrganization))
-			organization.Status.ID = garmOrganization.ID
-			organization.Status.PoolManagerFailureReason = garmOrganization.PoolManagerStatus.FailureReason
-			organization.Status.PoolManagerIsRunning = garmOrganization.PoolManagerStatus.IsRunning
-			if err := r.Status().Update(ctx, organization); err != nil {
-				return false, err
-			}
-			return true, nil
-		}
-	}
-
-	return false, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -10,6 +10,7 @@ type EnterpriseClient interface {
 	ListEnterprises(param *enterprises.ListEnterprisesParams) (*enterprises.ListEnterprisesOK, error)
 	CreateEnterprise(param *enterprises.CreateEnterpriseParams) (*enterprises.CreateEnterpriseOK, error)
 	GetEnterprise(param *enterprises.GetEnterpriseParams) (*enterprises.GetEnterpriseOK, error)
+	UpdateEnterprise(param *enterprises.UpdateEnterpriseParams) (*enterprises.UpdateEnterpriseOK, error)
 	DeleteEnterprise(param *enterprises.DeleteEnterpriseParams) error
 }
 
@@ -61,4 +62,13 @@ func (s *enterpriseClient) DeleteEnterprise(param *enterprises.DeleteEnterpriseP
 	}
 
 	return nil
+}
+
+func (s *enterpriseClient) UpdateEnterprise(param *enterprises.UpdateEnterpriseParams) (*enterprises.UpdateEnterpriseOK, error) {
+	enterprise, err := s.client.Enterprises.UpdateEnterprise(param, s.token)
+	if err != nil {
+		return nil, err
+	}
+
+	return enterprise, nil
 }

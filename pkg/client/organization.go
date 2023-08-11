@@ -10,6 +10,7 @@ type OrganizationClient interface {
 	ListOrganizations(param *organizations.ListOrgsParams) (*organizations.ListOrgsOK, error)
 	CreateOrganization(param *organizations.CreateOrgParams) (*organizations.CreateOrgOK, error)
 	GetOrganization(param *organizations.GetOrgParams) (*organizations.GetOrgOK, error)
+	UpdateOrganization(param *organizations.UpdateOrgParams) (*organizations.UpdateOrgOK, error)
 	DeleteOrganization(param *organizations.DeleteOrgParams) error
 }
 
@@ -61,4 +62,13 @@ func (s *organizationClient) DeleteOrganization(param *organizations.DeleteOrgPa
 	}
 
 	return nil
+}
+
+func (s *organizationClient) UpdateOrganization(param *organizations.UpdateOrgParams) (*organizations.UpdateOrgOK, error) {
+	organization, err := s.client.Organizations.UpdateOrg(param, s.token)
+	if err != nil {
+		return nil, err
+	}
+
+	return organization, nil
 }
