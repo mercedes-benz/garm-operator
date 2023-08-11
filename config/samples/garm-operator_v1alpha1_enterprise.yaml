@@ -11,7 +11,9 @@ metadata:
   namespace: garm-operator-system
 spec:
   credentialsName: GitHub-Actions
-  webhookSecret: mysecret
+  webhookSecretRef:
+    key: "webhookSecret"
+    secretName: "enterprise-webhook-secret"
 ---
 apiVersion: garm-operator.mercedes-benz.com/v1alpha1
 kind: Enterprise

@@ -30,6 +30,6 @@ func ToGitHubScopeKind(kind string) (GitHubScopeKind, error) {
 }
 
 type SecretRef struct {
-	SecretName string `json:"secretName"`
-	Key        string `json:"key"`
+	Name string `json:"secretName"`
+	Key  string `json:"key"`
 }

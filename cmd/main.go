@@ -152,10 +152,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	resolvedGarmPassword, err := secret.TryGet(garmPassword, secret.ReadFromFile(garmPasswordSecretPath))
-	if err != nil {
-		setupLog.Error(err, "unable to fetch garm password from either flag, os_env or filepath", "error", err)
-		os.Exit(1)
+	if garmPassword == "" {
+		if garmPassword, err = secret.ReadFromFile(garmPasswordSecretPath); err != nil {
+			setupLog.Error(err, "unable to fetch garm password from either flag, os_env or filepath", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	if err = (&controller.EnterpriseReconciler{
@@ -164,7 +165,7 @@ func main() {
 
 		BaseURL:  garmServer,
 		Username: garmUsername,
-		Password: resolvedGarmPassword,
+		Password: garmPassword,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Enterprise")
 		os.Exit(1)
@@ -175,7 +176,7 @@ func main() {
 
 		BaseURL:  garmServer,
 		Username: garmUsername,
-		Password: resolvedGarmPassword,
+		Password: garmPassword,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Pool")
 		os.Exit(1)
@@ -194,7 +195,7 @@ func main() {
 
 		BaseURL:  garmServer,
 		Username: garmUsername,
-		Password: resolvedGarmPassword,
+		Password: garmPassword,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
 		os.Exit(1)

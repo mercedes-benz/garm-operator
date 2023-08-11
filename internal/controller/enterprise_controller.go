@@ -170,10 +170,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 func (r *EnterpriseReconciler) createOrUpdate(ctx context.Context, scope garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) error {
 	log := log.FromContext(ctx)
 
-	webhookSecret, err := secret.TryGet(
-		enterprise.Spec.WebhookSecret,
-		secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace),
-	)
+	webhookSecret, err := secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace)
 	if err != nil {
 		return err
 	}

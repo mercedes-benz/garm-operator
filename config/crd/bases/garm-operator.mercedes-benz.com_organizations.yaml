@@ -58,8 +58,6 @@ spec:
             properties:
               credentialsName:
                 type: string
-              webhookSecret:
-                type: string
               webhookSecretRef:
                 properties:
                   key:
@@ -72,6 +70,7 @@ spec:
                 type: object
             required:
             - credentialsName
+            - webhookSecretRef
             type: object
           status:
             description: OrganizationStatus defines the observed state of Organization
