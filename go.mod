@@ -8,6 +8,7 @@ require (
 	github.com/go-openapi/runtime v0.26.0
 	github.com/onsi/ginkgo/v2 v2.9.5
 	github.com/onsi/gomega v1.27.7
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/pflag v1.0.5
 	go.uber.org/mock v0.2.0
 	k8s.io/api v0.27.2
@@ -62,7 +63,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.15.1 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
