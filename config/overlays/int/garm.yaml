@@ -15,8 +15,26 @@ spec:
     - secretKey: webhookSecret
       remoteRef:
         key: garm-int
-        version: "1"
         property: webhook_secret
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: garm-cli-password
+  namespace: garm-infra-stage-int
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: garm-cli-password
+    creationPolicy: Owner
+  data:
+    - secretKey: cliPassword
+      remoteRef:
+        key: garm-int
+        property: cli_password
 ---
 apiVersion: garm-operator.mercedes-benz.com/v1alpha1
 kind: Organization
