@@ -19,6 +19,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/event"
+	"k8s.io/client-go/tools/record"
 	"strings"
 
 	"github.com/cloudbase/garm/client/organizations"
@@ -39,13 +41,15 @@ import (
 // OrganizationReconciler reconciles a Organization object
 type OrganizationReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 
 	BaseURL  string
 	Username string
 	Password string
 }
 
+//+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/finalizers,verbs=update
@@ -117,7 +121,9 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 
 				if !strings.EqualFold(garmOrganization.CredentialsName, organization.Spec.CredentialsName) &&
 					!strings.EqualFold(garmOrganization.WebhookSecret, webhookSecret) {
-					return ctrl.Result{}, fmt.Errorf("organization with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing organization first")
+					err := fmt.Errorf("organization with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing organization first")
+					event.Error(r.Recorder, organization, err)
+					return ctrl.Result{}, err
 				}
 
 				log.Info("garm organization object found for given organization CR")
@@ -131,6 +137,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 				}
 
 				log.Info("existing garm organization object successfully adopted")
+				event.Info(r.Recorder, organization, "existing garm organization object successfully adopted")
 
 				return ctrl.Result{}, nil
 			}
@@ -141,6 +148,8 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 	case organization.Status.ID == "":
 
 		log.Info("status.ID is empty and organization doesn't exist on garm side. Creating new organization in garm")
+		event.Creating(r.Recorder, organization, "organization doesn't exist on garm side")
+
 		retValue, err := scope.CreateOrganization(
 			organizations.NewCreateOrgParams().
 				WithBody(params.CreateOrgParams{
@@ -163,6 +172,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 		}
 
 		log.Info("creating organization in garm succeeded")
+		event.Info(r.Recorder, organization, "organization enterprise in garm succeeded")
 
 		return ctrl.Result{}, nil
 
@@ -187,6 +197,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 			webhookSecret != garmOrganization.Payload.WebhookSecret {
 
 			log.Info("organization credentials or webhook secret has changed, updating garm organization object")
+			event.Updating(r.Recorder, organization, "organization credentials or webhook secret has changed")
 
 			// update credentials and webhook secret
 			retValue, err := scope.UpdateOrganization(
@@ -222,6 +233,7 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garm
 	log.WithValues("organization", organization.Name)
 
 	log.Info("starting organization deletion")
+	event.Deleting(r.Recorder, organization, "starting organization deletion")
 
 	err := scope.DeleteOrganization(
 		organizations.NewDeleteOrgParams().

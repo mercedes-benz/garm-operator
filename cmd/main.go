@@ -152,8 +152,9 @@ func main() {
 	}
 
 	if err = (&controller.EnterpriseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("enterprise-controller"),
 
 		BaseURL:  garmServer,
 		Username: garmUsername,
@@ -163,8 +164,9 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controller.PoolReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("pool-controller"),
 
 		BaseURL:  garmServer,
 		Username: garmUsername,
@@ -182,8 +184,9 @@ func main() {
 	}
 
 	if err = (&controller.OrganizationReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("organization-controller"),
 
 		BaseURL:  garmServer,
 		Username: garmUsername,

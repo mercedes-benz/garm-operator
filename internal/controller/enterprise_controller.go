@@ -19,6 +19,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/event"
+	"k8s.io/client-go/tools/record"
 	"strings"
 
 	"github.com/cloudbase/garm/client/enterprises"
@@ -39,13 +41,15 @@ import (
 // EnterpriseReconciler reconciles a Enterprise object
 type EnterpriseReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 
 	BaseURL  string
 	Username string
 	Password string
 }
 
+//+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=enterprises,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=enterprises/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=enterprises/finalizers,verbs=update
@@ -118,7 +122,9 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 
 				if !strings.EqualFold(garmEnterprise.CredentialsName, enterprise.Spec.CredentialsName) &&
 					!strings.EqualFold(garmEnterprise.WebhookSecret, webhookSecret) {
-					return ctrl.Result{}, fmt.Errorf("enterprise with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing enterprise first")
+					err := fmt.Errorf("enterprise with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing enterprise first")
+					event.Error(r.Recorder, enterprise, err)
+					return ctrl.Result{}, err
 				}
 
 				log.Info("garm enterprise object found for given enterprise CR")
@@ -132,6 +138,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 				}
 
 				log.Info("existing garm enterprise object successfully adopted")
+				event.Info(r.Recorder, enterprise, "existing garm enterprise object successfully adopted")
 
 				return ctrl.Result{}, nil
 			}
@@ -142,6 +149,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 	case enterprise.Status.ID == "":
 
 		log.Info("status.ID is empty and enterprise doesn't exist on garm side. Creating new enterprise in garm")
+		event.Creating(r.Recorder, enterprise, "enterprise doesn't exist on garm side")
 
 		retValue, err := scope.CreateEnterprise(
 			enterprises.NewCreateEnterpriseParams().
@@ -165,6 +173,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 		}
 
 		log.Info("creating enterprise in garm succeeded")
+		event.Info(r.Recorder, enterprise, "creating enterprise in garm succeeded")
 
 		return ctrl.Result{}, nil
 
@@ -193,6 +202,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 			webhookSecret != garmEnterprise.Payload.WebhookSecret {
 
 			log.Info("enterprise credentials or webhook secret has changed, updating garm enterprise object")
+			event.Updating(r.Recorder, enterprise, "enterprise credentials or webhook secret has changed")
 
 			// update credentials and webhook secret
 			retValue, err := scope.UpdateEnterprise(
@@ -229,6 +239,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	log.WithValues("enterprise", enterprise.Name)
 
 	log.Info("starting enterprise deletion")
+	event.Deleting(r.Recorder, enterprise, "starting organization deletion")
 
 	err := scope.DeleteEnterprise(
 		enterprises.NewDeleteEnterpriseParams().
