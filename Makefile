@@ -115,6 +115,7 @@ install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~
 
 .PHONY: generate-crd-manifests
 generate-crd-manifests: manifests kustomize ## Generate CRD manifests (primarly for release process)
+	mkdir -p tmp
 	$(KUSTOMIZE) build config/crd > tmp/crd.yaml
 
 .PHONY: uninstall
@@ -129,6 +130,7 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: generate-deployment-manifests
 generate-deployment-manifests: manifests kustomize ## Generate deployment manifests (primarly for release process)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	mkdir -p tmp
 	$(KUSTOMIZE) build config/default > tmp/operator.yaml
 
 .PHONY: undeploy
