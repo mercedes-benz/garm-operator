@@ -115,7 +115,7 @@ install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~
 
 .PHONY: generate-crd-manifests
 generate-crd-manifests: manifests kustomize ## Generate CRD manifests (primarly for release process)
-	$(KUSTOMIZE) build config/crd > dist/crd.yaml
+	$(KUSTOMIZE) build config/crd > tmp/crd.yaml
 
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -129,7 +129,7 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: generate-deployment-manifests
 generate-deployment-manifests: manifests kustomize ## Generate deployment manifests (primarly for release process)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default > dist/operator.yaml
+	$(KUSTOMIZE) build config/default > tmp/operator.yaml
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -139,8 +139,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 
 .PHONY: release
 release: goreleaser ## Create a new release
-	mkdir -p dist/
-	$(GORELEASER) release
+	$(GORELEASER) release --clean
 
 ##@ Build Dependencies
 

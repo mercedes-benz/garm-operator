@@ -56,8 +56,8 @@ release:
     name: garm-operator
   prerelease: auto
   extra_files:
-    - glob: dist/crd.yaml
-    - glob: dist/operator.yaml
+    - glob: tmp/crd.yaml
+    - glob: tmp/operator.yaml
 
 github_urls:
   api: https://git.i.mercedes-benz.com/api/v3/
