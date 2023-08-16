@@ -150,12 +150,10 @@ func main() {
 		setupLog.Error(errors.New("unable to fetch garm server from either flag or os_env"), "unable to start manager")
 		os.Exit(1)
 	}
-
 	if garmUsername == "" {
 		setupLog.Error(errors.New("unable to fetch garm username from either flag or os_env"), "unable to start manager")
 		os.Exit(1)
 	}
-
 	if garmPassword == "" {
 		setupLog.Error(errors.New("unable to fetch garm password from either flag or os_env"), "unable to start manager")
 		os.Exit(1)
