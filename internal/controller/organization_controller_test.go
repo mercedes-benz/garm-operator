@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"k8s.io/client-go/tools/record"
 	"reflect"
 	"testing"
 
@@ -407,6 +408,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				BaseURL:  "http://domain.does.not.exist:9997",
 				Username: "admin",
 				Password: "admin",
+				Recorder: record.NewFakeRecorder(3),
 			}
 
 			organization := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Organization)
@@ -501,6 +503,7 @@ func TestOrganizationReconciler_reconcileDelete(t *testing.T) {
 				BaseURL:  "http://domain.does.not.exist:9997",
 				Username: "admin",
 				Password: "admin",
+				Recorder: record.NewFakeRecorder(3),
 			}
 
 			organization := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Organization)

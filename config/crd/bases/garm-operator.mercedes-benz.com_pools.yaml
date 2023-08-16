@@ -69,8 +69,6 @@ spec:
                 type: string
               flavor:
                 type: string
-              forceDeleteRunners:
-                type: boolean
               githubRunnerGroup:
                 type: string
               githubScopeRef:
@@ -119,7 +117,6 @@ spec:
             required:
             - enabled
             - flavor
-            - forceDeleteRunners
             - githubScopeRef
             - imageName
             - maxRunners

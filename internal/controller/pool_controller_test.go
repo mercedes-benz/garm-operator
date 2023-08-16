@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"k8s.io/client-go/tools/record"
 	"reflect"
 	"testing"
 
@@ -642,6 +643,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				BaseURL:  "http://domain.does.not.exist:9997",
 				Username: "admin",
 				Password: "admin",
+				Recorder: record.NewFakeRecorder(3),
 			}
 
 			pool := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Pool)
@@ -661,6 +663,331 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			if !reflect.DeepEqual(pool, tt.expectedObject) {
 				t.Errorf("PoolReconciler.reconcileNormal() \n got =  %#v \n want = %#v", pool, tt.expectedObject)
 			}
+		})
+	}
+}
+
+func TestPoolController_ReconcileDelete(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	poolId := "fb2bceeb-f74d-435d-9648-626c75cb23ce"
+	enterpriseId := "93068607-2d0d-4b76-a950-0e40d31955b8"
+	enterpriseName := "test-enterprise"
+	namespaceName := "test-namespace"
+
+	tests := []struct {
+		name string
+		// the object to reconcile
+		object client.Object
+		// a list of objects to initialize the fake client with
+		// this can be used to define other existing objects that are referenced by the object to reconcile
+		// e.g. images or other pools ..
+		runtimeObjects    []runtime.Object
+		expectGarmRequest func(m *mock.MockPoolClientMockRecorder)
+		wantErr           bool
+		expectedObject    *garmoperatorv1alpha1.Pool
+	}{
+		{
+			name: "delete pool - scaling down runners",
+			object: &garmoperatorv1alpha1.Pool{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pool",
+					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-enterprise-pool",
+					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.PoolSpec{
+					GitHubScopeRef: v1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
+						Name:     enterpriseName,
+					},
+					ProviderName:           "kubernetes_external",
+					MaxRunners:             5,
+					MinIdleRunners:         3,
+					ImageName:              "ubuntu-image",
+					Flavor:                 "medium",
+					OSType:                 "linux",
+					OSArch:                 "arm64",
+					Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+					Enabled:                true,
+					RunnerBootstrapTimeout: 20,
+					ExtraSpecs:             "",
+					GitHubRunnerGroup:      "",
+				},
+				Status: garmoperatorv1alpha1.PoolStatus{
+					ID:            poolId,
+					Synced:        true,
+					LastSyncTime:  metav1.Time{},
+					LastSyncError: "",
+					RunnerCount:   0,
+					ActiveRunners: 0,
+					IdleRunners:   0,
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Pool{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pool",
+					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-enterprise-pool",
+					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.PoolSpec{
+					GitHubScopeRef: v1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
+						Name:     enterpriseName,
+					},
+					ProviderName:           "kubernetes_external",
+					MaxRunners:             5,
+					MinIdleRunners:         0,
+					ImageName:              "ubuntu-image",
+					Flavor:                 "medium",
+					OSType:                 "linux",
+					OSArch:                 "arm64",
+					Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+					Enabled:                true,
+					RunnerBootstrapTimeout: 20,
+					ExtraSpecs:             "",
+					GitHubRunnerGroup:      "",
+				},
+				Status: garmoperatorv1alpha1.PoolStatus{
+					ID:            poolId,
+					Synced:        true,
+					LastSyncTime:  metav1.Time{},
+					LastSyncError: "",
+					RunnerCount:   0,
+					ActiveRunners: 0,
+					IdleRunners:   0,
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceName,
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("supersecretvalue"),
+					},
+				},
+				&garmoperatorv1alpha1.Image{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "ubuntu-image",
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.ImageSpec{
+						Tag: "linux-ubuntu-22.04-arm64",
+					},
+				},
+				&garmoperatorv1alpha1.Enterprise{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Enterprise",
+						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      enterpriseName,
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.EnterpriseSpec{
+						CredentialsName: "foobar",
+						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "my-webhook-secret",
+							Key:  "webhookSecret",
+						},
+					},
+					Status: garmoperatorv1alpha1.EnterpriseStatus{
+						ID:                       enterpriseId,
+						PoolManagerIsRunning:     false,
+						PoolManagerFailureReason: "no resources available",
+					},
+				},
+			},
+			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {},
+		},
+		{
+			name: "delete pool - scaling down runners",
+			object: &garmoperatorv1alpha1.Pool{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pool",
+					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-enterprise-pool",
+					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.PoolSpec{
+					GitHubScopeRef: v1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
+						Name:     enterpriseName,
+					},
+					ProviderName:           "kubernetes_external",
+					MaxRunners:             5,
+					MinIdleRunners:         0,
+					ImageName:              "ubuntu-image",
+					Flavor:                 "medium",
+					OSType:                 "linux",
+					OSArch:                 "arm64",
+					Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+					Enabled:                true,
+					RunnerBootstrapTimeout: 20,
+					ExtraSpecs:             "",
+					GitHubRunnerGroup:      "",
+				},
+				Status: garmoperatorv1alpha1.PoolStatus{
+					ID:            poolId,
+					Synced:        true,
+					LastSyncTime:  metav1.Time{},
+					LastSyncError: "",
+					RunnerCount:   0,
+					ActiveRunners: 0,
+					IdleRunners:   0,
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Pool{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pool",
+					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "my-enterprise-pool",
+					Namespace:  namespaceName,
+					Finalizers: []string{},
+				},
+				Spec: garmoperatorv1alpha1.PoolSpec{
+					GitHubScopeRef: v1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
+						Name:     enterpriseName,
+					},
+					ProviderName:           "kubernetes_external",
+					MaxRunners:             5,
+					MinIdleRunners:         0,
+					ImageName:              "ubuntu-image",
+					Flavor:                 "medium",
+					OSType:                 "linux",
+					OSArch:                 "arm64",
+					Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+					Enabled:                true,
+					RunnerBootstrapTimeout: 20,
+					ExtraSpecs:             "",
+					GitHubRunnerGroup:      "",
+				},
+				Status: garmoperatorv1alpha1.PoolStatus{
+					ID:            poolId,
+					Synced:        true,
+					LastSyncTime:  metav1.Time{},
+					LastSyncError: "",
+					RunnerCount:   0,
+					ActiveRunners: 0,
+					IdleRunners:   0,
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceName,
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("supersecretvalue"),
+					},
+				},
+				&garmoperatorv1alpha1.Image{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "ubuntu-image",
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.ImageSpec{
+						Tag: "linux-ubuntu-22.04-arm64",
+					},
+				},
+				&garmoperatorv1alpha1.Enterprise{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Enterprise",
+						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      enterpriseName,
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.EnterpriseSpec{
+						CredentialsName: "foobar",
+						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "my-webhook-secret",
+							Key:  "webhookSecret",
+						},
+					},
+					Status: garmoperatorv1alpha1.EnterpriseStatus{
+						ID:                       enterpriseId,
+						PoolManagerIsRunning:     false,
+						PoolManagerFailureReason: "no resources available",
+					},
+				},
+			},
+			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
+				m.DeletePool(pools.NewDeletePoolParams().WithPoolID(poolId)).Return(nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			schemeBuilder := runtime.SchemeBuilder{
+				garmoperatorv1alpha1.AddToScheme,
+			}
+
+			err := schemeBuilder.AddToScheme(scheme.Scheme)
+			if err != nil {
+				t.Fatal(err)
+			}
+			runtimeObjects := []runtime.Object{tt.object}
+			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Pool{}).Build()
+
+			// create a fake reconciler
+			reconciler := &PoolReconciler{
+				Client:   client,
+				BaseURL:  "http://domain.does.not.exist:9997",
+				Username: "admin",
+				Password: "admin",
+				Recorder: record.NewFakeRecorder(3),
+			}
+
+			pool := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Pool)
+
+			mockPoolClient := mock.NewMockPoolClient(mockCtrl)
+			tt.expectGarmRequest(mockPoolClient.EXPECT())
+
+			_, err = reconciler.reconcileDelete(context.Background(), mockPoolClient, pool)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("PoolReconciler.reconcileDelete() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// empty resource version to avoid comparison errors
+			pool.ObjectMeta.ResourceVersion = ""
+			pool.Status.LastSyncTime = metav1.Time{}
+			if !reflect.DeepEqual(pool, tt.expectedObject) {
+				t.Errorf("PoolReconciler.reconcileNormal() \n got =  %#v \n want = %#v", pool, tt.expectedObject)
+			}
+
 		})
 	}
 }

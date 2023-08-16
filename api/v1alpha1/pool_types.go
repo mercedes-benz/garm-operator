@@ -39,7 +39,6 @@ type PoolSpec struct {
 	Tags                   []string                         `json:"tags"`
 	Enabled                bool                             `json:"enabled"`
 	RunnerBootstrapTimeout uint                             `json:"runnerBootstrapTimeout"`
-	ForceDeleteRunners     bool                             `json:"forceDeleteRunners"`
 
 	// The name of the image resource, this image resource must exists in the same namespace as the pool
 	ImageName string `json:"imageName"`

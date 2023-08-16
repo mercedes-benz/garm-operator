@@ -285,21 +285,15 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		return ctrl.Result{}, nil
 	}
 
-	if controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) && pool.Spec.ForceDeleteRunners {
+	if controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) && pool.Spec.MinIdleRunners != 0 {
 		pool.Spec.MinIdleRunners = 0
 		err := r.Update(ctx, pool)
 		if err != nil {
 			return r.handleUpdateError(ctx, pool, err)
 		}
 		log.Info("scaling pool down before deleting")
-		event.Deleting(r.Recorder, pool, fmt.Sprintf("scaling down runners in Pool %s in namespace %s", pool.Name, pool.Namespace))
+		event.Deleting(r.Recorder, pool, "scaling down runners in pool before deleting")
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, nil
-	}
-
-	// remove finalizer so k8s can delete resource
-	controllerutil.RemoveFinalizer(pool, key.PoolFinalizerName)
-	if err := r.Update(ctx, pool); err != nil {
-		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err))
 	}
 
 	err := garmClient.DeletePool(
@@ -307,6 +301,12 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 			WithPoolID(pool.Status.ID),
 	)
 	if err != nil {
+		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err))
+	}
+
+	// remove finalizer so k8s can delete resource
+	controllerutil.RemoveFinalizer(pool, key.PoolFinalizerName)
+	if err := r.Update(ctx, pool); err != nil {
 		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err))
 	}
 

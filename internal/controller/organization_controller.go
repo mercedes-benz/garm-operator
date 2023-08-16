@@ -172,7 +172,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 		}
 
 		log.Info("creating organization in garm succeeded")
-		event.Info(r.Recorder, organization, "organization enterprise in garm succeeded")
+		event.Info(r.Recorder, organization, "organization in garm succeeded")
 
 		return ctrl.Result{}, nil
 
