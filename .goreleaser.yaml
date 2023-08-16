@@ -1,0 +1,67 @@
+project_name: garm-operator
+before:
+  hooks:
+    - go mod tidy
+    - make generate-deployment-manifests
+    - make generate-crd-manifests
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    main: ./cmd/
+
+dockers:
+  - image_templates:
+      - "registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:{{ .Version }}"
+      - "registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:latest"
+    dockerfile: release.Dockerfile
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of uname.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  use: github
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "Bug fixes"
+      regexp: '^.*?bug(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Others
+      order: 999
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+release:
+  github:
+    owner: GitHub-Actions
+    name: garm-operator
+  prerelease: auto
+  extra_files:
+    - glob: tmp/crd.yaml
+    - glob: tmp/operator.yaml
+
+github_urls:
+  api: https://git.i.mercedes-benz.com/api/v3/
+  upload: https://git.i.mercedes-benz.com/api/uploads/
+  download: https://git.i.mercedes-benz.com
+  # set to true if you use a self-signed certificate
+  skip_tls_verify: true

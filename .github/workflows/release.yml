@@ -1,0 +1,53 @@
+name: release
+
+on:
+  push:
+    # run only against tags
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  VAULT_ADDR: https://hcvault.app.corpintra.net/
+  VAULT_NAMESPACE: Action-Runners
+  VAULT_ROLE: garm-operator
+
+jobs:
+  goreleaser:
+    runs-on: [ road-runner, small ] # could run on a k8s pod in the future
+    steps:
+      - name: setup vault
+        uses: hashicorp/vault-action@v2.6.0
+        with:
+          method: jwt
+          url: ${{ env.VAULT_ADDR }}
+          namespace: ${{ env.VAULT_NAMESPACE }}
+          role: ${{ env.VAULT_ROLE }}
+          exportToken: true
+          secrets: |
+            secrets/data/road-runner-technical-user harbor_password | HARBOR_PASSWORD ;
+            secrets/data/road-runner-technical-user harbor_username | HARBOR_USERNAME ;
+            secrets/data/road-runner-technical-user gh_token | GITHUB_TOKEN ;
+
+      - name: Login to harbor
+        uses: docker/login-action@v2
+        with:
+          registry: registry-emea.app.corpintra.net
+          username: ${{ env.HARBOR_USERNAME }}
+          password: ${{ env.HARBOR_PASSWORD }}
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - run: git fetch --force --tags
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: release
+        run: make release
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
