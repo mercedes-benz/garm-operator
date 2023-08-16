@@ -17,8 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"flag"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
 	"os"
 	"time"
 
@@ -66,10 +66,9 @@ func main() {
 
 		watchNamespace string
 
-		garmServer             string
-		garmUsername           string
-		garmPassword           string
-		garmPasswordSecretPath string
+		garmServer   string
+		garmUsername string
+		garmPassword string
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -86,7 +85,6 @@ func main() {
 	flag.StringVar(&garmServer, "garm-server", "", "The address of the GARM server")
 	flag.StringVar(&garmUsername, "garm-username", "", "The username for the GARM server")
 	flag.StringVar(&garmPassword, "garm-password", "", "The password for the GARM server")
-	flag.StringVar(&garmPasswordSecretPath, "garm-password-secret-path", "", "Path to a file which contains the password for the GARM server")
 
 	klog.InitFlags(flag.CommandLine)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -105,10 +103,6 @@ func main() {
 	if len(os.Getenv("GARM_PASSWORD")) > 0 {
 		setupLog.Info("Using garm-password from environment variable")
 		garmPassword = os.Getenv("GARM_PASSWORD")
-	}
-	if len(os.Getenv("GARM_PASSWORD_SECRET_PATH")) > 0 {
-		setupLog.Info("Using garm-password-secret-path from environment variable")
-		garmPasswordSecretPath = os.Getenv("GARM_PASSWORD_SECRET_PATH")
 	}
 	if len(os.Getenv("WATCH_NAMESPACE")) > 0 {
 		setupLog.Info("using watch-namespace from environment variable")
@@ -153,10 +147,8 @@ func main() {
 	}
 
 	if garmPassword == "" {
-		if garmPassword, err = secret.ReadFromFile(garmPasswordSecretPath); err != nil {
-			setupLog.Error(err, "unable to fetch garm password from either flag, os_env or filepath", "error", err)
-			os.Exit(1)
-		}
+		setupLog.Error(errors.New("unable to fetch garm password from either flag or os_env"), "unable to start manager")
+		os.Exit(1)
 	}
 
 	if err = (&controller.EnterpriseReconciler{

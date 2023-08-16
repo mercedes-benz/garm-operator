@@ -3,33 +3,13 @@ package secret
 import (
 	"context"
 	"fmt"
+
 	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
-
-// ReadFromFile fetches a secret value from a given file path
-func ReadFromFile(filePath string) (string, error) {
-	if filePath == "" {
-		return "", nil
-	}
-
-	bytes, err := os.ReadFile(filePath)
-	if err != nil {
-		return "", err
-	}
-
-	result := string(bytes)
-	result = strings.TrimSpace(result)
-	result = strings.Replace(result, "\t", "", -1)
-	result = strings.Replace(result, "\n", "", -1)
-
-	return result, err
-}
 
 // FetchRef fetches a secret for a given garmoperatorv1alpha1.SecretRef and namespace
 func FetchRef(ctx context.Context, c client.Client, ref *garmoperatorv1alpha1.SecretRef, namespace string) (string, error) {
