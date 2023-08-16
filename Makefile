@@ -138,9 +138,9 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 ##@ Release
 
 .PHONY: release
-release: goreleaser mockgen ## Create a new release
+release: goreleaser ## Create a new release
 	mkdir -p dist/
-	$(GORELEASER) release --clean
+	$(GORELEASER) release
 
 ##@ Build Dependencies
 

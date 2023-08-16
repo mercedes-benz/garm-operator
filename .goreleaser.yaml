@@ -2,7 +2,6 @@ project_name: garm-operator
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
     - make generate-deployment-manifests
     - make generate-crd-manifests
 builds:
@@ -10,6 +9,8 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
+    goarch:
+      - amd64
     main: ./cmd/
 
 dockers:
