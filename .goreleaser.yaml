@@ -2,7 +2,7 @@ project_name: garm-operator
 before:
   hooks:
     - go mod tidy
-    - make generate-deployment-manifests
+    - sh -c "IMG=registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:{{ .Version }} make generate-deployment-manifests"
     - make generate-crd-manifests
 builds:
   - env:
@@ -58,6 +58,8 @@ release:
   extra_files:
     - glob: tmp/crd.yaml
     - glob: tmp/operator.yaml
+  header: |
+    Container image is available at `registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:{{ .Version }}`
 
 github_urls:
   api: https://git.i.mercedes-benz.com/api/v3/

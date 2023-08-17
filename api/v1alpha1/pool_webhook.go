@@ -51,7 +51,6 @@ func (r *Pool) Default() {
 	poollog.Info("default", "name", r.Name)
 }
 
-// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-garm-operator-mercedes-benz-com-v1alpha1-pool,mutating=false,failurePolicy=fail,sideEffects=None,groups=garm-operator.mercedes-benz.com,resources=pools,verbs=create;update,versions=v1alpha1,name=vpool.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &Pool{}

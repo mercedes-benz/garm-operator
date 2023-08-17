@@ -129,9 +129,10 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 
 .PHONY: generate-deployment-manifests
 generate-deployment-manifests: manifests kustomize ## Generate deployment manifests (primarly for release process)
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	mkdir -p tmp
 	$(KUSTOMIZE) build config/default > tmp/operator.yaml
+	sed -i'' -e 's@image: .*@image: '"${IMG}"'@' tmp/operator.yaml
+
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.

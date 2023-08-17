@@ -22,6 +22,8 @@ import (
 	"os"
 	"time"
 
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
@@ -80,7 +82,7 @@ func main() {
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
 
 	flag.StringVar(&watchNamespace, "namespace", "",
-		"Namespace that the controller watches to reconcile cluster-api objects. If unspecified, the controller watches for cluster-api objects across all namespaces.")
+		"Namespace that the controller watches to reconcile garm objects. If unspecified, the controller watches for garm objects across all namespaces.")
 
 	flag.StringVar(&garmServer, "garm-server", "", "The address of the GARM server")
 	flag.StringVar(&garmUsername, "garm-username", "", "The username for the GARM server")

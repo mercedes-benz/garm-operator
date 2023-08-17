@@ -1,25 +1,12 @@
 #!/usr/bin/env bash
 
-# Copyright 2021 The Kubernetes Authors.
+# This script installs a local kind cluster with a local container registry
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# This script installs a local kind cluster with a local container registry and the correct files mounted for using CAPD
-# to test Cluster API.
-# This script is a customized version of the kind_with_local_registry script supplied by the kind maintainers at
+# This script is a customized version of the kind_with_local_registry script from
 # https://kind.sigs.k8s.io/docs/user/local-registry/
-# The modifications mount the docker socket inside the kind cluster so that CAPD can be used to
-# created docker containers.
+#
+# The modifications change the registry port, explicity target the kind-cluster by the given name
+# and also check if the cluster already exists before creating it.
 
 set -o errexit
 set -o nounset
@@ -47,7 +34,8 @@ if [ "$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true
 fi
 
 # 3. Create kind cluster with containerd registry config dir enabled.
-# TODO(killianmuldoon): kind will eventually enable this by default and this patch will be unnecessary.
+# TODO: kind will eventually enable this by default and this patch will
+# be unnecessary.
 #
 # See:
 # https://github.com/kubernetes-sigs/kind/issues/2875
@@ -56,13 +44,6 @@ fi
 cat <<EOF | kind create cluster --name="$KIND_CLUSTER_NAME" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-networking:
-  ipFamily: dual
-nodes:
-- role: control-plane
-  extraMounts:
-    - hostPath: /var/run/docker.sock
-      containerPath: /var/run/docker.sock
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry]
@@ -70,7 +51,6 @@ containerdConfigPatches:
 EOF
 
 # 4. Add the registry config to the nodes
-#
 # This is necessary because localhost resolves to loopback addresses that are
 # network-namespace local.
 # In other words: localhost in the container is not localhost on the host.
@@ -104,11 +84,3 @@ data:
     host: "localhost:${reg_port}"
     help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
 EOF
-
-# TODO for wednesday:
-# move garm with k8s resource foo into a kubernetes deployment - hack around
-# expose/use node-port and to the ngrok foo
-#
-# result:
-# - garm webhook should be reachable via ngrok and github
-# - garm-operator should be able to access garm itself
