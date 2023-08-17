@@ -17,11 +17,10 @@ spec:
   enabled: true
   extraSpecs: ""
   flavor: small
-  forceDeleteRunners: false
   githubRunnerGroup: ""
   imageName: runner-default
-  maxRunners: 1
-  minIdleRunners: 0
+  maxRunners: 2
+  minIdleRunners: 2
   osArch: arm64
   osType: linux
   providerName: kubernetes_external
@@ -52,7 +51,6 @@ spec:
   enabled: true
   extraSpecs: ""
   flavor: large
-  forceDeleteRunners: false
   githubRunnerGroup: ""
   imageName: runner-default
   maxRunners: 1
@@ -87,11 +85,10 @@ spec:
   enabled: true
   extraSpecs: ""
   flavor: medium
-  forceDeleteRunners: false
   githubRunnerGroup: ""
   imageName: runner-default
-  maxRunners: 1
-  minIdleRunners: 0
+  maxRunners: 2
+  minIdleRunners: 2
   osArch: arm64
   osType: linux
   providerName: kubernetes_external

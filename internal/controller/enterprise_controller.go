@@ -247,6 +247,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteEnterprise error: %s", err))
+		event.Error(r.Recorder, enterprise, err)
 		return ctrl.Result{}, err
 	}
 

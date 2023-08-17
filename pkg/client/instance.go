@@ -27,16 +27,25 @@ func NewInstanceClient(garmParams GarmScopeParams) (InstanceClient, error) {
 }
 
 func (i *instanceClient) GetInstance(params *instances.GetInstanceParams) (*instances.GetInstanceOK, error) {
-	//TODO implement me
-	panic("implement me")
+	instance, err := i.client.Instances.GetInstance(params, i.token)
+	if err != nil {
+		return nil, err
+	}
+	return instance, nil
 }
 
 func (i *instanceClient) ListInstances(params *instances.ListInstancesParams) (*instances.ListInstancesOK, error) {
-	//TODO implement me
-	panic("implement me")
+	instances, err := i.client.Instances.ListInstances(params, i.token)
+	if err != nil {
+		return nil, err
+	}
+	return instances, nil
 }
 
 func (i *instanceClient) ListPoolInstances(params *instances.ListPoolInstancesParams) (*instances.ListPoolInstancesOK, error) {
-	//TODO implement me
-	panic("implement me")
+	instances, err := i.client.Instances.ListPoolInstances(params, i.token)
+	if err != nil {
+		return nil, err
+	}
+	return instances, nil
 }

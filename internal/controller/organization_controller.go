@@ -241,6 +241,7 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garm
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteOrganization error: %s", err))
+		event.Error(r.Recorder, organization, err)
 		return ctrl.Result{}, err
 	}
 

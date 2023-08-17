@@ -77,6 +77,15 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
+	runnerInstanceClient, err := garmClient.NewInstanceClient(garmClient.GarmScopeParams{
+		BaseURL:  r.BaseURL,
+		Username: r.Username,
+		Password: r.Password,
+	})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	pool := &garmoperatorv1alpha1.Pool{}
 	if err := r.Get(ctx, req.NamespacedName, pool); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -88,7 +97,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	// handle deletion
 	if !pool.ObjectMeta.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, poolClient, pool)
+		return r.reconcileDelete(ctx, poolClient, pool, runnerInstanceClient)
 	}
 
 	return r.reconcileNormal(ctx, poolClient, pool)
@@ -124,7 +133,7 @@ func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmCli
 func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("trying to create pool...")
-	event.Creating(r.Recorder, pool, "")
+	event.Creating(r.Recorder, pool, "Start creating garm pool")
 
 	result, err := r.syncPools(ctx, garmClient, pool, gitHubScopeRef)
 	if err != nil {
@@ -269,7 +278,7 @@ func updatePool(garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Poo
 	return result.Payload, err
 }
 
-func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
 	// pool does not exist in garm database yet as ID in Status is empty, so we can safely delete it
 	log := log.FromContext(ctx)
 	log.Info("Deleting Pool", "pool", pool.Name)
@@ -296,7 +305,17 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, nil
 	}
 
-	err := garmClient.DeletePool(
+	runners, err := instanceClient.ListPoolInstances(
+		instances.NewListPoolInstancesParams().WithPoolID(pool.Status.ID))
+	if err != nil {
+		return r.handleUpdateError(ctx, pool, err)
+	}
+
+	if len(runners.GetPayload()) > 0 {
+		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, nil
+	}
+
+	err = garmClient.DeletePool(
 		pools.NewDeletePoolParams().
 			WithPoolID(pool.Status.ID),
 	)
@@ -355,7 +374,7 @@ func (r *PoolReconciler) syncPools(ctx context.Context, garmClient garmClient.Po
 	}
 
 	log.Info("Pool with specified specs does not yet exist, creating pool in garm")
-	event.Creating(r.Recorder, pool, fmt.Sprint("pool with specified specs does not yet exist, creating pool in garm"))
+	event.Creating(r.Recorder, pool, "pool with specified specs does not yet exist, creating pool in garm")
 	return createPool(ctx, garmClient, pool, image, gitHubScopeRef)
 }
 

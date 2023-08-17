@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"github.com/cloudbase/garm/client/instances"
 	"k8s.io/client-go/tools/record"
 	"reflect"
 	"testing"
@@ -649,6 +650,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			pool := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Pool)
 
 			mockPoolClient := mock.NewMockPoolClient(mockCtrl)
+
 			tt.expectGarmRequest(mockPoolClient.EXPECT())
 
 			_, err = reconciler.reconcileNormal(context.Background(), mockPoolClient, pool)
@@ -684,7 +686,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 		// this can be used to define other existing objects that are referenced by the object to reconcile
 		// e.g. images or other pools ..
 		runtimeObjects    []runtime.Object
-		expectGarmRequest func(m *mock.MockPoolClientMockRecorder)
+		expectGarmRequest func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder)
 		wantErr           bool
 		expectedObject    *garmoperatorv1alpha1.Pool
 	}{
@@ -814,10 +816,10 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {},
+			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {},
 		},
 		{
-			name: "delete pool - scaling down runners",
+			name: "delete pool - deleting garm resource",
 			object: &garmoperatorv1alpha1.Pool{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Pool",
@@ -940,8 +942,9 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
-				m.DeletePool(pools.NewDeletePoolParams().WithPoolID(poolId)).Return(nil)
+			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
+				instanceClient.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID(poolId)).Return(&instances.ListPoolInstancesOK{Payload: params.Instances{}}, nil)
+				poolClient.DeletePool(pools.NewDeletePoolParams().WithPoolID(poolId)).Return(nil)
 			},
 		},
 	}
@@ -973,9 +976,11 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 			pool := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Pool)
 
 			mockPoolClient := mock.NewMockPoolClient(mockCtrl)
-			tt.expectGarmRequest(mockPoolClient.EXPECT())
+			mockInstanceClient := mock.NewMockInstanceClient(mockCtrl)
 
-			_, err = reconciler.reconcileDelete(context.Background(), mockPoolClient, pool)
+			tt.expectGarmRequest(mockPoolClient.EXPECT(), mockInstanceClient.EXPECT())
+
+			_, err = reconciler.reconcileDelete(context.Background(), mockPoolClient, pool, mockInstanceClient)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PoolReconciler.reconcileDelete() error = %v, wantErr %v", err, tt.wantErr)
 				return
