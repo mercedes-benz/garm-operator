@@ -7,7 +7,6 @@ allow_k8s_contexts('garm-operator')
 # we use the `cert_manager` extension to deploy cert-manager into the kind-cluster
 # as the plugin has already well written readiness checks we can use it to wait for
 deploy_cert_manager(
-    load_to_kind=True, # this will load the images into the kind-cluster registry
     kind_cluster_name='garm-operator', # just for security reasons ;-)
     version='v1.12.0' # the version of cert-manager to deploy
 )

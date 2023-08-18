@@ -7,3 +7,4 @@ package mock
 //go:generate ../../../bin/mockgen -package mock -destination=enterprise.go -source=../enterprise.go Enterprise
 //go:generate ../../../bin/mockgen -package mock -destination=organization.go -source=../organization.go Organization
 //go:generate ../../../bin/mockgen -package mock -destination=pool.go -source=../pool.go Pool
+//go:generate ../../../bin/mockgen -package mock -destination=instance.go -source=../instance.go Instance

@@ -36,6 +36,27 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /validate-garm-operator-mercedes-benz-com-v1alpha1-image
+  failurePolicy: Fail
+  name: vimage.kb.io
+  rules:
+  - apiGroups:
+    - garm-operator.mercedes-benz.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - images
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /validate-garm-operator-mercedes-benz-com-v1alpha1-pool
   failurePolicy: Fail
   name: vpool.kb.io
