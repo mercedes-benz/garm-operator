@@ -210,12 +210,13 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 			enterprise.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
 			enterprise.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
 
-			if err := r.Status().Update(ctx, enterprise); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			return ctrl.Result{}, nil
 		}
+
+		if err := r.Status().Update(ctx, enterprise); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, nil
 	}
 
 	log.Info("reconciling enterprise successfully done")

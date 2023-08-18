@@ -203,13 +203,13 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 
 			organization.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
 			organization.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-
-			if err := r.Status().Update(ctx, organization); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			return ctrl.Result{}, nil
 		}
+
+		if err := r.Status().Update(ctx, organization); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, nil
 	}
 
 	log.Info("reconciling organization successfully done")
