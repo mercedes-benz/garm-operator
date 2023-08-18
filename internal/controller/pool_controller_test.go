@@ -3,12 +3,11 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"github.com/cloudbase/garm/client/instances"
-	"k8s.io/client-go/tools/record"
 	"reflect"
 	"testing"
 
 	"github.com/cloudbase/garm/client/enterprises"
+	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/client/pools"
 	"github.com/cloudbase/garm/params"
 	"go.uber.org/mock/gomock"
@@ -17,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -673,8 +673,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	poolId := "fb2bceeb-f74d-435d-9648-626c75cb23ce"
-	enterpriseId := "93068607-2d0d-4b76-a950-0e40d31955b8"
+	poolID := "fb2bceeb-f74d-435d-9648-626c75cb23ce"
+	enterpriseID := "93068607-2d0d-4b76-a950-0e40d31955b8"
 	enterpriseName := "test-enterprise"
 	namespaceName := "test-namespace"
 
@@ -724,7 +724,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolId,
+					ID:            poolID,
 					Synced:        true,
 					LastSyncTime:  metav1.Time{},
 					LastSyncError: "",
@@ -765,7 +765,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolId,
+					ID:            poolID,
 					Synced:        true,
 					LastSyncTime:  metav1.Time{},
 					LastSyncError: "",
@@ -810,7 +810,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseId,
+						ID:                       enterpriseID,
 						PoolManagerIsRunning:     false,
 						PoolManagerFailureReason: "no resources available",
 					},
@@ -852,7 +852,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolId,
+					ID:            poolID,
 					Synced:        true,
 					LastSyncTime:  metav1.Time{},
 					LastSyncError: "",
@@ -891,7 +891,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolId,
+					ID:            poolID,
 					Synced:        true,
 					LastSyncTime:  metav1.Time{},
 					LastSyncError: "",
@@ -936,22 +936,21 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseId,
+						ID:                       enterpriseID,
 						PoolManagerIsRunning:     false,
 						PoolManagerFailureReason: "no resources available",
 					},
 				},
 			},
 			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
-				instanceClient.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID(poolId)).Return(&instances.ListPoolInstancesOK{Payload: params.Instances{}}, nil)
-				poolClient.DeletePool(pools.NewDeletePoolParams().WithPoolID(poolId)).Return(nil)
+				instanceClient.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID(poolID)).Return(&instances.ListPoolInstancesOK{Payload: params.Instances{}}, nil)
+				poolClient.DeletePool(pools.NewDeletePoolParams().WithPoolID(poolID)).Return(nil)
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			schemeBuilder := runtime.SchemeBuilder{
 				garmoperatorv1alpha1.AddToScheme,
 			}
@@ -992,7 +991,6 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 			if !reflect.DeepEqual(pool, tt.expectedObject) {
 				t.Errorf("PoolReconciler.reconcileNormal() \n got =  %#v \n want = %#v", pool, tt.expectedObject)
 			}
-
 		})
 	}
 }
