@@ -27,6 +27,7 @@ k8s_resource(
         'garm-operator-mutating-webhook-configuration:mutatingwebhookconfiguration',
         'garm-operator-controller-manager:serviceaccount',
         'garm-operator-leader-election-role:role',
+        'garm-operator-manager-role:clusterrole',
         'garm-operator-manager-role:role',
         'garm-operator-leader-election-rolebinding:rolebinding',
         'garm-operator-manager-rolebinding:rolebinding',
