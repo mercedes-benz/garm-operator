@@ -220,6 +220,11 @@ lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported
 kind-cluster: ## Create a new kind cluster designed for local development
 	hack/kind-with-registry.sh
 
+.PHONY: delete-kind-cluster
+delete-kind-cluster:
+	kind delete cluster --name garm-operator
+	docker kill kind-registry && docker rm kind-registry
+
 .PHONY: tilt-up
 tilt-up: kind-cluster ## Start tilt and build kind cluster
 	tilt up
