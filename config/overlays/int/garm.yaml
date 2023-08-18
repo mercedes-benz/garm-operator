@@ -72,7 +72,6 @@ spec:
   enabled: false
   extraSpecs: '{\"garm_image_type\":\"runner-default\",\"garm_stage\":\"int\"}'
   flavor: small
-  forceDeleteRunners: true
   githubRunnerGroup: ""
   imageName: kubernetes-runner
   maxRunners: 2
@@ -107,7 +106,6 @@ spec:
   enabled: false
   extraSpecs: '{\"garm_image_type\":\"runner-default\",\"garm_stage\":\"int\"}'
   flavor: m1.medium
-  forceDeleteRunners: true
   githubRunnerGroup: ""
   imageName: runner-default
   maxRunners: 2
