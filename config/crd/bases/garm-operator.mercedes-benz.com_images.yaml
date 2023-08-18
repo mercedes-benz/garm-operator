@@ -16,7 +16,15 @@ spec:
     singular: image
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.tag
+      name: Tag
+      priority: 1
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Image is the Schema for the images API
@@ -48,3 +56,4 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}
