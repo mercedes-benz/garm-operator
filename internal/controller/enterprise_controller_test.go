@@ -21,20 +21,20 @@ import (
 	"reflect"
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/params"
 	"go.uber.org/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
 )
 
 func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
@@ -109,7 +109,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
 						CredentialsName: "foobar",
-					}}, nil)
+					},
+				}, nil)
 			},
 		},
 		{
@@ -173,7 +174,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						Name:            "existing-enterprise",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
-					}}, nil)
+					},
+				}, nil)
 
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").WithBody(params.UpdateEntityParams{
@@ -256,7 +258,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							IsRunning:     false,
 							FailureReason: "no resources available",
 						},
-					}}, nil)
+					},
+				}, nil)
 			},
 		},
 		{
@@ -324,7 +327,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
-					}}, nil)
+					},
+				}, nil)
 			},
 		},
 		{
@@ -385,7 +389,6 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			schemeBuilder := runtime.SchemeBuilder{
 				garmoperatorv1alpha1.AddToScheme,
 			}
@@ -422,7 +425,6 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			if !reflect.DeepEqual(enterprise, tt.expectedObject) {
 				t.Errorf("EnterpriseReconciler.reconcileNormal() got = %#v, want %#v", enterprise, tt.expectedObject)
 			}
-
 		})
 	}
 }
@@ -481,7 +483,6 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			schemeBuilder := runtime.SchemeBuilder{
 				garmoperatorv1alpha1.AddToScheme,
 			}
@@ -514,7 +515,7 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 				return
 			}
 
-			//check for mandatory finalizer
+			// check for mandatory finalizer
 			if controllerutil.ContainsFinalizer(enterprise, key.EnterpriseFinalizerName) {
 				t.Errorf("EnterpriseReconciler.Reconcile() finalizer still exist")
 				return

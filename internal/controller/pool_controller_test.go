@@ -6,9 +6,6 @@ import (
 	"reflect"
 	"testing"
 
-	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/client/pools"
 	"github.com/cloudbase/garm/params"
@@ -20,15 +17,19 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
 )
 
 func TestPoolController_ReconcileCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	outdatedPoolId := "a9f48897-77c3-4293-8462-732a22a908f1"
-	poolId := "fb2bceeb-f74d-435d-9648-626c75cb23ce"
-	enterpriseId := "93068607-2d0d-4b76-a950-0e40d31955b8"
+	outdatedPoolID := "a9f48897-77c3-4293-8462-732a22a908f1"
+	poolID := "fb2bceeb-f74d-435d-9648-626c75cb23ce"
+	enterpriseID := "93068607-2d0d-4b76-a950-0e40d31955b8"
 	enterpriseName := "test-enterprise"
 	namespaceName := "test-namespace"
 
@@ -107,7 +108,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolId,
+					ID:            poolID,
 					Synced:        true,
 					LastSyncTime:  metav1.Time{},
 					LastSyncError: "",
@@ -152,7 +153,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseId,
+						ID:                       enterpriseID,
 						PoolManagerIsRunning:     false,
 						PoolManagerFailureReason: "no resources available",
 					},
@@ -163,7 +164,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 
 				extraSpecs := json.RawMessage([]byte{})
 				m.CreateEnterprisePool(
-					enterprises.NewCreateEnterprisePoolParams().WithEnterpriseID(enterpriseId).WithBody(
+					enterprises.NewCreateEnterprisePoolParams().WithEnterpriseID(enterpriseID).WithBody(
 						params.CreatePoolParams{
 							RunnerPrefix: params.RunnerPrefix{
 								Prefix: "",
@@ -186,7 +187,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						RunnerPrefix: params.RunnerPrefix{
 							Prefix: "",
 						},
-						ID:             poolId,
+						ID:             poolID,
 						ProviderName:   "kubernetes_external",
 						MaxRunners:     5,
 						MinIdleRunners: 3,
@@ -218,7 +219,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						RepoName:       "",
 						OrgID:          "",
 						OrgName:        "",
-						EnterpriseID:   enterpriseId,
+						EnterpriseID:   enterpriseID,
 						EnterpriseName: enterpriseName,
 					},
 				}, nil)
@@ -255,7 +256,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            outdatedPoolId,
+					ID:            outdatedPoolID,
 					Synced:        true,
 					LastSyncTime:  metav1.Time{},
 					LastSyncError: "",
@@ -296,7 +297,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolId,
+					ID:            poolID,
 					Synced:        true,
 					LastSyncTime:  metav1.Time{},
 					LastSyncError: "",
@@ -341,21 +342,21 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseId,
+						ID:                       enterpriseID,
 						PoolManagerIsRunning:     false,
 						PoolManagerFailureReason: "no resources available",
 					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
-				m.GetPool(pools.NewGetPoolParams().WithPoolID(outdatedPoolId)).Return(&pools.GetPoolOK{Payload: params.Pool{}}, nil)
+				m.GetPool(pools.NewGetPoolParams().WithPoolID(outdatedPoolID)).Return(&pools.GetPoolOK{Payload: params.Pool{}}, nil)
 
 				m.ListAllPools(pools.NewListPoolsParams()).Return(&pools.ListPoolsOK{Payload: params.Pools{
 					{
 						RunnerPrefix: params.RunnerPrefix{
 							Prefix: "",
 						},
-						ID:             poolId,
+						ID:             poolID,
 						ProviderName:   "kubernetes_external",
 						MaxRunners:     5,
 						MinIdleRunners: 3,
@@ -387,7 +388,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						RepoName:       "",
 						OrgID:          "",
 						OrgName:        "",
-						EnterpriseID:   enterpriseId,
+						EnterpriseID:   enterpriseID,
 						EnterpriseName: enterpriseName,
 					},
 				}}, nil)
@@ -424,7 +425,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolId,
+					ID:            poolID,
 					Synced:        true,
 					LastSyncTime:  metav1.Time{},
 					LastSyncError: "",
@@ -465,7 +466,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolId,
+					ID:            poolID,
 					Synced:        true,
 					LastSyncTime:  metav1.Time{},
 					LastSyncError: "",
@@ -510,18 +511,18 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseId,
+						ID:                       enterpriseID,
 						PoolManagerIsRunning:     false,
 						PoolManagerFailureReason: "no resources available",
 					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
-				m.GetPool(pools.NewGetPoolParams().WithPoolID(poolId)).Return(&pools.GetPoolOK{Payload: params.Pool{
+				m.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
 					RunnerPrefix: params.RunnerPrefix{
 						Prefix: "",
 					},
-					ID:             poolId,
+					ID:             poolID,
 					ProviderName:   "kubernetes_external",
 					MaxRunners:     5,
 					MinIdleRunners: 3,
@@ -553,7 +554,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					RepoName:       "",
 					OrgID:          "",
 					OrgName:        "",
-					EnterpriseID:   enterpriseId,
+					EnterpriseID:   enterpriseID,
 					EnterpriseName: enterpriseName,
 				}}, nil)
 
@@ -563,7 +564,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				runnerBootstrapTimeout := uint(20)
 				extraSpecs := json.RawMessage([]byte{})
 				gitHubRunnerGroup := ""
-				m.UpdatePool(pools.NewUpdatePoolParams().WithPoolID(poolId).WithBody(params.UpdatePoolParams{
+				m.UpdatePool(pools.NewUpdatePoolParams().WithPoolID(poolID).WithBody(params.UpdatePoolParams{
 					RunnerPrefix: params.RunnerPrefix{
 						Prefix: "",
 					},
@@ -582,7 +583,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					RunnerPrefix: params.RunnerPrefix{
 						Prefix: "",
 					},
-					ID:             poolId,
+					ID:             poolID,
 					ProviderName:   "kubernetes_external",
 					MaxRunners:     1,
 					MinIdleRunners: 0,
@@ -614,7 +615,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					RepoName:       "",
 					OrgID:          "",
 					OrgName:        "",
-					EnterpriseID:   enterpriseId,
+					EnterpriseID:   enterpriseID,
 					EnterpriseName: enterpriseName,
 				}}, nil)
 			},
@@ -623,7 +624,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			schemeBuilder := runtime.SchemeBuilder{
 				garmoperatorv1alpha1.AddToScheme,
 			}
@@ -661,7 +661,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			if !reflect.DeepEqual(pool, tt.expectedObject) {
 				t.Errorf("PoolReconciler.reconcileNormal() \n got =  %#v \n want = %#v", pool, tt.expectedObject)
 			}
-
 		})
 	}
 }

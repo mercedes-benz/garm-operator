@@ -32,8 +32,10 @@ import (
 )
 
 // log is for logging in this package.
-var poollog = logf.Log.WithName("pool-resource")
-var c client.Client
+var (
+	poollog = logf.Log.WithName("pool-resource")
+	c       client.Client
+)
 
 func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	c = mgr.GetClient()

@@ -7,12 +7,9 @@ import (
 
 	"github.com/cloudbase/garm/client"
 	apiClientLogin "github.com/cloudbase/garm/client/login"
+	"github.com/cloudbase/garm/params"
 	"github.com/go-openapi/runtime"
 	openapiRuntimeClient "github.com/go-openapi/runtime/client"
-
-	//"github.com/cloudbase/garm/cmd/garm-cli/client"
-
-	"github.com/cloudbase/garm/params"
 )
 
 type GarmScopeParams struct {
@@ -35,20 +32,20 @@ func newGarmClient(garmParams GarmScopeParams) (*client.GarmAPI, runtime.ClientA
 		return nil, nil, errors.New("password is mandator")
 	}
 
-	baseUrlParsed, err := url.Parse(garmParams.BaseURL)
+	baseURLParsed, err := url.Parse(garmParams.BaseURL)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse base url %s: %s", garmParams.BaseURL, err)
 	}
 
-	apiPath, err := url.JoinPath(baseUrlParsed.Path, client.DefaultBasePath)
+	apiPath, err := url.JoinPath(baseURLParsed.Path, client.DefaultBasePath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to join base url path %s with %s: %s", baseUrlParsed.Path, client.DefaultBasePath, err)
+		return nil, nil, fmt.Errorf("failed to join base url path %s with %s: %s", baseURLParsed.Path, client.DefaultBasePath, err)
 	}
 
 	transportCfg := client.DefaultTransportConfig().
-		WithHost(baseUrlParsed.Host).
+		WithHost(baseURLParsed.Host).
 		WithBasePath(apiPath).
-		WithSchemes([]string{baseUrlParsed.Scheme})
+		WithSchemes([]string{baseURLParsed.Scheme})
 	apiCli := client.NewHTTPClientWithConfig(nil, transportCfg)
 	authToken := openapiRuntimeClient.BearerToken("")
 

@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"strings"
 
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
-
 	"github.com/cloudbase/garm/client/organizations"
 	"github.com/cloudbase/garm/params"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,9 +31,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
-
 	garmClient "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
 )
 
 // OrganizationReconciler reconciles a Organization object
@@ -205,19 +203,18 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 
 			organization.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
 			organization.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-
-			if err := r.Status().Update(ctx, organization); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			return ctrl.Result{}, nil
 		}
+
+		if err := r.Status().Update(ctx, organization); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, nil
 	}
 
 	log.Info("reconciling organization successfully done")
 
 	return ctrl.Result{}, nil
-
 }
 
 func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (ctrl.Result, error) {
