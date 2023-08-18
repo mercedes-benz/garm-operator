@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/cloudbase/garm/client/enterprises"
+	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/client/organizations"
 	"github.com/cloudbase/garm/client/pools"
 	"github.com/cloudbase/garm/client/repositories"
