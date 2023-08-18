@@ -40,6 +40,10 @@ spec:
       name: Error
       priority: 1
       type: string
+    - jsonPath: .spec.enabled
+      name: Enabled
+      priority: 1
+      type: boolean
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date

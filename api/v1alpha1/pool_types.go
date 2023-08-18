@@ -73,6 +73,7 @@ type PoolStatus struct {
 //+kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.providerName`,priority=1
 //+kubebuilder:printcolumn:name="Scope",type=string,JSONPath=`.spec.githubScopeRef.kind`,priority=1
 //+kubebuilder:printcolumn:name="Error",type=string,JSONPath=`.status.lastSyncError`,priority=1
+//+kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.spec.enabled`,priority=1
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Pool is the Schema for the pools API
