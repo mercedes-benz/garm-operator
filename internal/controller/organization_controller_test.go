@@ -21,9 +21,6 @@ import (
 	"reflect"
 	"testing"
 
-	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
 	"github.com/cloudbase/garm/client/organizations"
 	"github.com/cloudbase/garm/params"
 	"go.uber.org/mock/gomock"
@@ -34,6 +31,10 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
 )
 
 func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
@@ -108,7 +109,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
 						CredentialsName: "foobar",
-					}}, nil)
+					},
+				}, nil)
 			},
 		},
 		{
@@ -172,7 +174,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						Name:            "existing-organization",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
-					}}, nil)
+					},
+				}, nil)
 
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").WithBody(params.UpdateEntityParams{
@@ -255,7 +258,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							IsRunning:     false,
 							FailureReason: "no resources available",
 						},
-					}}, nil)
+					},
+				}, nil)
 			},
 		},
 		{
@@ -323,7 +327,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
-					}}, nil)
+					},
+				}, nil)
 			},
 		},
 		{
@@ -384,7 +389,6 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			schemeBuilder := runtime.SchemeBuilder{
 				garmoperatorv1alpha1.AddToScheme,
 			}
@@ -421,7 +425,6 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 			if !reflect.DeepEqual(organization, tt.expectedObject) {
 				t.Errorf("OrganizationReconciler.reconcileNormal() got = %#v, want %#v", organization, tt.expectedObject)
 			}
-
 		})
 	}
 }
@@ -480,7 +483,6 @@ func TestOrganizationReconciler_reconcileDelete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			schemeBuilder := runtime.SchemeBuilder{
 				garmoperatorv1alpha1.AddToScheme,
 			}
@@ -512,7 +514,7 @@ func TestOrganizationReconciler_reconcileDelete(t *testing.T) {
 				return
 			}
 
-			//check for mandatory finalizer
+			// check for mandatory finalizer
 			if controllerutil.ContainsFinalizer(organization, key.OrganizationFinalizerName) {
 				t.Errorf("OrganizationReconciler.Reconcile() finalizer still exist")
 				return

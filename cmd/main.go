@@ -22,28 +22,19 @@ import (
 	"os"
 	"time"
 
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
-
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
-
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	"github.com/spf13/pflag"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/klog/v2"
+	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
-	"k8s.io/klog/v2"
-	"k8s.io/klog/v2/klogr"
-
 	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/internal/controller"
-	//+kubebuilder:scaffold:imports
 )
 
 var (
@@ -59,7 +50,6 @@ func init() {
 }
 
 func main() {
-
 	var (
 		metricsAddr          string
 		enableLeaderElection bool

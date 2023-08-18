@@ -1,8 +1,9 @@
 package garmpool
 
 import (
-	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 	"github.com/cloudbase/garm/params"
+
+	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
 )
 
 type Predicate func(params.Pool) bool

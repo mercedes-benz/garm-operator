@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"strings"
 
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
-
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/params"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,9 +31,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
-
 	garmClient "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
 )
 
 // EnterpriseReconciler reconciles a Enterprise object

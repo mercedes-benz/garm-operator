@@ -1,0 +1,32 @@
+linters:
+  disable-all: true
+  fast: false
+  enable:
+    - gci
+    - goconst
+    - gofmt
+    - gofumpt
+    - goimports
+    - govet
+    - gosec
+    - importas
+    - ineffassign
+    - misspell
+    - nakedret
+    - nilerr
+    - predeclared
+    - revive
+    - staticcheck
+    - unconvert
+    - unused
+    - wastedassign
+
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(git.i.mercedes-benz.com/GitHub-Actions/garm-operator)
+
+  goimports:
+    local-prefixes: git.i.mercedes-benz.com/GitHub-Actions/garm-operator
