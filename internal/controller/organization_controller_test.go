@@ -26,7 +26,6 @@ import (
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
@@ -53,7 +52,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "organization exist - no op",
 			object: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
@@ -83,7 +82,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
@@ -117,7 +116,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "organization exist - but spec has changed",
 			object: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
@@ -147,7 +146,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
@@ -196,7 +195,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "organization exist but pool status has changed - updating status",
 			object: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
@@ -226,7 +225,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-organization",
 					Namespace: "default",
 					Finalizers: []string{
@@ -266,7 +265,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "organization does not exist - create",
 			object: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-organization",
 					Namespace: "default",
 				},
@@ -290,7 +289,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-organization",
 					Namespace: "default",
 					Finalizers: []string{
@@ -335,7 +334,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "organization already exist in garm - adopt",
 			object: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-organization",
 					Namespace: "default",
 				},
@@ -359,7 +358,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-organization",
 					Namespace: "default",
 					Finalizers: []string{
@@ -446,7 +445,7 @@ func TestOrganizationReconciler_reconcileDelete(t *testing.T) {
 		{
 			name: "delete organization",
 			object: &garmoperatorv1alpha1.Organization{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "delete-organization",
 					Namespace: "default",
 					Finalizers: []string{

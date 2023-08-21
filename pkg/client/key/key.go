@@ -1,8 +1,9 @@
 package key
 
 const (
-	finalizerGroupName        = "garm-operator.mercedes-benz.com"
-	EnterpriseFinalizerName   = finalizerGroupName + "/enterprise"
-	OrganizationFinalizerName = finalizerGroupName + "/organization"
-	PoolFinalizerName         = finalizerGroupName + "/pool"
+	groupName                 = "garm-operator.mercedes-benz.com"
+	EnterpriseFinalizerName   = groupName + "/enterprise"
+	OrganizationFinalizerName = groupName + "/organization"
+	PoolFinalizerName         = groupName + "/pool"
+	PausedAnnotation          = groupName + "/paused"
 )

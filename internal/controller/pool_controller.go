@@ -48,6 +48,7 @@ import (
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/event"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/garmpool"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/util/annotations"
 )
 
 // PoolReconciler reconciles a Pool object
@@ -69,6 +70,21 @@ type PoolReconciler struct {
 func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
+	pool := &garmoperatorv1alpha1.Pool{}
+	if err := r.Get(ctx, req.NamespacedName, pool); err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		log.Error(err, "cannot fetch Pool")
+		return ctrl.Result{}, err
+	}
+
+	// Ignore objects that are paused
+	if annotations.IsPaused(pool) {
+		log.Info("Reconciliation is paused for this object")
+		return ctrl.Result{}, nil
+	}
+
 	poolClient, err := garmClient.NewPoolClient(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
@@ -84,15 +100,6 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		Password: r.Password,
 	})
 	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	pool := &garmoperatorv1alpha1.Pool{}
-	if err := r.Get(ctx, req.NamespacedName, pool); err != nil {
-		if apierrors.IsNotFound(err) {
-			return ctrl.Result{}, nil
-		}
-		log.Error(err, "cannot fetch Pool")
 		return ctrl.Result{}, err
 	}
 
