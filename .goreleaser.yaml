@@ -38,17 +38,19 @@ changelog:
   sort: asc
   use: github
   groups:
-    - title: Features
+    - title: "✨ Features"
       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
       order: 0
-    - title: "Bug fixes"
-      regexp: '^.*?bug(\([[:word:]]+\))??!?:.+$'
+    - title: "🐛 Bug fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
       order: 1
-    - title: Others
+    - title: "📚 Documentation"
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: "🌱 Others"
       order: 999
   filters:
     exclude:
-      - "^docs:"
       - "^test:"
 release:
   github:
