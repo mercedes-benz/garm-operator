@@ -133,7 +133,6 @@ generate-deployment-manifests: manifests kustomize ## Generate deployment manife
 	$(KUSTOMIZE) build config/default > tmp/operator.yaml
 	sed -i'' -e 's@image: .*@image: '"${IMG}"'@' tmp/operator.yaml
 
-
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
@@ -159,6 +158,7 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 MOCKGEN ?= $(LOCALBIN)/mockgen
 GORELEASER ?= $(LOCALBIN)/goreleaser
+MDTOC ?= $(LOCALBIN)/mdtoc
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
@@ -166,6 +166,7 @@ CONTROLLER_TOOLS_VERSION ?= v0.12.0
 GOLANGCI_LINT_VERSION ?= v1.53.3
 MOCKGEN_VERSION ?= v0.2.0
 GORELEASER_VERSION ?= v1.20.0
+MDTOC_VERSION ?= v1.1.0
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -202,8 +203,14 @@ $(MOCKGEN): $(LOCALBIN)
 .PHONY: goreleaser
 goreleaser: $(GORELEASER) ## Download goreleaser locally if necessary. If wrong version is installed, it will be overwritten.
 $(GORELEASER): $(LOCALBIN)
-	test -s $(LOCALBIN)/golangci-lint && $(LOCALBIN)/golangci-lint --version | grep -q $(GORELEASER_VERSION) || \
+	test -s $(LOCALBIN)/goreleaser && $(LOCALBIN)/goreleaser --version | grep -q $(GORELEASER_VERSION) || \
 	GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@$(GORELEASER_VERSION)
+
+.PHONY: mdtoc
+mdtoc: $(MDTOC) ## Download mdtoc locally if necessary. If wrong version is installed, it will be overwritten.
+$(MDTOC): $(LOCALBIN)
+	test -s $(LOCALBIN)/mdtoc && $(LOCALBIN)/mdtoc --version | grep -q $(MDTOC_VERSION) || \
+	GOBIN=$(LOCALBIN) go install sigs.k8s.io/mdtoc@$(MDTOC_VERSION)
 
 ##@ Lint / Verify
 .PHONY: lint
@@ -213,6 +220,37 @@ lint: $(GOLANGCI_LINT) ## Run linting.
 .PHONY: lint-fix
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linte
 	GOLANGCI_LINT_EXTRA_ARGS=--fix $(MAKE) lint
+
+ALL_VERIFY_CHECKS = gen manifests doctoc
+
+.PHONY: verify
+verify: $(addprefix verify-,$(ALL_VERIFY_CHECKS)) ## Run all verify-* targets
+
+.PHONY: verify-gen
+verify-gen: generate  ## Verify go generated files are up to date
+	@if !(git diff --quiet HEAD); then \
+		git diff; \
+		echo "generated files are out of date, run make generate"; exit 1; \
+	fi
+
+.PHONY: verify-manifests
+verify-manifests: manifests  ## Verify kubebuilder generated files are up to date
+	@if !(git diff --quiet HEAD); then \
+		git diff; \
+		echo "generated files are out of date, run make manifests"; exit 1; \
+	fi
+
+.PHONY: verify-doctoc
+verify-doctoc: generate-doctoc
+	@if !(git diff --quiet HEAD); then \
+		git diff; \
+		echo "doctoc is out of date, run make generate-doctoc"; exit 1; \
+	fi
+
+##@ Documentation
+.PHONY: generate-doctoc
+generate-doctoc: mdtoc ## Generate documentation table of contents
+	grep --include='*.md' -rl -e '<!-- toc -->' $(git rev-parse --show-toplevel) | xargs $(MDTOC) -inplace -max-depth 3
 
 ##@ Local Development
 
