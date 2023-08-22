@@ -2,7 +2,7 @@ project_name: garm-operator
 before:
   hooks:
     - go mod tidy
-    - sh -c "IMG=registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:{{ .Version }} make generate-deployment-manifests"
+    - sh -c "IMG=registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:v{{ .Version }} make generate-deployment-manifests"
     - make generate-crd-manifests
 builds:
   - env:
@@ -15,7 +15,7 @@ builds:
 
 dockers:
   - image_templates:
-      - "registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:{{ .Version }}"
+      - "registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:v{{ .Version }}"
       - "registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:latest"
     dockerfile: release.Dockerfile
 
@@ -59,7 +59,7 @@ release:
     - glob: tmp/crd.yaml
     - glob: tmp/operator.yaml
   header: |
-    Container image is available at `registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:{{ .Version }}`
+    Container image is available at `registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:v{{ .Version }}`
 
 github_urls:
   api: https://git.i.mercedes-benz.com/api/v3/
