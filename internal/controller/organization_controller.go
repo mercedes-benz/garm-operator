@@ -36,6 +36,7 @@ import (
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/event"
 	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/util/annotations"
 )
 
 // OrganizationReconciler reconciles a Organization object
@@ -65,6 +66,12 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
+	}
+
+	// Ignore objects that are paused
+	if annotations.IsPaused(organization) {
+		log.Info("Reconciliation is paused for this object")
+		return ctrl.Result{}, nil
 	}
 
 	scope, err := garmClient.NewOrganizationClient(garmClient.GarmScopeParams{

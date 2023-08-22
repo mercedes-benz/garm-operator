@@ -19,6 +19,9 @@ jobs:
         with:
           go-version: '1.20'
 
+      - name: make verify
+        run: make verify
+
       - name: make lint
         run: make golangci-lint && GOLANGCI_LINT_EXTRA_ARGS=--timeout=1h make lint
       

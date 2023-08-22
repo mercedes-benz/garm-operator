@@ -26,7 +26,6 @@ import (
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
@@ -53,7 +52,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "enterprise exist - no op",
 			object: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
 					Finalizers: []string{
@@ -83,7 +82,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
 					Finalizers: []string{
@@ -117,7 +116,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "enterprise exist - but spec has changed",
 			object: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
 					Finalizers: []string{
@@ -147,7 +146,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
 					Finalizers: []string{
@@ -196,7 +195,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "enterprise exist but pool status has changed - updating status",
 			object: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
 					Finalizers: []string{
@@ -215,7 +214,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
 					Finalizers: []string{
@@ -266,7 +265,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "enterprise does not exist - create",
 			object: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
 				},
@@ -279,7 +278,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
 					Finalizers: []string{
@@ -335,7 +334,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		{
 			name: "enterprise already exist in garm - adopt",
 			object: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
 				},
@@ -348,7 +347,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
 					Finalizers: []string{
@@ -446,7 +445,7 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 		{
 			name: "delete enterprise",
 			object: &garmoperatorv1alpha1.Enterprise{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "delete-enterprise",
 					Namespace: "default",
 					Finalizers: []string{

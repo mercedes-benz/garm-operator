@@ -12,7 +12,6 @@ import (
 	"github.com/cloudbase/garm/params"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -59,7 +58,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					Namespace: namespaceName,
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
@@ -91,7 +90,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
@@ -239,7 +238,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					Namespace: namespaceName,
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
@@ -280,7 +279,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
@@ -408,7 +407,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					Namespace: namespaceName,
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
@@ -449,7 +448,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
@@ -705,7 +704,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
@@ -746,7 +745,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
@@ -833,7 +832,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
@@ -872,7 +871,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					Finalizers: []string{},
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
-					GitHubScopeRef: v1.TypedLocalObjectReference{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
 						Name:     enterpriseName,
