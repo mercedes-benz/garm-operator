@@ -1,31 +1,5 @@
 ---
 apiVersion: admissionregistration.k8s.io/v1
-kind: MutatingWebhookConfiguration
-metadata:
-  name: mutating-webhook-configuration
-webhooks:
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
-      path: /mutate-garm-operator-mercedes-benz-com-v1alpha1-pool
-  failurePolicy: Fail
-  name: mpool.kb.io
-  rules:
-  - apiGroups:
-    - garm-operator.mercedes-benz.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - pools
-  sideEffects: None
----
-apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: validating-webhook-configuration
@@ -38,7 +12,7 @@ webhooks:
       namespace: system
       path: /validate-garm-operator-mercedes-benz-com-v1alpha1-image
   failurePolicy: Fail
-  name: vimage.kb.io
+  name: validate.image.garm-operator.mercedes-benz.com
   rules:
   - apiGroups:
     - garm-operator.mercedes-benz.com
@@ -59,7 +33,7 @@ webhooks:
       namespace: system
       path: /validate-garm-operator-mercedes-benz-com-v1alpha1-pool
   failurePolicy: Fail
-  name: vpool.kb.io
+  name: validate.pool.garm-operator.mercedes-benz.com
   rules:
   - apiGroups:
     - garm-operator.mercedes-benz.com
