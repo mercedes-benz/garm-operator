@@ -113,11 +113,6 @@ endif
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | $(KUBECTL) apply -f -
 
-.PHONY: generate-crd-manifests
-generate-crd-manifests: manifests kustomize ## Generate CRD manifests (primarly for release process)
-	mkdir -p tmp
-	$(KUSTOMIZE) build config/crd > tmp/crd.yaml
-
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
@@ -126,12 +121,6 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | $(KUBECTL) apply -f -
-
-.PHONY: generate-deployment-manifests
-generate-deployment-manifests: manifests kustomize ## Generate deployment manifests (primarly for release process)
-	mkdir -p tmp
-	$(KUSTOMIZE) build config/default > tmp/operator.yaml
-	sed -i'' -e 's@image: .*@image: '"${IMG}"'@' tmp/operator.yaml
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -142,6 +131,14 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 .PHONY: release
 release: goreleaser ## Create a new release
 	$(GORELEASER) release --clean
+
+.PHONY: release-manifests
+release-manifests: manifests kustomize ## Generate manifests for releasing
+	mkdir -p tmp
+	$(KUSTOMIZE) build config/default > tmp/garm_operator_all.yaml
+	sed -i'' -e 's@image: .*@image: '"${IMG}"'@' tmp/garm_operator_all.yaml
+	$(SLICE) -f tmp/operator.yaml --include-kind CustomResourceDefinition --template "garm_operator_crds.yaml" -o tmp/
+	$(SLICE) -f tmp/operator.yaml --exclude-kind CustomResourceDefinition --template "garm_operator.yaml" -o tmp/
 
 ##@ Build Dependencies
 
@@ -159,6 +156,7 @@ GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 MOCKGEN ?= $(LOCALBIN)/mockgen
 GORELEASER ?= $(LOCALBIN)/goreleaser
 MDTOC ?= $(LOCALBIN)/mdtoc
+SLICE ?= $(LOCALBIN)/kubectl-slice
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
@@ -167,6 +165,7 @@ GOLANGCI_LINT_VERSION ?= v1.53.3
 MOCKGEN_VERSION ?= v0.2.0
 GORELEASER_VERSION ?= v1.20.0
 MDTOC_VERSION ?= v1.1.0
+SLICE_VERSION ?= v1.2.6
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -211,6 +210,12 @@ mdtoc: $(MDTOC) ## Download mdtoc locally if necessary. If wrong version is inst
 $(MDTOC): $(LOCALBIN)
 	test -s $(LOCALBIN)/mdtoc && $(LOCALBIN)/mdtoc --version | grep -q $(MDTOC_VERSION) || \
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/mdtoc@$(MDTOC_VERSION)
+
+.PHONY: slice
+slice: $(SLICE) ## Download kubectl-slice locally if necessary. If wrong version is installed, it will be overwritten.
+$(SLICE): $(LOCALBIN)
+	test -s $(LOCALBIN)/kubectl-slice && $(LOCALBIN)/kubectl-slice --version | grep -q $(SLICE_VERSION) || \
+	GOBIN=$(LOCALBIN) go install github.com/patrickdappollonio/kubectl-slice@$(SLICE_VERSION)
 
 ##@ Lint / Verify
 .PHONY: lint

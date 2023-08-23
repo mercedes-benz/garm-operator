@@ -2,8 +2,7 @@ project_name: garm-operator
 before:
   hooks:
     - go mod tidy
-    - sh -c "IMG=registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:v{{ .Version }} make generate-deployment-manifests"
-    - make generate-crd-manifests
+    - sh -c "IMG=registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:v{{ .Version }} make release-manifests"
 builds:
   - env:
       - CGO_ENABLED=0
@@ -56,10 +55,17 @@ release:
     name: garm-operator
   prerelease: auto
   extra_files:
-    - glob: tmp/crd.yaml
-    - glob: tmp/operator.yaml
+    - glob: tmp/garm_operator_all.yaml
+    - glob: tmp/garm_operator_crds.yaml
+    - glob: tmp/garm_operator.yaml
   header: |
-    Container image is available at `registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:v{{ .Version }}`
+    Container image is available at `registry-emea.app.corpintra.net/roadrunner/{{ .ProjectName }}:v{{ .Version }}` 
+
+    * `garm_operator.yaml` contains the operator deployment manifest with all the required RBAC rules and certificate configurations.
+    * `garm_operator_crds.yaml` contains the CRDs for the operator.
+    * `garm_operator_all.yaml` is the combination of the above two files.
+
+    ---
 
 github_urls:
   api: https://git.i.mercedes-benz.com/api/v3/
