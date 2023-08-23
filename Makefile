@@ -137,8 +137,8 @@ release-manifests: manifests kustomize slice ## Generate manifests for releasing
 	mkdir -p tmp
 	$(KUSTOMIZE) build config/default > tmp/garm_operator_all.yaml
 	sed -i'' -e 's@image: .*@image: '"${IMG}"'@' tmp/garm_operator_all.yaml
-	$(SLICE) -f tmp/operator.yaml --include-kind CustomResourceDefinition --template "garm_operator_crds.yaml" -o tmp/
-	$(SLICE) -f tmp/operator.yaml --exclude-kind CustomResourceDefinition --template "garm_operator.yaml" -o tmp/
+	$(SLICE) -f tmp/garm_operator_all.yaml --include-kind CustomResourceDefinition --template "garm_operator_crds.yaml" -o tmp/
+	$(SLICE) -f tmp/garm_operator_all.yaml --exclude-kind CustomResourceDefinition --template "garm_operator.yaml" -o tmp/
 
 ##@ Build Dependencies
 
