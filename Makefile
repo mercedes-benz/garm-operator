@@ -133,7 +133,7 @@ release: goreleaser ## Create a new release
 	$(GORELEASER) release --clean
 
 .PHONY: release-manifests
-release-manifests: manifests kustomize ## Generate manifests for releasing
+release-manifests: manifests kustomize slice ## Generate manifests for releasing
 	mkdir -p tmp
 	$(KUSTOMIZE) build config/default > tmp/garm_operator_all.yaml
 	sed -i'' -e 's@image: .*@image: '"${IMG}"'@' tmp/garm_operator_all.yaml
