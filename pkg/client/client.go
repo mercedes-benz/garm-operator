@@ -10,6 +10,8 @@ import (
 	"github.com/cloudbase/garm/params"
 	"github.com/go-openapi/runtime"
 	openapiRuntimeClient "github.com/go-openapi/runtime/client"
+
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/metrics"
 )
 
 type GarmScopeParams struct {
@@ -58,7 +60,9 @@ func newGarmClient(garmParams GarmScopeParams) (*client.GarmAPI, runtime.ClientA
 	// login with empty token and login params
 	// this will return a new token in response
 	resp, err := apiCli.Login.Login(newLoginParamsReq, authToken)
+	metrics.TotalGarmCalls.WithLabelValues("client.Login").Inc()
 	if err != nil {
+		metrics.GarmCallErrors.WithLabelValues("client.Login").Inc()
 		return nil, nil, err
 	}
 

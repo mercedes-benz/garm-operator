@@ -4,6 +4,8 @@ import (
 	"github.com/cloudbase/garm/client"
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/go-openapi/runtime"
+
+	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/metrics"
 )
 
 type EnterpriseClient interface {
@@ -29,9 +31,10 @@ func NewEnterpriseClient(garmParams GarmScopeParams) (EnterpriseClient, error) {
 }
 
 func (s *enterpriseClient) ListEnterprises(param *enterprises.ListEnterprisesParams) (*enterprises.ListEnterprisesOK, error) {
-	// TODO: track requests by introducing metrics
+	metrics.TotalGarmCalls.WithLabelValues("enterprises.List").Inc()
 	enterprises, err := s.client.Enterprises.ListEnterprises(param, s.token)
 	if err != nil {
+		metrics.GarmCallErrors.WithLabelValues("enterprises.List").Inc()
 		return nil, err
 	}
 
@@ -39,8 +42,10 @@ func (s *enterpriseClient) ListEnterprises(param *enterprises.ListEnterprisesPar
 }
 
 func (s *enterpriseClient) CreateEnterprise(param *enterprises.CreateEnterpriseParams) (*enterprises.CreateEnterpriseOK, error) {
+	metrics.TotalGarmCalls.WithLabelValues("enterprises.Create").Inc()
 	enterprise, err := s.client.Enterprises.CreateEnterprise(param, s.token)
 	if err != nil {
+		metrics.GarmCallErrors.WithLabelValues("enterprises.Create").Inc()
 		return nil, err
 	}
 
@@ -48,16 +53,20 @@ func (s *enterpriseClient) CreateEnterprise(param *enterprises.CreateEnterpriseP
 }
 
 func (s *enterpriseClient) GetEnterprise(param *enterprises.GetEnterpriseParams) (*enterprises.GetEnterpriseOK, error) {
+	metrics.TotalGarmCalls.WithLabelValues("enterprises.Get").Inc()
 	enterprise, err := s.client.Enterprises.GetEnterprise(param, s.token)
 	if err != nil {
+		metrics.GarmCallErrors.WithLabelValues("enterprises.Get").Inc()
 		return nil, err
 	}
 	return enterprise, nil
 }
 
 func (s *enterpriseClient) DeleteEnterprise(param *enterprises.DeleteEnterpriseParams) error {
+	metrics.TotalGarmCalls.WithLabelValues("enterprises.Delete").Inc()
 	err := s.client.Enterprises.DeleteEnterprise(param, s.token)
 	if err != nil {
+		metrics.GarmCallErrors.WithLabelValues("enterprises.Delete").Inc()
 		return err
 	}
 
@@ -65,8 +74,10 @@ func (s *enterpriseClient) DeleteEnterprise(param *enterprises.DeleteEnterpriseP
 }
 
 func (s *enterpriseClient) UpdateEnterprise(param *enterprises.UpdateEnterpriseParams) (*enterprises.UpdateEnterpriseOK, error) {
+	metrics.TotalGarmCalls.WithLabelValues("enterprises.Update").Inc()
 	enterprise, err := s.client.Enterprises.UpdateEnterprise(param, s.token)
 	if err != nil {
+		metrics.GarmCallErrors.WithLabelValues("enterprises.Update").Inc()
 		return nil, err
 	}
 
