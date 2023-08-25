@@ -14,7 +14,6 @@ patches:
 - path: patches/webhook_in_enterprises.yaml
 - path: patches/webhook_in_pools.yaml
 - path: patches/webhook_in_organizations.yaml
-#- path: patches/webhook_in_images.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
