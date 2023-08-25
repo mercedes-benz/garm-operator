@@ -125,7 +125,6 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 
 		for _, garmOrganization := range organizations.Payload {
 			if strings.EqualFold(garmOrganization.Name, organization.Name) {
-
 				if !strings.EqualFold(garmOrganization.CredentialsName, organization.Spec.CredentialsName) &&
 					!strings.EqualFold(garmOrganization.WebhookSecret, webhookSecret) {
 					err := fmt.Errorf("organization with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing organization first")
@@ -202,7 +201,6 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, scope garm
 
 		if organization.Spec.CredentialsName != garmOrganization.Payload.CredentialsName &&
 			webhookSecret != garmOrganization.Payload.WebhookSecret {
-
 			log.Info("organization credentials or webhook secret has changed, updating garm organization object")
 			event.Updating(r.Recorder, organization, "organization credentials or webhook secret has changed")
 

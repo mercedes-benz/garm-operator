@@ -28,7 +28,7 @@ var (
 		prometheus.CounterOpts{
 			Namespace: metricNamespace,
 			Subsystem: garmAPI,
-			Name:      "error",
+			Name:      "errors_total",
 			Help:      "Number of GARM API calls that failed",
 			ConstLabels: prometheus.Labels{
 				metricControllerLabel: metricControllerValue,

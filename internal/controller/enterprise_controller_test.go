@@ -38,6 +38,8 @@ import (
 )
 
 func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
+	t.Parallel()
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -431,6 +433,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 }
 
 func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
+	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 

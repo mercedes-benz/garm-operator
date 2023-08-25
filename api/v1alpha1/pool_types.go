@@ -143,5 +143,3 @@ func (p *PoolList) FilterByFields(predicates ...Predicate) {
 
 	p.Items = filteredItems
 }
-
-// Todo: Might replace GitHubScope with reference to Enterprise/Org/Repo CRD

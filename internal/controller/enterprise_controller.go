@@ -126,7 +126,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 
 		for _, garmEnterprise := range enterprises.Payload {
 			if strings.EqualFold(garmEnterprise.Name, enterprise.Name) {
-
 				if !strings.EqualFold(garmEnterprise.CredentialsName, enterprise.Spec.CredentialsName) &&
 					!strings.EqualFold(garmEnterprise.WebhookSecret, webhookSecret) {
 					err := fmt.Errorf("enterprise with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing enterprise first")
@@ -207,7 +206,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 
 		if enterprise.Spec.CredentialsName != garmEnterprise.Payload.CredentialsName &&
 			webhookSecret != garmEnterprise.Payload.WebhookSecret {
-
 			log.Info("enterprise credentials or webhook secret has changed, updating garm enterprise object")
 			event.Updating(r.Recorder, enterprise, "enterprise credentials or webhook secret has changed")
 
@@ -226,7 +224,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, scope garmCl
 
 			enterprise.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
 			enterprise.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-
 		}
 
 		if err := r.Status().Update(ctx, enterprise); err != nil {
