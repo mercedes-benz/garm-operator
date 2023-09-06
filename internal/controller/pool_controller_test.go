@@ -19,9 +19,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/mock"
+	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	"github.com/mercedes-benz/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 )
 
 func TestPoolController_ReconcileCreate(t *testing.T) {

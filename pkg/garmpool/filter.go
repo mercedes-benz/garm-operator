@@ -3,7 +3,7 @@ package garmpool
 import (
 	"github.com/cloudbase/garm/params"
 
-	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 )
 
 type Predicate func(params.Pool) bool

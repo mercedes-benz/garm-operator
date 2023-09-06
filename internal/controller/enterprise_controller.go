@@ -31,12 +31,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
-	garmClient "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/event"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/secret"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/util/annotations"
+	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
+	"github.com/mercedes-benz/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/event"
+	"github.com/mercedes-benz/garm-operator/pkg/secret"
+	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
 // EnterpriseReconciler reconciles a Enterprise object

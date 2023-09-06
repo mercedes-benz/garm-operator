@@ -33,8 +33,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
-	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/internal/controller"
+	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	"github.com/mercedes-benz/garm-operator/internal/controller"
 )
 
 var (

@@ -3,7 +3,7 @@ package annotations
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 )
 
 // IsPaused returns true if the object has the `paused` annotation.

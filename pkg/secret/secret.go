@@ -9,7 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	garmoperatorv1alpha1 "git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1"
+	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 )
 
 // FetchRef fetches a secret for a given garmoperatorv1alpha1.SecretRef and namespace

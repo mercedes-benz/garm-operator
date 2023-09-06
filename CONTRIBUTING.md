@@ -70,7 +70,7 @@ Before you can contribute, you will need to sign the [Contributor License Agreem
 For communication please respect our [FOSS Code of Conduct](https://github.com/mercedes-benz/foss/blob/master/CODE_OF_CONDUCT.md).
 
 The following communication channels exist for this project:
-- GitHub for reporting and claiming issues: https://git.i.mercedes-benz.com/GitHub-Actions/garm-operator/issues
+- GitHub for reporting and claiming issues: https://github.com/mercedes-benz/garm-operator/issues
 
 Transparent and open communication is important to us. 
 Thus, all project-related communication should happen only through these channels and in English. 

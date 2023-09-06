@@ -11,7 +11,7 @@ import (
 	"github.com/go-openapi/runtime"
 	openapiRuntimeClient "github.com/go-openapi/runtime/client"
 
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/metrics"
+	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 
 type GarmScopeParams struct {

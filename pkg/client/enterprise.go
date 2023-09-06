@@ -5,7 +5,7 @@ import (
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/go-openapi/runtime"
 
-	"git.i.mercedes-benz.com/GitHub-Actions/garm-operator/pkg/metrics"
+	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 
 type EnterpriseClient interface {

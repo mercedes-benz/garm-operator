@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     name: lint and test
-    runs-on: [ road-runner, medium ] # could run on a k8s pod in the future
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:

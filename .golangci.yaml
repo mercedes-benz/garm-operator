@@ -33,15 +33,15 @@ linters-settings:
     sections:
       - standard
       - default
-      - prefix(git.i.mercedes-benz.com/GitHub-Actions/garm-operator)
+      - prefix(github.com/mercedes-benz/garm-operator)
 
   goimports:
-    local-prefixes: git.i.mercedes-benz.com/GitHub-Actions/garm-operator
+    local-prefixes: github.com/mercedes-benz/garm-operator
 
   importas:
     no-unaliased: false
     alias:
-      - pkg: git.i.mercedes-benz.com/GitHub-Actions/garm-operator/api/v1alpha1
+      - pkg: github.com/mercedes-benz/garm-operator/api/v1alpha1
         alias: garmoperatorv1alpha1
       - pkg: k8s.io/api/core/v1
         alias: corev1
