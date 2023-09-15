@@ -53,10 +53,10 @@ We are releasing the `garm-operator` as container image together with the corres
 This manifests can be used to deploy the `garm-operator` into your Kubernetes cluster.
 
 ```bash
-GARM_OPERATOR_VERSIOn=<garm-operator-version>
-GARM_SERVER_URL=<garm-server-url> 
-GARM_SERVER_USERNAME=<garm-server-username>
-GARM_SERVER_PASSWORD=<garm-server-password>
+export GARM_OPERATOR_VERSIOn=<garm-operator-version>
+export GARM_SERVER_URL=<garm-server-url> 
+export GARM_SERVER_USERNAME=<garm-server-username>
+export GARM_SERVER_PASSWORD=<garm-server-password>
 curl -L https://github.com/mercedes-benz/garm-operator/releases/download/${GARM_OPERATOR_VERSION}/garm-operator-all.yaml | envsubst | kubectl apply -f -
 ```
 

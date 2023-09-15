@@ -197,7 +197,7 @@ $(GOLANGCI_LINT): $(LOCALBIN)
 .PHONY: mockgen
 mockgen: $(MOCKGEN) ## Download mockgen locally if necessary. If wrong version is installed, it will be overwritten.
 $(MOCKGEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/golangci-lint && $(LOCALBIN)/golangci-lint --version | grep -q $(MOCKGEN_VERSION) || \
+	test -s $(LOCALBIN)/mockgen && $(LOCALBIN)/mockget --version | grep -q $(MOCKGEN_VERSION) || \
 	GOBIN=$(LOCALBIN) go install go.uber.org/mock/mockgen@$(MOCKGEN_VERSION)
 
 .PHONY: goreleaser
