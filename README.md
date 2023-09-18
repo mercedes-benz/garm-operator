@@ -1,5 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/mercedes-benz/garm-operator)](https://goreportcard.com/report/github.com/mercedes-benz/garm-operator) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mercedes-benz/garm-operator?sort=semver)
+
 # garm-operator 
 
 <!-- toc -->
