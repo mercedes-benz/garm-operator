@@ -14,6 +14,7 @@ import (
 )
 
 type PoolClient interface {
+	Login(garmParams GarmScopeParams) error
 	ListAllPools(param *pools.ListPoolsParams) (*pools.ListPoolsOK, error)
 	CreateRepoPool(param *repositories.CreateRepoPoolParams) (*repositories.CreateRepoPoolOK, error)
 	CreateOrgPool(param *organizations.CreateOrgPoolParams) (*organizations.CreateOrgPoolOK, error)
@@ -31,13 +32,21 @@ type poolClient struct {
 	token  runtime.ClientAuthInfoWriter
 }
 
-func NewPoolClient(garmParams GarmScopeParams) (PoolClient, error) {
+func NewPoolClient() PoolClient {
+	return &poolClient{}
+}
+
+func (p *poolClient) Login(garmParams GarmScopeParams) error {
+	metrics.TotalGarmCalls.WithLabelValues("Login").Inc()
 	garmClient, token, err := newGarmClient(garmParams)
 	if err != nil {
-		return nil, err
+		metrics.GarmCallErrors.WithLabelValues("Login").Inc()
+		return err
 	}
+	p.client = garmClient
+	p.token = token
 
-	return &poolClient{garmClient, token}, nil
+	return nil
 }
 
 func (p *poolClient) ListAllPools(param *pools.ListPoolsParams) (*pools.ListPoolsOK, error) {

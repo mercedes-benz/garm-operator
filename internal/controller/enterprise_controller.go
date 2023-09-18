@@ -62,7 +62,8 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	scope, err := garmClient.NewEnterpriseClient(garmClient.GarmScopeParams{
+	enterpriseClient := garmClient.NewEnterpriseClient()
+	err = enterpriseClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
@@ -74,10 +75,10 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Handle deleted enterprises
 	if !enterprise.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, scope, enterprise)
+		return r.reconcileDelete(ctx, enterpriseClient, enterprise)
 	}
 
-	return r.reconcileNormal(ctx, scope, enterprise)
+	return r.reconcileNormal(ctx, enterpriseClient, enterprise)
 }
 
 func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (ctrl.Result, error) {

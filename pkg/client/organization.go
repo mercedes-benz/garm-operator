@@ -11,6 +11,7 @@ import (
 )
 
 type OrganizationClient interface {
+	Login(garmParams GarmScopeParams) error
 	ListOrganizations(param *organizations.ListOrgsParams) (*organizations.ListOrgsOK, error)
 	CreateOrganization(param *organizations.CreateOrgParams) (*organizations.CreateOrgOK, error)
 	GetOrganization(param *organizations.GetOrgParams) (*organizations.GetOrgOK, error)
@@ -23,13 +24,21 @@ type organizationClient struct {
 	token  runtime.ClientAuthInfoWriter
 }
 
-func NewOrganizationClient(garmParams GarmScopeParams) (OrganizationClient, error) {
+func NewOrganizationClient() OrganizationClient {
+	return &organizationClient{}
+}
+
+func (s *organizationClient) Login(garmParams GarmScopeParams) error {
+	metrics.TotalGarmCalls.WithLabelValues("Login").Inc()
 	garmClient, token, err := newGarmClient(garmParams)
 	if err != nil {
-		return nil, err
+		metrics.GarmCallErrors.WithLabelValues("Login").Inc()
+		return err
 	}
+	s.client = garmClient
+	s.token = token
 
-	return &organizationClient{garmClient, token}, nil
+	return nil
 }
 
 func (s *organizationClient) ListOrganizations(param *organizations.ListOrgsParams) (*organizations.ListOrgsOK, error) {

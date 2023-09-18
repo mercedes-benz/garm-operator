@@ -11,6 +11,7 @@ import (
 )
 
 type EnterpriseClient interface {
+	Login(garmParams GarmScopeParams) error
 	ListEnterprises(param *enterprises.ListEnterprisesParams) (*enterprises.ListEnterprisesOK, error)
 	CreateEnterprise(param *enterprises.CreateEnterpriseParams) (*enterprises.CreateEnterpriseOK, error)
 	GetEnterprise(param *enterprises.GetEnterpriseParams) (*enterprises.GetEnterpriseOK, error)
@@ -23,13 +24,21 @@ type enterpriseClient struct {
 	token  runtime.ClientAuthInfoWriter
 }
 
-func NewEnterpriseClient(garmParams GarmScopeParams) (EnterpriseClient, error) {
+func NewEnterpriseClient() EnterpriseClient {
+	return &enterpriseClient{}
+}
+
+func (s *enterpriseClient) Login(garmParams GarmScopeParams) error {
+	metrics.TotalGarmCalls.WithLabelValues("Login").Inc()
 	garmClient, token, err := newGarmClient(garmParams)
 	if err != nil {
-		return nil, err
+		metrics.GarmCallErrors.WithLabelValues("Login").Inc()
+		return err
 	}
+	s.client = garmClient
+	s.token = token
 
-	return &enterpriseClient{garmClient, token}, nil
+	return nil
 }
 
 func (s *enterpriseClient) ListEnterprises(param *enterprises.ListEnterprisesParams) (*enterprises.ListEnterprisesOK, error) {
