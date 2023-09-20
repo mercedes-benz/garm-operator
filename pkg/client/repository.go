@@ -11,6 +11,7 @@ import (
 )
 
 type RepositoryClient interface {
+	Login(garmParams GarmScopeParams) error
 	ListRepositories(param *repositories.ListReposParams) (*repositories.ListReposOK, error)
 	CreateRepository(param *repositories.CreateRepoParams) (*repositories.CreateRepoOK, error)
 	GetRepository(param *repositories.GetRepoParams) (*repositories.GetRepoOK, error)
@@ -23,13 +24,21 @@ type repositoryClient struct {
 	token  runtime.ClientAuthInfoWriter
 }
 
-func NewRepositoryClient(garmParams GarmScopeParams) (RepositoryClient, error) {
+func NewRepositoryClient() RepositoryClient {
+	return &repositoryClient{}
+}
+
+func (s *repositoryClient) Login(garmParams GarmScopeParams) error {
+	metrics.TotalGarmCalls.WithLabelValues("Login").Inc()
 	garmClient, token, err := newGarmClient(garmParams)
 	if err != nil {
-		return nil, err
+		metrics.GarmCallErrors.WithLabelValues("Login").Inc()
+		return err
 	}
+	s.client = garmClient
+	s.token = token
 
-	return &repositoryClient{garmClient, token}, nil
+	return nil
 }
 
 func (s *repositoryClient) ListRepositories(param *repositories.ListReposParams) (*repositories.ListReposOK, error) {

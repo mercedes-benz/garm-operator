@@ -70,7 +70,8 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	poolClient, err := garmClient.NewPoolClient(garmClient.GarmScopeParams{
+	poolClient := garmClient.NewPoolClient()
+	err := poolClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
@@ -79,7 +80,8 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	runnerInstanceClient, err := garmClient.NewInstanceClient(garmClient.GarmScopeParams{
+	instanceClient := garmClient.NewInstanceClient()
+	err = instanceClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
@@ -90,7 +92,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	// handle deletion
 	if !pool.ObjectMeta.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, poolClient, pool, runnerInstanceClient)
+		return r.reconcileDelete(ctx, poolClient, pool, instanceClient)
 	}
 
 	return r.reconcileNormal(ctx, poolClient, pool)

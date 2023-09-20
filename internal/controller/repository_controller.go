@@ -61,7 +61,8 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	scope, err := garmClient.NewRepositoryClient(garmClient.GarmScopeParams{
+	repositoryClient := garmClient.NewRepositoryClient()
+	err = repositoryClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
@@ -73,10 +74,10 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Handle deleted repositories
 	if !repository.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, scope, repository)
+		return r.reconcileDelete(ctx, repositoryClient, repository)
 	}
 
-	return r.reconcileNormal(ctx, scope, repository)
+	return r.reconcileNormal(ctx, repositoryClient, repository)
 }
 
 func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository) (ctrl.Result, error) {

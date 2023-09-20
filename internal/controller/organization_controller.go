@@ -61,7 +61,8 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 
-	scope, err := garmClient.NewOrganizationClient(garmClient.GarmScopeParams{
+	organizationClient := garmClient.NewOrganizationClient()
+	err = organizationClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
@@ -73,10 +74,10 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Handle deleted organizations
 	if !organization.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, scope, organization)
+		return r.reconcileDelete(ctx, organizationClient, organization)
 	}
 
-	return r.reconcileNormal(ctx, scope, organization)
+	return r.reconcileNormal(ctx, organizationClient, organization)
 }
 
 func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (ctrl.Result, error) {
