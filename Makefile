@@ -41,7 +41,7 @@ all: build
 
 .PHONY: help
 help: ## Display this help.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Development
 
@@ -158,6 +158,8 @@ MOCKGEN ?= $(LOCALBIN)/mockgen
 GORELEASER ?= $(LOCALBIN)/goreleaser
 MDTOC ?= $(LOCALBIN)/mdtoc
 SLICE ?= $(LOCALBIN)/kubectl-slice
+NANCY ?= $(LOCALBIN)/nancy
+GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
@@ -167,6 +169,7 @@ MOCKGEN_VERSION ?= v0.2.0
 GORELEASER_VERSION ?= v1.21.0
 MDTOC_VERSION ?= v1.1.0
 SLICE_VERSION ?= v1.2.6
+NANCY_VERSION ?= v1.0.42
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -218,6 +221,18 @@ $(SLICE): $(LOCALBIN)
 	test -s $(LOCALBIN)/kubectl-slice && $(LOCALBIN)/kubectl-slice --version | grep -q $(SLICE_VERSION) || \
 	GOBIN=$(LOCALBIN) go install github.com/patrickdappollonio/kubectl-slice@$(SLICE_VERSION)
 
+.PHONY: nancy
+nancy: $(NANCY) ## Download nancy locally if necessary. If wrong version is installed, it will be overwritten.
+$(NANCY): $(LOCALBIN)
+	test -s $(LOCALBIN)/nancy && $(LOCALBIN)/nancy --version | grep -q $(NANCY_VERSION) || \
+	GOBIN=$(LOCALBIN) go install github.com/sonatype-nexus-community/nancy@$(NANCY_VERSION)
+
+.PHONY: govulncheck
+govulncheck: $(GOVULNCHECK) ## Download govulncheck locally if necessary. If wrong version is installed, it will be overwritten.
+$(GOVULNCHECK): $(LOCALBIN)
+	test -s $(LOCALBIN)/govulncheck || \
+	GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@latest
+
 ##@ Lint / Verify
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run linting.
@@ -227,7 +242,7 @@ lint: $(GOLANGCI_LINT) ## Run linting.
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linte
 	GOLANGCI_LINT_EXTRA_ARGS=--fix $(MAKE) lint
 
-ALL_VERIFY_CHECKS = gen manifests doctoc license
+ALL_VERIFY_CHECKS = gen manifests doctoc license security
 
 .PHONY: verify
 verify: $(addprefix verify-,$(ALL_VERIFY_CHECKS)) ## Run all verify-* targets
@@ -256,6 +271,18 @@ verify-doctoc: generate-doctoc
 		git diff; \
 		echo "doctoc is out of date, run make generate-doctoc"; exit 1; \
 	fi
+
+.PHONY: verify-security
+verify-security: govulncheck-scan nancy-scan ## Verify security by running govulncheck and nancy
+	@echo "Security checks passed"
+
+.PHONY: govulncheck-scan
+govulncheck-scan: govulncheck ## Perform govulncheck scan
+	$(GOVULNCHECK) ./...
+
+.PHONY: nancy-scan
+nancy-scan: nancy ## Perform nancy scan
+	go list -json -deps ./... | $(NANCY) sleuth
 
 ##@ Documentation
 .PHONY: generate-doctoc
