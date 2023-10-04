@@ -1,0 +1,17 @@
+name: Feature Request
+description: Request a feature you want to see in garm operator
+body:
+  - type: textarea
+    id: feature
+    attributes:
+      label: What is the feature you would like to have?
+      description: |
+        Please provide as much info as possible about the feature.
+      placeholder: "I would like to have ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else you would like to add?
