@@ -1,6 +1,8 @@
 <!-- SPDX-License-Identifier: MIT -->
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/mercedes-benz/garm-operator)](https://goreportcard.com/report/github.com/mercedes-benz/garm-operator) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mercedes-benz/garm-operator?sort=semver)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mercedes-benz/garm-operator)](https://goreportcard.com/report/github.com/mercedes-benz/garm-operator) 
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mercedes-benz/garm-operator?sort=semver)
+[![build](https://github.com/mercedes-benz/garm-operator/actions/workflows/build.yml/badge.svg)](https://github.com/mercedes-benz/garm-operator/actions/workflows/build.yml)
 
 # garm-operator 
 
@@ -55,7 +57,7 @@ We are releasing the `garm-operator` as container image together with the corres
 This manifests can be used to deploy the `garm-operator` into your Kubernetes cluster.
 
 ```bash
-export GARM_OPERATOR_VERSIOn=<garm-operator-version>
+export GARM_OPERATOR_VERSION=<garm-operator-version>
 export GARM_SERVER_URL=<garm-server-url> 
 export GARM_SERVER_USERNAME=<garm-server-username>
 export GARM_SERVER_PASSWORD=<garm-server-password>
@@ -63,6 +65,8 @@ curl -L https://github.com/mercedes-benz/garm-operator/releases/download/${GARM_
 ```
 
 #### Custom Resources
+
+The CRD documentation can be also seen via [docs.crds.dev](https://doc.crds.dev/github.com/mercedes-benz/garm-operator).
 
 Folder `config/samples` contains few basic examples of `Pools`, `Images` and corresponding `Repositories`, `Organizations` or `Enterprises`.
 
