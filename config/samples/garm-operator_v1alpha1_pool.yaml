@@ -15,7 +15,7 @@ spec:
     kind: Enterprise
     name: enterprise-sample
   enabled: true
-  extraSpecs: ""
+  extraSpecs: '{}'
   flavor: small
   githubRunnerGroup: ""
   imageName: runner-default
@@ -48,7 +48,7 @@ spec:
     kind: Organization
     name: github-actions
   enabled: true
-  extraSpecs: ""
+  extraSpecs: '{}'
   flavor: medium
   githubRunnerGroup: ""
   imageName: runner-default
@@ -81,7 +81,7 @@ spec:
     kind: Repository
     name: garm-operator
   enabled: true
-  extraSpecs: ""
+  extraSpecs: '{}'
   flavor: medium
   githubRunnerGroup: ""
   imageName: runner-default
