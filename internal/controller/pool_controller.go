@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	garmProviderParams "github.com/cloudbase/garm-provider-common/params"
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/client/organizations"
@@ -294,8 +295,21 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 
 	if controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) && pool.Spec.MinIdleRunners != 0 {
 		pool.Spec.MinIdleRunners = 0
-		err := r.Update(ctx, pool)
+		pool.Spec.Enabled = false
+
+		image, err := r.getImage(ctx, pool)
 		if err != nil {
+			log.Error(err, "error getting image")
+			return r.handleUpdateError(ctx, pool, err)
+		}
+
+		_, err = updatePool(garmClient, pool, image)
+		if err != nil {
+			log.Error(err, "error updating pool")
+			return r.handleUpdateError(ctx, pool, err)
+		}
+
+		if err := r.Update(ctx, pool); err != nil {
 			return r.handleUpdateError(ctx, pool, err)
 		}
 		log.Info("scaling pool down before deleting")
@@ -306,10 +320,27 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	runners, err := instanceClient.ListPoolInstances(
 		instances.NewListPoolInstancesParams().WithPoolID(pool.Status.ID))
 	if err != nil {
-		return r.handleUpdateError(ctx, pool, err)
+		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err))
 	}
 
 	if len(runners.GetPayload()) > 0 {
+		for _, runner := range runners.GetPayload() {
+			switch runner.Status {
+			case garmProviderParams.InstanceRunning, garmProviderParams.InstanceError:
+				if runner.RunnerStatus != params.RunnerActive {
+					err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name))
+					if err != nil {
+						log.Error(err, "unable to delete runner", "runner", runner.Name)
+					}
+				} else {
+					log.Info("Runner has an active run that does not allow deletion", "runner", runner.Name, "state", runner.Status, "runner state", runner.RunnerStatus)
+				}
+			default:
+				log.Info("Runner is in state that does not allow deletion", "runner", runner.Name, "state", runner.Status)
+			}
+		}
+
+		log.Info("Not all runners could be deleted or are still in deleting phase, reconcile in 1 minute again.")
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, nil
 	}
 

@@ -36,6 +36,20 @@ func (m *MockInstanceClient) EXPECT() *MockInstanceClientMockRecorder {
 	return m.recorder
 }
 
+// DeleteInstance mocks base method.
+func (m *MockInstanceClient) DeleteInstance(params *instances.DeleteInstanceParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteInstance", params)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteInstance indicates an expected call of DeleteInstance.
+func (mr *MockInstanceClientMockRecorder) DeleteInstance(params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInstance", reflect.TypeOf((*MockInstanceClient)(nil).DeleteInstance), params)
+}
+
 // GetInstance mocks base method.
 func (m *MockInstanceClient) GetInstance(params *instances.GetInstanceParams) (*instances.GetInstanceOK, error) {
 	m.ctrl.T.Helper()

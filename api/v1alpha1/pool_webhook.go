@@ -77,7 +77,7 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	if len(poolList.Items) > 0 {
 		existing := poolList.Items[0]
 		return nil, apierrors.NewBadRequest(
-			fmt.Sprintf("can not create pool, pool=%s with same image=%s, flavor=%s and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.ImageName, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScopeRef.Name))
+			fmt.Sprintf("can not create pool, pool=%s with same image=%s , flavor=%s  and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.ImageName, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScopeRef.Name))
 	}
 
 	return nil, nil

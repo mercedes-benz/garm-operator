@@ -66,11 +66,8 @@ func (i *Image) attachedPools(ctx context.Context) ([]Pool, error) {
 	}
 
 	for _, pool := range pools.Items {
-		// we do not care about pools that are already deleted
-		if pool.GetDeletionTimestamp() == nil {
-			if pool.Spec.ImageName == i.Name {
-				result = append(result, pool)
-			}
+		if pool.Spec.ImageName == i.Name {
+			result = append(result, pool)
 		}
 	}
 

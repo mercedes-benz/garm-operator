@@ -5,7 +5,7 @@ go 1.21.3
 
 require (
 	github.com/cloudbase/garm v0.1.3
-	github.com/cloudbase/garm-provider-common v0.0.0-20230724114054-7aa0a3dfbce0
+	github.com/cloudbase/garm-provider-common v0.1.0
 	github.com/go-openapi/runtime v0.26.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.16.0
