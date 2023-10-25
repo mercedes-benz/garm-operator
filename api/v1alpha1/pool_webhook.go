@@ -77,7 +77,7 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	if len(poolList.Items) > 0 {
 		existing := poolList.Items[0]
 		return nil, apierrors.NewBadRequest(
-			fmt.Sprintf("can not create pool, pool=%s with same image=%s , flavor=%s  and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.ImageName, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScopeRef.Name))
+			fmt.Sprintf("can not create pool, pool=%s with same image=%s, flavor=%s and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.ImageName, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScopeRef.Name))
 	}
 
 	return nil, nil
@@ -85,43 +85,46 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	poollog.Info("validate update", "name", r)
+	poollog.Info("validate update", "name", r.Name, "namespace", r.Namespace)
 
 	oldCRD, ok := old.(*Pool)
 	if !ok {
 		return nil, apierrors.NewBadRequest("failed to convert runtime.Object to Pool CRD")
 	}
 
-	err := validateImageName(context.Background(), r)
-	if err != nil {
-		return nil, apierrors.NewInvalid(
-			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-			r.Name,
-			field.ErrorList{err},
-		)
-	}
+	// if the object is being deleted, skip validation
+	if r.GetDeletionTimestamp() == nil {
+		err := validateImageName(context.Background(), r)
+		if err != nil {
+			return nil, apierrors.NewInvalid(
+				schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+				r.Name,
+				field.ErrorList{err},
+			)
+		}
 
-	if err := r.validateExtraSpec(); err != nil {
-		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-			r.Name,
-			field.ErrorList{err},
-		)
-	}
+		if err := r.validateExtraSpec(); err != nil {
+			return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+				r.Name,
+				field.ErrorList{err},
+			)
+		}
 
-	if err := r.validateProviderName(oldCRD); err != nil {
-		return nil, apierrors.NewInvalid(
-			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-			r.Name,
-			field.ErrorList{err},
-		)
-	}
+		if err := r.validateProviderName(oldCRD); err != nil {
+			return nil, apierrors.NewInvalid(
+				schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+				r.Name,
+				field.ErrorList{err},
+			)
+		}
 
-	if err := r.validateGitHubScope(oldCRD); err != nil {
-		return nil, apierrors.NewInvalid(
-			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-			r.Name,
-			field.ErrorList{err},
-		)
+		if err := r.validateGitHubScope(oldCRD); err != nil {
+			return nil, apierrors.NewInvalid(
+				schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+				r.Name,
+				field.ErrorList{err},
+			)
+		}
 	}
 
 	return nil, nil
