@@ -136,3 +136,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - runners
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - runners/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - runners/status
+  verbs:
+  - get
+  - patch
+  - update
