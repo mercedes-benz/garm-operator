@@ -15,6 +15,7 @@ type InstanceClient interface {
 	GetInstance(params *instances.GetInstanceParams) (*instances.GetInstanceOK, error)
 	ListInstances(params *instances.ListInstancesParams) (*instances.ListInstancesOK, error)
 	ListPoolInstances(params *instances.ListPoolInstancesParams) (*instances.ListPoolInstancesOK, error)
+	DeleteInstance(params *instances.DeleteInstanceParams) error
 }
 
 type instanceClient struct {
@@ -67,4 +68,14 @@ func (i *instanceClient) ListPoolInstances(params *instances.ListPoolInstancesPa
 		return nil, err
 	}
 	return instances, nil
+}
+
+func (i *instanceClient) DeleteInstance(params *instances.DeleteInstanceParams) error {
+	metrics.TotalGarmCalls.WithLabelValues("instances.Delete").Inc()
+	err := i.client.Instances.DeleteInstance(params, i.token)
+	if err != nil {
+		metrics.GarmCallErrors.WithLabelValues("instances.ListPool").Inc()
+		return err
+	}
+	return nil
 }
