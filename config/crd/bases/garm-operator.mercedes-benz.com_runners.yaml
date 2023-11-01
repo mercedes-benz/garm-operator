@@ -24,7 +24,7 @@ spec:
       name: ID
       type: string
     - description: Pool ID
-      jsonPath: .status.pool_id
+      jsonPath: .status.poolId
       name: Pool ID
       type: string
     - description: Garm Runner Status
@@ -32,7 +32,7 @@ spec:
       name: Garm Runner Status
       type: string
     - description: Provider Runner Status
-      jsonPath: .status.instance_status
+      jsonPath: .status.instanceStatus
       name: Provider Runner Status
       type: string
     name: v1alpha1

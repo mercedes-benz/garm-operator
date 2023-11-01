@@ -80,9 +80,9 @@ type RunnerStatus struct {
 //+kubebuilder:resource:path=runners,scope=Namespaced,categories=garm,shortName=run
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Runner ID"
-//+kubebuilder:printcolumn:name="Pool ID",type="string",JSONPath=".status.pool_id",description="Pool ID"
+//+kubebuilder:printcolumn:name="Pool ID",type="string",JSONPath=".status.poolId",description="Pool ID"
 //+kubebuilder:printcolumn:name="Garm Runner Status",type="string",JSONPath=".status.status",description="Garm Runner Status"
-//+kubebuilder:printcolumn:name="Provider Runner Status",type="string",JSONPath=".status.instance_status",description="Provider Runner Status"
+//+kubebuilder:printcolumn:name="Provider Runner Status",type="string",JSONPath=".status.instanceStatus",description="Provider Runner Status"
 
 // Runner is the Schema for the runners API
 type Runner struct {
