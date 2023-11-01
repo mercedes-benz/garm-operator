@@ -217,6 +217,11 @@ func main() {
 	go runnerReconciler.PollRunnerInstances(ctx, eventChan)
 	defer cancel()
 
+	if err = (&garmoperatorv1alpha1.Runner{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Runner")
+		exitCode = 1
+		return
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

@@ -75,11 +75,11 @@ spec:
                   - type
                   type: object
                 type: array
-              agent_id:
+              agentId:
                 description: AgentID is the github runner agent ID.
                 format: int64
                 type: integer
-              github-runner-group:
+              githubRunnerGroup:
                 description: GithubRunnerGroup is the github runner group to which
                   the runner belongs. The runner group must be created by someone
                   with access to the enterprise.
@@ -87,7 +87,7 @@ spec:
               id:
                 description: ID is the database ID of this instance.
                 type: string
-              instance_status:
+              instanceStatus:
                 description: RunnerStatus is the github runner status as it appears
                   on GitHub.
                 type: string
@@ -96,29 +96,29 @@ spec:
                   on the provider, this may or may not be useful in the context of
                   the provider, but we can use it internally to identify the instance.
                 type: string
-              os_arch:
+              osArch:
                 description: OSArch is the operating system architecture.
                 type: string
-              os_name:
+              osName:
                 description: 'OSName is the name of the OS. Eg: ubuntu, centos, etc.'
                 type: string
-              os_type:
+              osType:
                 description: OSType is the operating system type. For now, only Linux
                   and Windows are supported.
                 type: string
-              os_version:
+              osVersion:
                 description: OSVersion is the version of the operating system.
                 type: string
-              pool_id:
+              poolId:
                 description: PoolID is the ID of the garm pool to which a runner belongs.
                 type: string
-              provider_fault:
+              providerFault:
                 description: ProviderFault holds any error messages captured from
                   the IaaS provider that is responsible for managing the lifecycle
                   of the runner.
                 format: byte
                 type: string
-              provider_id:
+              providerId:
                 description: PeoviderID is the unique ID the provider associated with
                   the compute instance. We use this to identify the instance in the
                   provider.
@@ -128,8 +128,8 @@ spec:
                   (eg: running, stopped, etc)'
                 type: string
             required:
-            - agent_id
-            - github-runner-group
+            - agentId
+            - githubRunnerGroup
             type: object
         type: object
     served: true
