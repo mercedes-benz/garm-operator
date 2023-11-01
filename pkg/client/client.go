@@ -119,3 +119,11 @@ func initializeGarm(ctx context.Context, garmParams GarmScopeParams) error {
 
 	return nil
 }
+
+func IsNotFoundError(err interface{}) bool {
+	apiErr, ok := err.(runtime.ClientResponseStatus)
+	if !ok {
+		return false
+	}
+	return apiErr.IsCode(404)
+}

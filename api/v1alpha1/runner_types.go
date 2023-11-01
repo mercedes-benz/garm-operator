@@ -24,10 +24,10 @@ type RunnerStatus struct {
 	// PeoviderID is the unique ID the provider associated
 	// with the compute instance. We use this to identify the
 	// instance in the provider.
-	ProviderID string `json:"provider_id,omitempty"`
+	ProviderID string `json:"providerId,omitempty"`
 
 	// AgentID is the github runner agent ID.
-	AgentID int64 `json:"agent_id"`
+	AgentID int64 `json:"agentId"`
 
 	// Name is the name associated with an instance. Depending on
 	// the provider, this may or may not be useful in the context of
@@ -37,16 +37,16 @@ type RunnerStatus struct {
 
 	// OSType is the operating system type. For now, only Linux and
 	// Windows are supported.
-	OSType commonParams.OSType `json:"os_type,omitempty"`
+	OSType commonParams.OSType `json:"osType,omitempty"`
 
 	// OSName is the name of the OS. Eg: ubuntu, centos, etc.
-	OSName string `json:"os_name,omitempty"`
+	OSName string `json:"osName,omitempty"`
 
 	// OSVersion is the version of the operating system.
-	OSVersion string `json:"os_version,omitempty"`
+	OSVersion string `json:"osVersion,omitempty"`
 
 	// OSArch is the operating system architecture.
-	OSArch commonParams.OSArch `json:"os_arch,omitempty"`
+	OSArch commonParams.OSArch `json:"osArch,omitempty"`
 
 	// Addresses is a list of IP addresses the provider reports
 	// for this instance.
@@ -56,29 +56,33 @@ type RunnerStatus struct {
 	Status commonParams.InstanceStatus `json:"status,omitempty"`
 
 	// RunnerStatus is the github runner status as it appears on GitHub.
-	InstanceStatus params.RunnerStatus `json:"instance_status,omitempty"`
+	InstanceStatus params.RunnerStatus `json:"instanceStatus,omitempty"`
 
 	// PoolID is the ID of the garm pool to which a runner belongs.
-	PoolID string `json:"pool_id,omitempty"`
+	PoolID string `json:"poolId,omitempty"`
 
 	// ProviderFault holds any error messages captured from the IaaS provider that is
 	// responsible for managing the lifecycle of the runner.
-	ProviderFault []byte `json:"provider_fault,omitempty"`
+	ProviderFault []byte `json:"providerFault,omitempty"`
 
 	// StatusMessages is a list of status messages sent back by the runner as it sets itself
 	// up.
-	//StatusMessages []params.StatusMessage `json:"status_messages,omitempty"`
 
 	//// UpdatedAt is the timestamp of the last update to this runner.
-	//UpdatedAt time.Time `json:"updated_at"`
+	// UpdatedAt time.Time `json:"updated_at"`
 
 	// GithubRunnerGroup is the github runner group to which the runner belongs.
 	// The runner group must be created by someone with access to the enterprise.
-	GitHubRunnerGroup string `json:"github-runner-group"`
+	GitHubRunnerGroup string `json:"githubRunnerGroup"`
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:path=runners,scope=Namespaced,categories=garm,shortName=run
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Runner ID"
+//+kubebuilder:printcolumn:name="Pool ID",type="string",JSONPath=".status.pool_id",description="Pool ID"
+//+kubebuilder:printcolumn:name="Garm Runner Status",type="string",JSONPath=".status.status",description="Garm Runner Status"
+//+kubebuilder:printcolumn:name="Provider Runner Status",type="string",JSONPath=".status.instance_status",description="Provider Runner Status"
 
 // Runner is the Schema for the runners API
 type Runner struct {

@@ -33,7 +33,8 @@ import (
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
-	"github.com/mercedes-benz/garm-operator/pkg/garmpool"
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
+	poolfilter "github.com/mercedes-benz/garm-operator/pkg/filter/pool"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
@@ -62,7 +63,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			return ctrl.Result{}, nil
 		}
 		log.Error(err, "cannot fetch Pool")
-		return ctrl.Result{}, err
+		return r.handleUpdateError(ctx, pool, err)
 	}
 
 	// Ignore objects that are paused
@@ -78,7 +79,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		Password: r.Password,
 	})
 	if err != nil {
-		return ctrl.Result{}, err
+		return r.handleUpdateError(ctx, pool, err)
 	}
 
 	instanceClient := garmClient.NewInstanceClient()
@@ -88,7 +89,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		Password: r.Password,
 	})
 	if err != nil {
-		return ctrl.Result{}, err
+		return r.handleUpdateError(ctx, pool, err)
 	}
 
 	// handle deletion
@@ -444,11 +445,11 @@ func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, garmCli
 	if err != nil {
 		return params.Pool{}, err
 	}
-	filteredGarmPools := garmpool.Filter(garmPools.Payload,
-		garmpool.MatchesImage(image.Spec.Tag),
-		garmpool.MatchesFlavor(pool.Spec.Flavor),
-		garmpool.MatchesProvider(pool.Spec.ProviderName),
-		garmpool.MatchesGitHubScope(scope, id),
+	filteredGarmPools := filter.Match(garmPools.Payload,
+		poolfilter.MatchesImage(image.Spec.Tag),
+		poolfilter.MatchesFlavor(pool.Spec.Flavor),
+		poolfilter.MatchesProvider(pool.Spec.ProviderName),
+		poolfilter.MatchesGitHubScope(scope, id),
 	)
 
 	if len(filteredGarmPools) > 1 {

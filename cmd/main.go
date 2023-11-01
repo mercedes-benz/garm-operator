@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -37,6 +38,9 @@ func init() {
 }
 
 func main() {
+	exitCode := 0
+	defer func() { os.Exit(exitCode) }()
+
 	ctrl.SetLogger(klogr.New())
 
 	// initiate flags
@@ -99,7 +103,8 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	ctx := ctrl.SetupSignalHandler()
@@ -127,7 +132,8 @@ func main() {
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Enterprise")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 	if err = (&controller.PoolReconciler{
 		Client:   mgr.GetClient(),
@@ -139,20 +145,26 @@ func main() {
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Pool")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
-	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Pool")
-		os.Exit(1)
-	}
-	if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Image")
-		os.Exit(1)
-	}
-	if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
-		os.Exit(1)
+	if os.Getenv("CREATE_WEBHOOK") == "true" {
+		if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Pool")
+			exitCode = 1
+			return
+		}
+		if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Image")
+			exitCode = 1
+			return
+		}
+		if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
+			exitCode = 1
+			return
+		}
 	}
 
 	if err = (&controller.OrganizationReconciler{
@@ -165,7 +177,8 @@ func main() {
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Organization")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	if err = (&controller.RepositoryReconciler{
@@ -178,7 +191,8 @@ func main() {
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Repository")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	eventChan := make(chan event.GenericEvent)
@@ -194,26 +208,32 @@ func main() {
 	// setup controller so it can reconcile if events from eventChan are queued
 	if err = runnerReconciler.SetupWithManager(mgr, eventChan); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Runner")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	// fetch runner instances periodically and enqueue reconcile events for runner ctrl if external system has changed
-	go runnerReconciler.PollRunnerInstances(context.Background(), eventChan)
+	ctx, cancel := context.WithCancel(context.Background())
+	go runnerReconciler.PollRunnerInstances(ctx, eventChan)
+	defer cancel()
 
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 }

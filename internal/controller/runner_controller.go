@@ -4,20 +4,27 @@ package controller
 
 import (
 	"context"
+	"strings"
+	"time"
+
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/params"
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
-	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
+
+	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
+	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 )
 
 // RunnerReconciler reconciles a Runner object
@@ -39,6 +46,144 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	log := log.FromContext(ctx)
 	log.Info("Reconciling runners...", "Request", req)
 
+	runnerClient, err := garmClient.NewInstanceClient(garmClient.GarmScopeParams{
+		BaseURL:  r.BaseURL,
+		Username: r.Username,
+		Password: r.Password,
+	})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	garmRunner, err := r.getGarmRunnerInstance(runnerClient, req.Name)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	runner := &garmoperatorv1alpha1.Runner{}
+	if err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: strings.ToLower(req.Name)}, runner); err != nil {
+		return r.handleFetchRunnerError(ctx, req, err, garmRunner)
+	}
+
+	if !runner.ObjectMeta.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, runnerClient, garmRunner, runner)
+	}
+
+	if garmRunner == nil {
+		return r.cleanupRunnerCR(ctx, runner)
+	}
+
+	return r.updateRunnerStatus(ctx, runner, garmRunner)
+}
+
+func (r *RunnerReconciler) handleFetchRunnerError(ctx context.Context, req ctrl.Request, fetchErr error, garmRunner *params.Instance) (ctrl.Result, error) {
+	if apierrors.IsNotFound(fetchErr) && garmRunner != nil {
+		return r.createRunnerCR(ctx, req, garmRunner)
+	}
+	return ctrl.Result{}, fetchErr
+}
+
+func (r *RunnerReconciler) createRunnerCR(ctx context.Context, req ctrl.Request, garmRunner *params.Instance) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+	log.Info("Creating Runner", "Runner", garmRunner.Name)
+
+	runnerObj := &garmoperatorv1alpha1.Runner{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      strings.ToLower(garmRunner.Name),
+			Namespace: req.Namespace,
+		},
+		Spec: garmoperatorv1alpha1.RunnerSpec{},
+	}
+	err := r.Create(ctx, runnerObj)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.ensureFinalizer(ctx, runnerObj); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if _, err := r.updateRunnerStatus(ctx, runnerObj, garmRunner); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient garmClient.InstanceClient, garmRunner *params.Instance, runner *garmoperatorv1alpha1.Runner) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+
+	if garmRunner != nil {
+		log.Info("Deleting Runner in Garm", "Runner Name", garmRunner.Name)
+		err := runnerClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(garmRunner.Name))
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	} else {
+		log.Info("Removing finalizer and cleaning up runner CR in cluster", "Runner CR", runner.Name)
+		if controllerutil.ContainsFinalizer(runner, key.RunnerFinalizerName) {
+			controllerutil.RemoveFinalizer(runner, key.RunnerFinalizerName)
+			if err := r.Update(ctx, runner); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *RunnerReconciler) cleanupRunnerCR(ctx context.Context, runner *garmoperatorv1alpha1.Runner) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+	log.Info("Cleaning up runner CRs with no match in Garm")
+	err := r.Delete(ctx, runner)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{}, nil
+}
+
+func (r *RunnerReconciler) getGarmRunnerInstance(client garmClient.InstanceClient, name string) (*params.Instance, error) {
+	// Problem: req.Name is not always name of garm instance like road-runner-k8s-EyCKa8uPE1to, but name of runner CR from cache which is lowercase road-runner-k8s-eycka8upe1to => GetInstanceByName can match runner in garm with name of CR
+	garmRunner, err := client.GetInstanceByName(instances.NewGetInstanceParams().WithInstanceName(name))
+	if err != nil && garmClient.IsNotFoundError(err) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return &garmRunner.Payload, err
+}
+
+func (r *RunnerReconciler) ensureFinalizer(ctx context.Context, runner *garmoperatorv1alpha1.Runner) error {
+	if !controllerutil.ContainsFinalizer(runner, key.RunnerFinalizerName) {
+		controllerutil.AddFinalizer(runner, key.RunnerFinalizerName)
+		return r.Update(ctx, runner)
+	}
+	return nil
+}
+
+func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmoperatorv1alpha1.Runner, garmRunner *params.Instance) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+	log.Info("Update runner status...")
+
+	runner.Status.ID = garmRunner.ID
+	runner.Status.ProviderID = garmRunner.ProviderID
+	runner.Status.AgentID = garmRunner.AgentID
+	runner.Status.Name = garmRunner.Name
+	runner.Status.OSType = garmRunner.OSType
+	runner.Status.OSName = garmRunner.OSName
+	runner.Status.OSVersion = garmRunner.OSVersion
+	runner.Status.OSArch = garmRunner.OSArch
+	runner.Status.Addresses = garmRunner.Addresses
+	runner.Status.Status = garmRunner.Status
+	runner.Status.InstanceStatus = garmRunner.RunnerStatus
+	runner.Status.PoolID = garmRunner.PoolID
+	runner.Status.ProviderFault = garmRunner.ProviderFault
+	runner.Status.GitHubRunnerGroup = garmRunner.GitHubRunnerGroup
+
+	if err := r.Status().Update(ctx, runner); err != nil {
+		log.Error(err, "unable to update Runner status")
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -51,28 +196,26 @@ func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager, eventChan chan eve
 		return err
 	}
 
-	if err = c.Watch(&source.Channel{Source: eventChan}, &handler.EnqueueRequestForObject{}); err != nil {
-		return err
-	}
-	return nil
+	return c.Watch(&source.Channel{Source: eventChan}, &handler.EnqueueRequestForObject{})
 }
 
 func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan chan event.GenericEvent) {
 	log := log.FromContext(ctx)
 	ticker := time.NewTicker(5 * time.Second)
-	done := make(chan bool)
-
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case _ = <-ticker.C:
-				log.Info("Polling Runners...")
-				_ = r.EnqueueRunnerInstances(ctx, eventChan)
+	for {
+		select {
+		case <-ctx.Done():
+			log.Info("Closing event channel for runners...")
+			close(eventChan)
+			return
+		case _ = <-ticker.C:
+			log.Info("Polling Runners...")
+			err := r.EnqueueRunnerInstances(ctx, eventChan)
+			if err != nil {
+				log.Error(err, "Failed polling runner instances")
 			}
 		}
-	}()
+	}
 }
 
 func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan chan event.GenericEvent) error {
@@ -89,6 +232,9 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 		Username: r.Username,
 		Password: r.Password,
 	})
+	if err != nil {
+		return err
+	}
 
 	var namespace string
 	if len(pools.Items) > 0 {
@@ -104,30 +250,10 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 	}
 
 	for _, runner := range allRunners {
-		// TODO: check if runner already exists as CR in namespace before enqueuing new event
 		runnerObj := garmoperatorv1alpha1.Runner{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      runner.Name,
 				Namespace: namespace,
-			},
-			Spec: garmoperatorv1alpha1.RunnerSpec{},
-			Status: garmoperatorv1alpha1.RunnerStatus{
-				ID:             runner.ID,
-				ProviderID:     runner.ProviderID,
-				AgentID:        runner.AgentID,
-				Name:           runner.Name,
-				OSType:         runner.OSType,
-				OSName:         runner.OSName,
-				OSVersion:      runner.OSVersion,
-				OSArch:         runner.OSArch,
-				Addresses:      runner.Addresses,
-				Status:         runner.Status,
-				InstanceStatus: runner.RunnerStatus,
-				PoolID:         runner.PoolID,
-				ProviderFault:  runner.ProviderFault,
-				//StatusMessages:    runner.StatusMessages,
-				//UpdatedAt:         runner.UpdatedAt,
-				GitHubRunnerGroup: runner.GitHubRunnerGroup,
 			},
 		}
 

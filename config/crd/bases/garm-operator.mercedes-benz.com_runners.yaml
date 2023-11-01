@@ -8,13 +8,34 @@ metadata:
 spec:
   group: garm-operator.mercedes-benz.com
   names:
+    categories:
+    - garm
     kind: Runner
     listKind: RunnerList
     plural: runners
+    shortNames:
+    - run
     singular: runner
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Runner ID
+      jsonPath: .status.id
+      name: ID
+      type: string
+    - description: Pool ID
+      jsonPath: .status.pool_id
+      name: Pool ID
+      type: string
+    - description: Garm Runner Status
+      jsonPath: .status.status
+      name: Garm Runner Status
+      type: string
+    - description: Provider Runner Status
+      jsonPath: .status.instance_status
+      name: Provider Runner Status
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Runner is the Schema for the runners API
