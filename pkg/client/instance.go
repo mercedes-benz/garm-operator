@@ -7,10 +7,9 @@ import (
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/go-openapi/runtime"
 
-	"github.com/mercedes-benz/garm-operator/pkg/metrics"
-
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
+	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 
 type InstanceClient interface {

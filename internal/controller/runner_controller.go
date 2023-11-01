@@ -46,16 +46,22 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	log := log.FromContext(ctx)
 	log.Info("Reconciling runners...", "Request", req)
 
-	runnerClient, err := garmClient.NewInstanceClient(garmClient.GarmScopeParams{
+	instanceClient := garmClient.NewInstanceClient()
+	err := instanceClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
+		// Debug:    true,
 	})
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	garmRunner, err := r.getGarmRunnerInstance(runnerClient, req.Name)
+	return r.reconcile(ctx, req, instanceClient)
+}
+
+func (r *RunnerReconciler) reconcile(ctx context.Context, req ctrl.Request, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
+	garmRunner, err := r.getGarmRunnerInstance(instanceClient, req.Name)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -66,7 +72,7 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	if !runner.ObjectMeta.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, runnerClient, garmRunner, runner)
+		return r.reconcileDelete(ctx, instanceClient, garmRunner, runner)
 	}
 
 	if garmRunner == nil {
@@ -227,10 +233,12 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 		return err
 	}
 
-	runnerClient, err := garmClient.NewInstanceClient(garmClient.GarmScopeParams{
+	instanceClient := garmClient.NewInstanceClient()
+	err = instanceClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
+		// Debug:    true,
 	})
 	if err != nil {
 		return err
@@ -242,7 +250,7 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 	}
 
 	for _, p := range pools.Items {
-		poolRunners, err := runnerClient.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID(p.Status.ID))
+		poolRunners, err := instanceClient.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID(p.Status.ID))
 		if err != nil {
 			return err
 		}
