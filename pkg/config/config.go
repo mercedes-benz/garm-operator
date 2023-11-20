@@ -32,8 +32,8 @@ type OperatorConfig struct {
 }
 
 type AppConfig struct {
-	Garm     GarmConfig     `koanf:"garm" validate:"required"`
-	Operator OperatorConfig `koanf:"operator" validate:"required"`
+	Garm     GarmConfig     `koanf:"garm"`
+	Operator OperatorConfig `koanf:"operator"`
 }
 
 var Config AppConfig
@@ -83,10 +83,7 @@ func ReadConfig(f *pflag.FlagSet, configFile string) error {
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	if err := validate.Struct(&Config); err != nil {
-		if strings.Contains(err.Error(), "required") {
-			return errors.Wrap(err, "set config with flag, env or in config file")
-		}
-		return errors.Wrap(err, "missing required attributes")
+		return errors.Wrap(err, "invalid config: set with env, flag or in config file")
 	}
 
 	return nil
