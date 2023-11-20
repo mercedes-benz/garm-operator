@@ -52,9 +52,9 @@ spec:
         - --garm-password=$GARM_SERVER_PASSWORD
         image: controller:latest
         env:
-        - name: CREATE_WEBHOOK
+        - name: OPERATOR_CREATE_WEBHOOK
           value: "true"
-        - name: WATCH_NAMESPACE
+        - name: OPERATOR_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
