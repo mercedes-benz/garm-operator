@@ -11,7 +11,6 @@ import (
 )
 
 func TestReadConfig(t *testing.T) {
-
 	f := flags.InitiateFlags()
 
 	tests := []struct {
@@ -127,7 +126,6 @@ func TestReadConfig(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			// set env vars
 			for k, v := range tt.envvars {

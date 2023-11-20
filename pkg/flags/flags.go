@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mercedes-benz/garm-operator/pkg/defaults"
 	"github.com/spf13/pflag"
+
+	"github.com/mercedes-benz/garm-operator/pkg/defaults"
 )
 
 func InitiateFlags() *pflag.FlagSet {

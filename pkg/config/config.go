@@ -39,9 +39,8 @@ type AppConfig struct {
 var Config AppConfig
 
 func ReadConfig(f *pflag.FlagSet, configFile string) error {
-
 	// create koanf instance
-	var k = koanf.New(".")
+	k := koanf.New(".")
 
 	// load config from envs with prefix OPERATOR_
 	k.Load(env.Provider("OPERATOR_", ".", func(s string) string {
@@ -60,14 +59,13 @@ func ReadConfig(f *pflag.FlagSet, configFile string) error {
 		k.Load(posflag.ProviderWithFlag(f, ".", k, func(pf *pflag.Flag) (string, interface{}) {
 			// Transform flag e.g. from operator-sync-period to operator.syncperiod
 			key := strings.Replace(pf.Name, "-", ".", 1)
-			key2 := strings.Replace(key, "-", "_", -1)
+			key2 := strings.ReplaceAll(key, "-", "_")
 
 			// Use FlagVal() and then transform the value, or don't use it at all
 			// and add custom logic to parse the value.
 			val := posflag.FlagVal(f, pf)
 
 			return key2, val
-
 		}), nil)
 	}
 
@@ -92,5 +90,4 @@ func ReadConfig(f *pflag.FlagSet, configFile string) error {
 	}
 
 	return nil
-
 }

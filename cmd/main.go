@@ -35,7 +35,6 @@ func init() {
 }
 
 func main() {
-
 	ctrl.SetLogger(klogr.New())
 
 	// initiate flags
@@ -59,10 +58,9 @@ func main() {
 		if err != nil {
 			setupLog.Error(err, "failed to marshal config as yaml")
 			os.Exit(1)
-		} else {
-			fmt.Printf("generated Config as yaml:\n%s\n", yamlConfig)
-			os.Exit(0)
 		}
+		fmt.Printf("generated Config as yaml:\n%s\n", yamlConfig)
+		os.Exit(0)
 	}
 
 	var watchNamespaces []string
