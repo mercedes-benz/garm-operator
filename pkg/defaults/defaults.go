@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 package defaults
 
 import "time"
