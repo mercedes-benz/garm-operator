@@ -10,6 +10,6 @@ const (
 	DefaultHealthProbeBindAddress = ":8081"
 	DefaultLeaderElection         = false
 	DefaultSyncPeriod             = 5 * time.Minute
-	DefaultNamespace              = ""
+	DefaultWatchNamespace         = ""
 	DefaultCreateWebhook          = false
 )

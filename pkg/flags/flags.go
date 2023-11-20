@@ -24,7 +24,7 @@ func InitiateFlags() *pflag.FlagSet {
 	f.String("operator-health-probe-bind-address", defaults.DefaultHealthProbeBindAddress, "The address the probe endpoint binds to.")
 	f.Bool("operator-leader-election", defaults.DefaultLeaderElection, "Enable leader election for controller manager. "+"Enabling this will ensure there is only one active controller manager.")
 	f.Duration("operator-sync-period", defaults.DefaultSyncPeriod, "The minimum interval at which watched resources are reconciled (e.g. 5m)")
-	f.String("operator-namespace", defaults.DefaultNamespace, "Namespace that the controller watches to reconcile garm objects. "+"If unspecified, the controller watches for garm objects across all namespaces.")
+	f.String("operator-watch-namespace", defaults.DefaultWatchNamespace, "Namespace that the controller watches to reconcile garm objects. "+"If unspecified, the controller watches for garm objects across all namespaces.")
 	f.Bool("operator-create-webhook", defaults.DefaultCreateWebhook, "If true, create a validating webhook for garm objects.")
 
 	f.String("garm-server", "", "The address of the GARM server")

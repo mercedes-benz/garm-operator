@@ -37,7 +37,7 @@ func TestReadConfig(t *testing.T) {
 					HealthProbeBindAddress: ":8081",
 					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
-					Namespace:              "",
+					WatchNamespace:         "",
 					Webhook:                false,
 				},
 				Garm: GarmConfig{
@@ -60,7 +60,7 @@ func TestReadConfig(t *testing.T) {
 					HealthProbeBindAddress: ":8081",
 					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
-					Namespace:              "",
+					WatchNamespace:         "",
 					Webhook:                false,
 				},
 				Garm: GarmConfig{
@@ -88,7 +88,7 @@ func TestReadConfig(t *testing.T) {
 					HealthProbeBindAddress: ":8081",
 					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
-					Namespace:              "",
+					WatchNamespace:         "",
 					Webhook:                false,
 				},
 				Garm: GarmConfig{
@@ -115,7 +115,7 @@ func TestReadConfig(t *testing.T) {
 					HealthProbeBindAddress: ":7001",
 					LeaderElection:         true,
 					SyncPeriod:             10 * time.Minute,
-					Namespace:              "garm-operator-namespace",
+					WatchNamespace:         "garm-operator-namespace",
 				},
 				Garm: GarmConfig{
 					Server:   "http://garm-server:9997",

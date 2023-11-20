@@ -27,7 +27,7 @@ type OperatorConfig struct {
 	HealthProbeBindAddress string        `koanf:"health_probe_bind_address" validate:"required,hostname_port"`
 	LeaderElection         bool          `koanf:"leader_election"`
 	SyncPeriod             time.Duration `koanf:"sync_period" validate:"required"`
-	Namespace              string        `koanf:"namespace"`
+	WatchNamespace         string        `koanf:"watch_namespace"`
 	Webhook                bool          `koanf:"create_webhook"`
 }
 

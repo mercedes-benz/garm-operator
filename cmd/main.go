@@ -64,8 +64,8 @@ func main() {
 	}
 
 	var watchNamespaces []string
-	if config.Config.Operator.Namespace != "" {
-		watchNamespaces = []string{config.Config.Operator.Namespace}
+	if config.Config.Operator.WatchNamespace != "" {
+		watchNamespaces = []string{config.Config.Operator.WatchNamespace}
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
