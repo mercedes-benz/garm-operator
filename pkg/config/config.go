@@ -25,7 +25,7 @@ type GarmConfig struct {
 type OperatorConfig struct {
 	MetricsBindAddress     string        `koanf:"metrics_bind_address" validate:"required,hostname_port"`
 	HealthProbeBindAddress string        `koanf:"health_probe_bind_address" validate:"required,hostname_port"`
-	LeaderElect            bool          `koanf:"leader_elect"`
+	LeaderElection         bool          `koanf:"leader_election"`
 	SyncPeriod             time.Duration `koanf:"sync_period" validate:"required"`
 	Namespace              string        `koanf:"namespace"`
 	Webhook                bool          `koanf:"create_webhook"`

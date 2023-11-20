@@ -6,7 +6,7 @@ garm:
 operator:
   metrics_bind_address: ":7000"
   health_probe_bind_address: ":7001"
-  leader_elect: true
+  leader_election: true
   sync_period: "10m"
   namespace: "garm-operator-namespace"
   create_webhook: false

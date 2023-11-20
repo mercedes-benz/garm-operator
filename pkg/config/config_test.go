@@ -35,7 +35,7 @@ func TestReadConfig(t *testing.T) {
 				Operator: OperatorConfig{
 					MetricsBindAddress:     ":8080",
 					HealthProbeBindAddress: ":8081",
-					LeaderElect:            false,
+					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
 					Namespace:              "",
 					Webhook:                false,
@@ -58,7 +58,7 @@ func TestReadConfig(t *testing.T) {
 				Operator: OperatorConfig{
 					MetricsBindAddress:     ":8080",
 					HealthProbeBindAddress: ":8081",
-					LeaderElect:            false,
+					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
 					Namespace:              "",
 					Webhook:                false,
@@ -86,7 +86,7 @@ func TestReadConfig(t *testing.T) {
 				Operator: OperatorConfig{
 					MetricsBindAddress:     ":8080",
 					HealthProbeBindAddress: ":8081",
-					LeaderElect:            false,
+					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
 					Namespace:              "",
 					Webhook:                false,
@@ -113,7 +113,7 @@ func TestReadConfig(t *testing.T) {
 				Operator: OperatorConfig{
 					MetricsBindAddress:     ":7000",
 					HealthProbeBindAddress: ":7001",
-					LeaderElect:            true,
+					LeaderElection:         true,
 					SyncPeriod:             10 * time.Minute,
 					Namespace:              "garm-operator-namespace",
 				},

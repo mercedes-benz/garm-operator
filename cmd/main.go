@@ -73,7 +73,7 @@ func main() {
 		MetricsBindAddress:     config.Config.Operator.MetricsBindAddress,
 		Port:                   9443,
 		HealthProbeBindAddress: config.Config.Operator.HealthProbeBindAddress,
-		LeaderElection:         config.Config.Operator.LeaderElect,
+		LeaderElection:         config.Config.Operator.LeaderElection,
 		LeaderElectionID:       "b608d8b3.mercedes-benz.com",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the

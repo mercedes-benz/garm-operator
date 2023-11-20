@@ -8,7 +8,7 @@ const (
 	// default values for operator configuration
 	DefaultMetricsBindAddress     = ":8080"
 	DefaultHealthProbeBindAddress = ":8081"
-	DefaultLeaderElect            = false
+	DefaultLeaderElection         = false
 	DefaultSyncPeriod             = 5 * time.Minute
 	DefaultNamespace              = ""
 	DefaultCreateWebhook          = false
