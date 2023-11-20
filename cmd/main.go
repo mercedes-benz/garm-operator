@@ -125,19 +125,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	if config.Config.Operator.Webhook == true {
-		if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Pool")
-			os.Exit(1)
-		}
-		if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Image")
-			os.Exit(1)
-		}
-		if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
-			os.Exit(1)
-		}
+	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Pool")
+		os.Exit(1)
+	}
+	if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Image")
+		os.Exit(1)
+	}
+	if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
+		os.Exit(1)
 	}
 
 	if err = (&controller.OrganizationReconciler{

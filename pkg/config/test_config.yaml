@@ -9,4 +9,3 @@ operator:
   leader_election: true
   sync_period: "10m"
   watch_namespace: "garm-operator-namespace"
-  create_webhook: false

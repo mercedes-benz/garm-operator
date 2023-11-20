@@ -38,7 +38,6 @@ func TestReadConfig(t *testing.T) {
 					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
 					WatchNamespace:         "",
-					Webhook:                false,
 				},
 				Garm: GarmConfig{
 					Server:   "http://localhost:9997",
@@ -61,7 +60,6 @@ func TestReadConfig(t *testing.T) {
 					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
 					WatchNamespace:         "",
-					Webhook:                false,
 				},
 				Garm: GarmConfig{
 					Server:   "http://localhost:9997",
@@ -89,7 +87,6 @@ func TestReadConfig(t *testing.T) {
 					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
 					WatchNamespace:         "",
-					Webhook:                false,
 				},
 				Garm: GarmConfig{
 					Server:   "http://localhost:9997",

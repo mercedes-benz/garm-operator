@@ -11,5 +11,4 @@ const (
 	DefaultLeaderElection         = false
 	DefaultSyncPeriod             = 5 * time.Minute
 	DefaultWatchNamespace         = ""
-	DefaultCreateWebhook          = false
 )
