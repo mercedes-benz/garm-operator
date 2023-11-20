@@ -1,0 +1,94 @@
+package config
+
+import (
+	"strings"
+	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/posflag"
+	"github.com/knadh/koanf/v2"
+	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
+)
+
+type GarmConfig struct {
+	Server   string `koanf:"server" validate:"required,url"`
+	Username string `koanf:"username" validate:"required"`
+	Password string `koanf:"password" validate:"required"`
+}
+
+type OperatorConfig struct {
+	MetricsBindAddress     string        `koanf:"metrics_bind_address" validate:"required,hostname_port"`
+	HealthProbeBindAddress string        `koanf:"health_probe_bind_address" validate:"required,hostname_port"`
+	LeaderElect            bool          `koanf:"leader_elect"`
+	SyncPeriod             time.Duration `koanf:"sync_period" validate:"required"`
+	Namespace              string        `koanf:"namespace"`
+	Webhook                bool          `koanf:"create_webhook"`
+}
+
+type AppConfig struct {
+	Garm     GarmConfig     `koanf:"garm" validate:"required"`
+	Operator OperatorConfig `koanf:"operator" validate:"required"`
+}
+
+var Config AppConfig
+
+func ReadConfig(f *pflag.FlagSet, configFile string) error {
+
+	// create koanf instance
+	var k = koanf.New(".")
+
+	// load config from envs with prefix OPERATOR_
+	k.Load(env.Provider("OPERATOR_", ".", func(s string) string {
+		// Transform env e.g. from OPERATOR_SYNC_PERIOD to operator.syncperiod
+		key := strings.Replace(strings.ToLower(s), "_", ".", 1)
+		return key
+	}), nil)
+
+	// load config from envs with prefix GARM_
+	k.Load(env.Provider("GARM_", ".", func(s string) string {
+		return strings.Replace(strings.ToLower(s), "_", ".", 1)
+	}), nil)
+
+	// load config from flags
+	if f != nil {
+		k.Load(posflag.ProviderWithFlag(f, ".", k, func(pf *pflag.Flag) (string, interface{}) {
+			// Transform flag e.g. from operator-sync-period to operator.syncperiod
+			key := strings.Replace(pf.Name, "-", ".", 1)
+			key2 := strings.Replace(key, "-", "_", -1)
+
+			// Use FlagVal() and then transform the value, or don't use it at all
+			// and add custom logic to parse the value.
+			val := posflag.FlagVal(f, pf)
+
+			return key2, val
+
+		}), nil)
+	}
+
+	// load config from file
+	if configFile != "" {
+		if err := k.Load(file.Provider(f.Lookup("config").Value.String()), yaml.Parser()); err != nil {
+			return errors.Wrap(err, "failed to load config file")
+		}
+	}
+
+	// unmarshal all koanf config keys into AppConfig struct
+	if err := k.Unmarshal("", &Config); err != nil {
+		return errors.Wrap(err, "failed to unmarshal config")
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	if err := validate.Struct(&Config); err != nil {
+		if strings.Contains(err.Error(), "required") {
+			return errors.Wrap(err, "set config with flag, env or in config file")
+		}
+		return errors.Wrap(err, "missing required attributes")
+	}
+
+	return nil
+
+}
