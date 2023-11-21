@@ -61,8 +61,11 @@ export GARM_OPERATOR_VERSION=<garm-operator-version>
 export GARM_SERVER_URL=<garm-server-url> 
 export GARM_SERVER_USERNAME=<garm-server-username>
 export GARM_SERVER_PASSWORD=<garm-server-password>
+export OPERATOR_WATCH_NAMESPACE=<operator-watch-namespace>
 curl -L https://github.com/mercedes-benz/garm-operator/releases/download/${GARM_OPERATOR_VERSION}/garm-operator-all.yaml | envsubst | kubectl apply -f -
 ```
+
+The full configuration parsing documentation can be found in the [configuration parsing guide](./docs/config/configuration-parsing.md)
 
 #### Custom Resources
 

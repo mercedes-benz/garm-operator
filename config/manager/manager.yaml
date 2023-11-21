@@ -50,14 +50,8 @@ spec:
         - --garm-server=$GARM_SERVER_URL
         - --garm-username=$GARM_SERVER_USERNAME
         - --garm-password=$GARM_SERVER_PASSWORD
+        - --operator-watch-namespace=$OPERATOR_WATCH_NAMESPACE
         image: controller:latest
-        env:
-        - name: CREATE_WEBHOOK
-          value: "true"
-        - name: WATCH_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
