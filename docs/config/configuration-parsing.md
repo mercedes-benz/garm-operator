@@ -2,9 +2,9 @@
 
 # Configuration Parsing
 
-The Configuration Parsing for the Garm Operator is implemented with [koanf](https://github.com/knadh/koanf).
+The configuration parsing for the Garm Operator is implemented with [koanf](https://github.com/knadh/koanf).
 
-The Configuration can be defined with `ENVs`, `Flags` and `config file (yaml)`.
+The configuration can be defined with `ENVs`, `Flags` and `config file (yaml)`.
 
 <!-- toc -->
 - [Parsing Order](#parsing-order)
@@ -24,7 +24,7 @@ The order is determined by the order in which the Read() function is called.
 
 For the Garm Operator the following order is defined, which is to be considered in ascending order from lowest to highest priority:
 
-1. Defined Default Values ([see section Configuration Default Values](#configuration-default-values))
+1. Defined default values ([see section configuration default values](#configuration-default-values))
 1. ENVs
 1. Flags
 1. Config File (yaml)
@@ -47,7 +47,7 @@ OPERATOR_WATCH_NAMESPACE
 
 ## Flags
 
-The following Flags will be parsed:
+The following flags will be parsed and can be found in the [flags package](../../pkg/flags/flags.go):
 
 ```
 --garm-server
@@ -70,9 +70,9 @@ In addition to the previously mentioned flags, there are two additional flags:
 --dry-run
 ```
 
-The `--config` flag can be set to specify the path to the `config file (yaml)` which contains the configuration ([see section Config File Strucutre](#config-file-structure)).
+The `--config` flag can be set to specify the path to the `config file (yaml)` which contains the configuration ([see section config file structure](#config-file-structure)).
 
-The `--dry-run` flag can be set to show the parsed configuration, without starting the Garm Operator. The Output can be similar to the following:
+The `--dry-run` flag can be set to show the parsed configuration, without starting the Garm Operator. The output can be similar to the following:
 
 ```
 generated Config as yaml:
@@ -109,11 +109,11 @@ operator:
 
 ## Configuration Default Values
 
-The defined default values for the configuration can be found in the [defaults package](../../pkg/defaults/defaults.go) .
+The defined default values for the configuration can be found in the [defaults package](../../pkg/defaults/defaults.go).
 
 ## Parsing Validation
 
-After the Configuration has been parsed by koanf and unmarshelled into a struct, the [validator](https://github.com/go-playground/validator) checks whether the generated struct is valid or not.
+After the configuration has been parsed by koanf and unmarshalled into a struct, the [validator](https://github.com/go-playground/validator) checks whether the generated struct is valid or not.
 
 For example, if the `Garm Username` is not set, the following error message is returned by the validator:
 
