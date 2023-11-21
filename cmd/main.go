@@ -40,11 +40,11 @@ func main() {
 	// initiate flags
 	f := flags.InitiateFlags()
 
-	// retrieve config flag value for ReadConfig() function
+	// retrieve config flag value for GenerateConfig() function
 	configFile := f.Lookup("config").Value.String()
 
-	// call ReadConfig() function from config package
-	if err := config.ReadConfig(f, configFile); err != nil {
+	// call GenerateConfig() function from config package
+	if err := config.GenerateConfig(f, configFile); err != nil {
 		setupLog.Error(err, "failed to read config")
 		os.Exit(1)
 	}

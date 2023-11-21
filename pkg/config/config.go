@@ -37,7 +37,7 @@ type AppConfig struct {
 
 var Config AppConfig
 
-func ReadConfig(f *pflag.FlagSet, configFile string) error {
+func GenerateConfig(f *pflag.FlagSet, configFile string) error {
 	// create koanf instance
 	k := koanf.New(".")
 

@@ -10,7 +10,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/flags"
 )
 
-func TestReadConfig(t *testing.T) {
+func TestGenerateConfig(t *testing.T) {
 	f := flags.InitiateFlags()
 
 	tests := []struct {
@@ -138,14 +138,14 @@ func TestReadConfig(t *testing.T) {
 				}
 			}
 
-			if err := ReadConfig(f, configFile); err != nil {
+			if err := GenerateConfig(f, configFile); err != nil {
 				if tt.wantErr {
 					return
 				}
-				t.Errorf("ReadConfig() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("GenerateConfig() error = %v, wantErr = %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(Config, tt.wantCfg) {
-				t.Errorf("ReadConfig() Config = \n%+v\n, wantCfg = \n%+v\n", Config, tt.wantCfg)
+				t.Errorf("GenerateConfig() Config = \n%+v\n, wantCfg = \n%+v\n", Config, tt.wantCfg)
 			}
 		})
 	}
