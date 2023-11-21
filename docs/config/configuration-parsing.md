@@ -8,10 +8,10 @@ The Configuration can be defined with `ENVs`, `Flags` and `config file (yaml)`.
 
 <!-- toc -->
 - [Parsing Order](#parsing-order)
-- [Availible ENVs](#envs)
-- [Availible Flags](#flags)
-  * [Additional Flags](#additional-flags)
-- [Config File Structure](#config-file-yaml)
+- [ENVs](#envs)
+- [Flags](#flags)
+  - [Additional Flags](#additional-flags)
+- [Config File (yaml)](#config-file-yaml)
 - [Configuration Default Values](#configuration-default-values)
 - [Parsing Validation](#parsing-validation)
 <!-- /toc -->
