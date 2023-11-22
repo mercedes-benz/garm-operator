@@ -70,7 +70,7 @@ In addition to the previously mentioned flags, there are two additional flags:
 --dry-run
 ```
 
-The `--config` flag can be set to specify the path to the `config file (yaml)` which contains the configuration ([see section config file structure](#config-file-structure)).
+The `--config` flag can be set to specify the path to the `config file (yaml)` which contains the configuration ([see section config file (yaml)](#config-file-yaml)).
 
 The `--dry-run` flag can be set to show the parsed configuration, without starting the Garm Operator. The output can be similar to the following:
 
