@@ -124,5 +124,5 @@ func printOverview(summary []providerSummary) {
 	} else {
 		t.Render()
 	}
-
+	// todo test
 }
