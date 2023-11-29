@@ -20,6 +20,8 @@ type GarmConfig struct {
 	Server   string `koanf:"server" validate:"required,url"`
 	Username string `koanf:"username" validate:"required"`
 	Password string `koanf:"password" validate:"required"`
+	Init     bool   `koanf:"init"`
+	Email    string `koanf:"email" validate:"required_if=Init true"`
 }
 
 type OperatorConfig struct {

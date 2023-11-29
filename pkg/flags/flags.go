@@ -29,6 +29,8 @@ func InitiateFlags() *pflag.FlagSet {
 	f.String("garm-server", "", "The address of the GARM server")
 	f.String("garm-username", "", "The username for the GARM server")
 	f.String("garm-password", "", "The password for the GARM server")
+	f.Bool("garm-init", defaults.DefaultGarmInit, "Enable initialization of new GARM Instance")
+	f.String("garm-email", defaults.DefaultGarmEmail, "The email address for the GARM server (only required if garm-init is set to true)")
 
 	f.Bool("dry-run", false, "If true, only print the object that would be sent, without sending it.")
 

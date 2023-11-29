@@ -2,6 +2,8 @@ garm:
   username: "garm-username"
   password: "garm-password"
   server: "http://garm-server:9997"
+  init: false
+  email: ""
 
 operator:
   metrics_bind_address: ":7000"

@@ -37,6 +37,8 @@ All ENVs with the `OPERATOR_` and `GARM_` prefix will be merged by koanf. Howeve
 GARM_SERVER
 GARM_USERNAME
 GARM_PASSWORD
+GARM_INIT
+GARM_EMAIL
 
 OPERATOR_METRICS_BIND_ADDRESS
 OPERATOR_HEALTH_PROBE_BIND_ADDRESS
@@ -53,6 +55,8 @@ The following flags will be parsed and can be found in the [flags package](../..
 --garm-server
 --garm-username
 --garm-password
+--garm-init
+--garm-email
 
 --operator-metrics-bind-address
 --operator-health-probe-bind-address
@@ -80,6 +84,8 @@ garm:
   server: http://garm-server:9997
   username: admin
   password: 123456789
+  init: false
+  email: ""
 operator:
   metricsbindaddress: :8080
   healthprobebindaddress: :8081
@@ -98,6 +104,8 @@ garm:
   server: "http://garm-server:9997"
   username: "garm-username"
   password: "garm-password"
+  init: false
+  email: ""
 
 operator:
   metrics_bind_address: ":7000"
