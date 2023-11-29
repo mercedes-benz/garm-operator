@@ -31,13 +31,15 @@ Issue-related communication should happen within the concerned issue.
 
 ## Contributions
 
+Contributions are highly welcome.
+
 If you would like to contribute code you can do so through GitHub by forking the repository and sending a pull request.
 
 When submitting code, please make every effort to follow existing conventions and style in order to keep the code as readable as possible.
 
 If you are new to contributing in GitHub, [First Contributions](https://github.com/firstcontributions/first-contributions) might be a good starting point.
 
-Before you can contribute, you will need to sign our CLA and send the signed CLA to CLA-mbti@mercedes-benz.com.
+Before you can contribute, you will need to sign our Contributor License Agreement (CLA). When you create your first pull request, you will be requested by our CLA-assistant to sign this CLA.
 
 ### Semantic Commit Messages
 
