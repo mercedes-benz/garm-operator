@@ -12,9 +12,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // RunnerSpec defines the desired state of Runner
-type RunnerSpec struct {
-	ID string `json:"id,omitempty"`
-}
+type RunnerSpec struct{}
 
 // RunnerStatus defines the observed state of Runner
 type RunnerStatus struct {
@@ -80,9 +78,12 @@ type RunnerStatus struct {
 //+kubebuilder:resource:path=runners,scope=Namespaced,categories=garm,shortName=run
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Runner ID"
-//+kubebuilder:printcolumn:name="Pool ID",type="string",JSONPath=".status.poolId",description="Pool ID"
+//+kubebuilder:printcolumn:name="Pool",type="string",JSONPath=".status.poolId",description="Pool CR Name"
 //+kubebuilder:printcolumn:name="Garm Runner Status",type="string",JSONPath=".status.status",description="Garm Runner Status"
 //+kubebuilder:printcolumn:name="Provider Runner Status",type="string",JSONPath=".status.instanceStatus",description="Provider Runner Status"
+//+kubebuilder:printcolumn:name="Provider ID",type="string",JSONPath=".status.providerId",description="Provider ID",priority=1
+//+kubebuilder:printcolumn:name="Agent ID",type="string",JSONPath=".status.agentId",description="Agent ID",priority=1
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Runner is the Schema for the runners API
 type Runner struct {

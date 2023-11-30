@@ -23,9 +23,9 @@ spec:
       jsonPath: .status.id
       name: ID
       type: string
-    - description: Pool ID
+    - description: Pool CR Name
       jsonPath: .status.poolId
-      name: Pool ID
+      name: Pool
       type: string
     - description: Garm Runner Status
       jsonPath: .status.status
@@ -35,6 +35,19 @@ spec:
       jsonPath: .status.instanceStatus
       name: Provider Runner Status
       type: string
+    - description: Provider ID
+      jsonPath: .status.providerId
+      name: Provider ID
+      priority: 1
+      type: string
+    - description: Agent ID
+      jsonPath: .status.agentId
+      name: Agent ID
+      priority: 1
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -54,9 +67,6 @@ spec:
             type: object
           spec:
             description: RunnerSpec defines the desired state of Runner
-            properties:
-              id:
-                type: string
             type: object
           status:
             description: RunnerStatus defines the observed state of Runner

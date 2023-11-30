@@ -171,6 +171,17 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 	log := log.FromContext(ctx)
 	log.Info("Update runner status...")
 
+	poolName := garmRunner.PoolID
+	pools := &garmoperatorv1alpha1.PoolList{}
+	err := r.List(ctx, pools)
+	if err == nil {
+		pools.FilterByFields(garmoperatorv1alpha1.MatchesID(garmRunner.PoolID))
+
+		if len(pools.Items) > 0 {
+			poolName = pools.Items[0].Name
+		}
+	}
+
 	runner.Status.ID = garmRunner.ID
 	runner.Status.ProviderID = garmRunner.ProviderID
 	runner.Status.AgentID = garmRunner.AgentID
@@ -182,7 +193,7 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 	runner.Status.Addresses = garmRunner.Addresses
 	runner.Status.Status = garmRunner.Status
 	runner.Status.InstanceStatus = garmRunner.RunnerStatus
-	runner.Status.PoolID = garmRunner.PoolID
+	runner.Status.PoolID = poolName
 	runner.Status.ProviderFault = garmRunner.ProviderFault
 	runner.Status.GitHubRunnerGroup = garmRunner.GitHubRunnerGroup
 
@@ -250,6 +261,9 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 	}
 
 	for _, p := range pools.Items {
+		if p.Status.ID == "" {
+			continue
+		}
 		poolRunners, err := instanceClient.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID(p.Status.ID))
 		if err != nil {
 			return err
