@@ -13,6 +13,6 @@ const (
 	DefaultWatchNamespace         = ""
 
 	// default values for garm configuration
-	DefaultGarmInit  = false
-	DefaultGarmEmail = ""
+	DefaultGarmInit  = true
+	DefaultGarmEmail = "garm-operator@localhost"
 )
