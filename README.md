@@ -26,6 +26,8 @@
 
 `garm-operator` is a [Kubernetes®](https://kubernetes.io) operator that manages the lifecycle of [garm](https://github.com/cloudbase/garm) objects by creating/updating/deleting corresponding objects in the Kubernetes cluster.
 
+![garm components overview](docs/assets/overview.png "Architecture Overview")
+
 ## 🔀 Versioning
 
 ### Garm Version
