@@ -51,8 +51,6 @@ metadata:
     app.kubernetes.io/name: enterprise
     app.kubernetes.io/instance: enterprise-sample
     app.kubernetes.io/part-of: garm-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: garm-operator
   name: enterprise-sample
   namespace: garm-operator-system
 spec:
@@ -86,8 +84,6 @@ metadata:
     app.kubernetes.io/name: image
     app.kubernetes.io/instance: image-sample
     app.kubernetes.io/part-of: garm-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: garm-operator
   name: runner-default
   namespace: garm-operator-system
 spec:
@@ -103,9 +99,7 @@ apiVersion: garm-operator.mercedes-benz.com/v1alpha1
 kind: Pool
 metadata:
   labels:
-    app.kubernetes.io/created-by: garm-operator
     app.kubernetes.io/instance: pool-sample
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: pool
     app.kubernetes.io/part-of: garm-operator
   name: openstack-small-pool-enterprise
