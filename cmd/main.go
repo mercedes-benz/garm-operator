@@ -5,9 +5,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
-	"time"
 
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -38,9 +39,12 @@ func init() {
 }
 
 func main() {
-	exitCode := 0
-	defer func() { os.Exit(exitCode) }()
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
 
+func run() error {
 	ctrl.SetLogger(klogr.New())
 
 	// initiate flags
@@ -51,8 +55,7 @@ func main() {
 
 	// call GenerateConfig() function from config package
 	if err := config.GenerateConfig(f, configFile); err != nil {
-		setupLog.Error(err, "failed to read config")
-		os.Exit(1)
+		return fmt.Errorf("failed to read config: %w", err)
 	}
 
 	// check if dry-run flag is set to true
@@ -62,11 +65,10 @@ func main() {
 	if dryRun {
 		yamlConfig, err := yaml.Marshal(config.Config)
 		if err != nil {
-			setupLog.Error(err, "failed to marshal config as yaml")
-			os.Exit(1)
+			return fmt.Errorf("failed to marshal config as yaml: %w", err)
 		}
 		fmt.Printf("generated Config as yaml:\n%s\n", yamlConfig)
-		os.Exit(0)
+		return nil
 	}
 
 	var watchNamespaces []string
@@ -102,9 +104,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		exitCode = 1
-		return
+		return fmt.Errorf("unable to start manager: %w", err)
 	}
 
 	ctx := ctrl.SetupSignalHandler()
@@ -131,9 +131,7 @@ func main() {
 		Username: config.Config.Garm.Username,
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Enterprise")
-		exitCode = 1
-		return
+		return fmt.Errorf("unable to create controller Enterprise: %w", err)
 	}
 	if err = (&controller.PoolReconciler{
 		Client:   mgr.GetClient(),
@@ -144,26 +142,18 @@ func main() {
 		Username: config.Config.Garm.Username,
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Pool")
-		exitCode = 1
-		return
+		return fmt.Errorf("unable to create controller Pool: %w", err)
 	}
 
 	if os.Getenv("CREATE_WEBHOOK") == "true" {
 		if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Pool")
-			exitCode = 1
-			return
+			return fmt.Errorf("unable to create webhook Pool: %w", err)
 		}
 		if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Image")
-			exitCode = 1
-			return
+			return fmt.Errorf("unable to create webhook Image: %w", err)
 		}
 		if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
-			exitCode = 1
-			return
+			return fmt.Errorf("unable to create webhook Repository: %w", err)
 		}
 	}
 
@@ -176,9 +166,7 @@ func main() {
 		Username: config.Config.Garm.Username,
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Organization")
-		exitCode = 1
-		return
+		return fmt.Errorf("unable to create controller Organization: %w", err)
 	}
 
 	if err = (&controller.RepositoryReconciler{
@@ -190,9 +178,7 @@ func main() {
 		Username: config.Config.Garm.Username,
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Repository")
-		exitCode = 1
-		return
+		return fmt.Errorf("unable to create controller Repository: %w", err)
 	}
 
 	eventChan := make(chan event.GenericEvent)
@@ -207,9 +193,7 @@ func main() {
 
 	// setup controller so it can reconcile if events from eventChan are queued
 	if err = runnerReconciler.SetupWithManager(mgr, eventChan); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Runner")
-		exitCode = 1
-		return
+		return fmt.Errorf("unable to create controller Runner: %w", err)
 	}
 
 	// fetch runner instances periodically and enqueue reconcile events for runner ctrl if external system has changed
@@ -220,20 +204,15 @@ func main() {
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
-		exitCode = 1
-		return
+		return fmt.Errorf("unable to set up health check: %w", err)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
-		exitCode = 1
-		return
+		return fmt.Errorf("unable to set up ready check: %w", err)
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctx); err != nil {
-		setupLog.Error(err, "problem running manager")
-		exitCode = 1
-		return
+	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+		return fmt.Errorf("unable to start manager: %w", err)
 	}
+	return nil
 }
