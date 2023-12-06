@@ -61,42 +61,47 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 }
 
 func (r *RunnerReconciler) reconcile(ctx context.Context, req ctrl.Request, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
+	// try fetch runner instance in garm db with events coming from reconcile loop events of RunnerCR or from manually enqueued events of garm api.
 	garmRunner, err := r.getGarmRunnerInstance(instanceClient, req.Name)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
+	// only create RunnerCR if it does not yet exist
 	runner := &garmoperatorv1alpha1.Runner{}
 	if err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: strings.ToLower(req.Name)}, runner); err != nil {
-		return r.handleFetchRunnerError(ctx, req, err, garmRunner)
+		return r.handleCreateRunnerCR(ctx, req, err, garmRunner)
 	}
 
+	// delete runner on garm side and remove finalizer if deleted
 	if !runner.ObjectMeta.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, instanceClient, garmRunner, runner)
+		return r.reconcileDelete(ctx, instanceClient, runner, garmRunner)
 	}
 
+	// cleanup dangling, potentially user applied RunnerCRs with no garm db match
 	if garmRunner == nil {
 		return r.cleanupRunnerCR(ctx, runner)
 	}
 
+	// sync garm runner status back to RunnerCR
 	return r.updateRunnerStatus(ctx, runner, garmRunner)
 }
 
-func (r *RunnerReconciler) handleFetchRunnerError(ctx context.Context, req ctrl.Request, fetchErr error, garmRunner *params.Instance) (ctrl.Result, error) {
+func (r *RunnerReconciler) handleCreateRunnerCR(ctx context.Context, req ctrl.Request, fetchErr error, garmRunner *params.Instance) (ctrl.Result, error) {
 	if apierrors.IsNotFound(fetchErr) && garmRunner != nil {
-		return r.createRunnerCR(ctx, req, garmRunner)
+		return r.createRunnerCR(ctx, garmRunner, req.Namespace)
 	}
 	return ctrl.Result{}, fetchErr
 }
 
-func (r *RunnerReconciler) createRunnerCR(ctx context.Context, req ctrl.Request, garmRunner *params.Instance) (ctrl.Result, error) {
+func (r *RunnerReconciler) createRunnerCR(ctx context.Context, garmRunner *params.Instance, namespace string) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("Creating Runner", "Runner", garmRunner.Name)
 
 	runnerObj := &garmoperatorv1alpha1.Runner{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.ToLower(garmRunner.Name),
-			Namespace: req.Namespace,
+			Namespace: namespace,
 		},
 		Spec: garmoperatorv1alpha1.RunnerSpec{},
 	}
@@ -116,9 +121,12 @@ func (r *RunnerReconciler) createRunnerCR(ctx context.Context, req ctrl.Request,
 	return ctrl.Result{}, nil
 }
 
-func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient garmClient.InstanceClient, garmRunner *params.Instance, runner *garmoperatorv1alpha1.Runner) (ctrl.Result, error) {
+func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient garmClient.InstanceClient, runner *garmoperatorv1alpha1.Runner, garmRunner *params.Instance) (ctrl.Result, error) {
+	// delete runner on garm side first before removing finalizer. Remove finalizer only if there is no garm runner in garm db anymore.
+	// Because DeleteInstance() is async on garm side, we don't remove the finalizer right away as EnqueueRunnerInstances
+	// would cause operator to create a new RunnerCR immediately with no deletion timestamp. Still cleanupRunnerCR() would eventually
+	// clean up those resources as well after 5 min.
 	log := log.FromContext(ctx)
-
 	if garmRunner != nil {
 		log.Info("Deleting Runner in Garm", "Runner Name", garmRunner.Name)
 		err := runnerClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(garmRunner.Name))
@@ -134,8 +142,8 @@ func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient gar
 			}
 		}
 	}
-
-	return ctrl.Result{}, nil
+	// requeue after 30 seconds so kubectl client does not wait for next reconciliation loop to clean up RunnerCR
+	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 }
 
 func (r *RunnerReconciler) cleanupRunnerCR(ctx context.Context, runner *garmoperatorv1alpha1.Runner) (ctrl.Result, error) {
@@ -249,17 +257,16 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
-		// Debug:    true,
 	})
 	if err != nil {
 		return err
 	}
 
-	var namespace string
-	if len(pools.Items) > 0 {
-		namespace = pools.Items[0].Namespace
+	if len(pools.Items) < 1 {
+		return nil
 	}
-
+	namespace := pools.Items[0].Namespace
+	// fetching runners by pools to ensure only runners belonging to pools in same namespace are being shown
 	for _, p := range pools.Items {
 		if p.Status.ID == "" {
 			continue

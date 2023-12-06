@@ -45,6 +45,7 @@ OPERATOR_HEALTH_PROBE_BIND_ADDRESS
 OPERATOR_LEADER_ELECTION
 OPERATOR_SYNC_PERIOD
 OPERATOR_WATCH_NAMESPACE
+OPERATOR_DISABLE_WEBHOOKS
 ```
 
 ## Flags
@@ -63,6 +64,7 @@ The following flags will be parsed and can be found in the [flags package](../..
 --operator-leader-election
 --operator-sync-period
 --operator-watch-namespace
+--operator-disable-webhooks
 ```
 
 ### Additional Flags
@@ -92,6 +94,7 @@ operator:
   leaderelection: false
   syncperiod: 5m0s
   watchnamespace: garm-operator-system
+  disablewebhooks: false
 ```
 
 ## Config File (yaml)
@@ -113,6 +116,7 @@ operator:
   leader_election: true
   sync_period: "10m"
   watch_namespace: "garm-operator-namespace"
+  disable_webhooks: false
 ```
 
 ## Configuration Default Values

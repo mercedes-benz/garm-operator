@@ -30,6 +30,7 @@ type OperatorConfig struct {
 	LeaderElection         bool          `koanf:"leader_election"`
 	SyncPeriod             time.Duration `koanf:"sync_period" validate:"required"`
 	WatchNamespace         string        `koanf:"watch_namespace"`
+	DisableWebhooks        bool          `koanf:"disable_webhooks"`
 }
 
 type AppConfig struct {

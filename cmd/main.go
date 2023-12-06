@@ -5,15 +5,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
-
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2/klogr"
+	"log"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -117,8 +115,7 @@ func run() error {
 			Password: config.Config.Garm.Password,
 			Email:    config.Config.Garm.Email,
 		}); err != nil {
-			setupLog.Error(err, "failed to initialize GARM")
-			os.Exit(1)
+			return fmt.Errorf("failed to initialize GARM: %w", err)
 		}
 	}
 
@@ -145,14 +142,16 @@ func run() error {
 		return fmt.Errorf("unable to create controller Pool: %w", err)
 	}
 
-	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Pool: %w", err)
-	}
-	if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Image: %w", err)
-	}
-	if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Repository: %w", err)
+	if !config.Config.Operator.DisableWebhooks {
+		if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to create webhook Pool: %w", err)
+		}
+		if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to create webhook Image: %w", err)
+		}
+		if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to create webhook Repository: %w", err)
+		}
 	}
 
 	if err = (&controller.OrganizationReconciler{

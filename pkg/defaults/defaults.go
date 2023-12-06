@@ -11,6 +11,7 @@ const (
 	DefaultLeaderElection         = false
 	DefaultSyncPeriod             = 5 * time.Minute
 	DefaultWatchNamespace         = ""
+	DisableWebhooks               = false
 
 	// default values for garm configuration
 	DefaultGarmInit  = true
