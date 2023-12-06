@@ -3,15 +3,19 @@
 package client
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/cloudbase/garm/client"
+	apiClientFirstRun "github.com/cloudbase/garm/client/first_run"
 	apiClientLogin "github.com/cloudbase/garm/client/login"
 	"github.com/cloudbase/garm/params"
 	"github.com/go-openapi/runtime"
 	openapiRuntimeClient "github.com/go-openapi/runtime/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
@@ -21,6 +25,7 @@ type GarmScopeParams struct {
 	Username string
 	Password string
 	Debug    bool
+	Email    string
 }
 
 func newGarmClient(garmParams GarmScopeParams) (*client.GarmAPI, runtime.ClientAuthInfoWriter, error) {
@@ -72,4 +77,45 @@ func newGarmClient(garmParams GarmScopeParams) (*client.GarmAPI, runtime.ClientA
 	authToken = openapiRuntimeClient.BearerToken(resp.Payload.Token)
 
 	return apiCli, authToken, nil
+}
+
+func initializeGarm(ctx context.Context, garmParams GarmScopeParams) error {
+	log := log.FromContext(ctx)
+
+	newUserReq := apiClientFirstRun.NewFirstRunParams()
+	newUserReq.Body = params.NewUserParams{
+		Username: garmParams.Username,
+		Password: garmParams.Password,
+		Email:    garmParams.Email,
+	}
+
+	baseURLParsed, err := url.Parse(garmParams.BaseURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse base url %s: %s", garmParams.BaseURL, err)
+	}
+
+	apiPath, err := url.JoinPath(baseURLParsed.Path, client.DefaultBasePath)
+	if err != nil {
+		return fmt.Errorf("failed to join base url path %s with %s: %s", baseURLParsed.Path, client.DefaultBasePath, err)
+	}
+
+	transportCfg := client.DefaultTransportConfig().
+		WithHost(baseURLParsed.Host).
+		WithBasePath(apiPath).
+		WithSchemes([]string{baseURLParsed.Scheme})
+	apiCli := client.NewHTTPClientWithConfig(nil, transportCfg)
+	authToken := openapiRuntimeClient.BearerToken("")
+
+	resp, err := apiCli.FirstRun.FirstRun(newUserReq, authToken)
+	if err != nil {
+		if strings.Contains(err.Error(), "(status 409)") {
+			log.Info("Garm is already initialized")
+			return nil
+		}
+		return fmt.Errorf("failed to initialize garm: %s", err)
+	}
+
+	log.Info("Garm initialized successfully with the following User", "ID", resp.Payload.ID, "username", resp.Payload.Username, "email", resp.Payload.Email, "enabled", resp.Payload.Enabled)
+
+	return nil
 }

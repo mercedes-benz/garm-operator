@@ -18,6 +18,7 @@ import (
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	"github.com/mercedes-benz/garm-operator/internal/controller"
+	"github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/flags"
 )
@@ -100,6 +101,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctx := ctrl.SetupSignalHandler()
+
+	if config.Config.Garm.Init {
+		initClient := client.NewInitClient()
+		if err = initClient.Init(ctx, client.GarmScopeParams{
+			BaseURL:  config.Config.Garm.Server,
+			Username: config.Config.Garm.Username,
+			Password: config.Config.Garm.Password,
+			Email:    config.Config.Garm.Email,
+		}); err != nil {
+			setupLog.Error(err, "failed to initialize GARM")
+			os.Exit(1)
+		}
+	}
+
 	if err = (&controller.EnterpriseReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
@@ -175,7 +191,7 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
