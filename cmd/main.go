@@ -145,16 +145,14 @@ func run() error {
 		return fmt.Errorf("unable to create controller Pool: %w", err)
 	}
 
-	if os.Getenv("CREATE_WEBHOOK") == "true" {
-		if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
-			return fmt.Errorf("unable to create webhook Pool: %w", err)
-		}
-		if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
-			return fmt.Errorf("unable to create webhook Image: %w", err)
-		}
-		if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-			return fmt.Errorf("unable to create webhook Repository: %w", err)
-		}
+	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create webhook Pool: %w", err)
+	}
+	if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create webhook Image: %w", err)
+	}
+	if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create webhook Repository: %w", err)
 	}
 
 	if err = (&controller.OrganizationReconciler{
@@ -211,7 +209,7 @@ func run() error {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		return fmt.Errorf("unable to start manager: %w", err)
 	}
 	return nil
