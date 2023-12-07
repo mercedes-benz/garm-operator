@@ -4,6 +4,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"github.com/life4/genesis/slices"
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
@@ -78,11 +80,6 @@ func (r *RunnerReconciler) reconcile(ctx context.Context, req ctrl.Request, inst
 		return r.reconcileDelete(ctx, instanceClient, runner, garmRunner)
 	}
 
-	// cleanup dangling, potentially user applied RunnerCRs with no garm db match
-	if garmRunner == nil {
-		return r.cleanupRunnerCR(ctx, runner)
-	}
-
 	// sync garm runner status back to RunnerCR
 	return r.updateRunnerStatus(ctx, runner, garmRunner)
 }
@@ -122,10 +119,6 @@ func (r *RunnerReconciler) createRunnerCR(ctx context.Context, garmRunner *param
 }
 
 func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient garmClient.InstanceClient, runner *garmoperatorv1alpha1.Runner, garmRunner *params.Instance) (ctrl.Result, error) {
-	// delete runner on garm side first before removing finalizer. Remove finalizer only if there is no garm runner in garm db anymore.
-	// Because DeleteInstance() is async on garm side, we don't remove the finalizer right away as EnqueueRunnerInstances
-	// would cause operator to create a new RunnerCR immediately with no deletion timestamp. Still cleanupRunnerCR() would eventually
-	// clean up those resources as well after 5 min.
 	log := log.FromContext(ctx)
 	if garmRunner != nil {
 		log.Info("Deleting Runner in Garm", "Runner Name", garmRunner.Name)
@@ -133,25 +126,23 @@ func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient gar
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-	} else {
-		log.Info("Removing finalizer and cleaning up runner CR in cluster", "Runner CR", runner.Name)
-		if controllerutil.ContainsFinalizer(runner, key.RunnerFinalizerName) {
-			controllerutil.RemoveFinalizer(runner, key.RunnerFinalizerName)
-			if err := r.Update(ctx, runner); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
+
 	}
-	// requeue after 30 seconds so kubectl client does not wait for next reconciliation loop to clean up RunnerCR
-	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *RunnerReconciler) cleanupRunnerCR(ctx context.Context, runner *garmoperatorv1alpha1.Runner) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
-	log.Info("Cleaning up runner CRs with no match in Garm")
+	log.Info("Removing finalizer and cleaning up runner CR in cluster", "Runner CR", runner.Name)
 	err := r.Delete(ctx, runner)
 	if err != nil {
 		return ctrl.Result{}, err
+	}
+	if controllerutil.ContainsFinalizer(runner, key.RunnerFinalizerName) {
+		controllerutil.RemoveFinalizer(runner, key.RunnerFinalizerName)
+		if err := r.Update(ctx, runner); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 	return ctrl.Result{}, nil
 }
@@ -176,6 +167,10 @@ func (r *RunnerReconciler) ensureFinalizer(ctx context.Context, runner *garmoper
 }
 
 func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmoperatorv1alpha1.Runner, garmRunner *params.Instance) (ctrl.Result, error) {
+	if garmRunner == nil {
+		return ctrl.Result{}, nil
+	}
+
 	log := log.FromContext(ctx)
 	log.Info("Update runner status...")
 
@@ -244,7 +239,7 @@ func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan ch
 }
 
 func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan chan event.GenericEvent) error {
-	allRunners := params.Instances{}
+	garmRunnerInstances := params.Instances{}
 	pools := &garmoperatorv1alpha1.PoolList{}
 
 	err := r.List(ctx, pools)
@@ -275,13 +270,53 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 		if err != nil {
 			return err
 		}
-		allRunners = append(allRunners, poolRunners.Payload...)
+		garmRunnerInstances = append(garmRunnerInstances, poolRunners.Payload...)
 	}
 
-	for _, runner := range allRunners {
+	// compare garmdb with runner cr => delete runnerCRs not present in garmdb
+	runnerCRList := &garmoperatorv1alpha1.RunnerList{}
+	err = r.List(ctx, runnerCRList)
+	if err != nil {
+		return err
+	}
+
+	runnerCRNameList := slices.Map(runnerCRList.Items, func(runner garmoperatorv1alpha1.Runner) string {
+		return runner.Name
+	})
+
+	runnerInstanceNameList := slices.Map(garmRunnerInstances, func(runner params.Instance) string {
+		return strings.ToLower(runner.Name)
+	})
+
+	runnersToDelete := getRunnerDiff(runnerCRNameList, runnerInstanceNameList)
+	fmt.Println(runnersToDelete)
+
+	for _, runnerName := range runnersToDelete {
+		runner := &garmoperatorv1alpha1.Runner{}
+		err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: runnerName}, runner)
+		if err != nil {
+			return err
+		}
+
+		if runner.DeletionTimestamp.IsZero() {
+			err = r.Delete(ctx, runner)
+			if err != nil {
+				return err
+			}
+		}
+
+		if controllerutil.ContainsFinalizer(runner, key.RunnerFinalizerName) {
+			controllerutil.RemoveFinalizer(runner, key.RunnerFinalizerName)
+			if err := r.Update(ctx, runner); err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, runner := range garmRunnerInstances {
 		runnerObj := garmoperatorv1alpha1.Runner{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      runner.Name,
+				Name:      strings.ToLower(runner.Name),
 				Namespace: namespace,
 			},
 		}
@@ -293,4 +328,15 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 		eventChan <- e
 	}
 	return nil
+}
+
+func getRunnerDiff(runnerCRs, garmRunners []string) []string {
+	var diff []string
+
+	for _, runnerCR := range runnerCRs {
+		if !slices.Contains(garmRunners, runnerCR) {
+			diff = append(diff, runnerCR)
+		}
+	}
+	return diff
 }

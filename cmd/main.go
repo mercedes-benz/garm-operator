@@ -142,16 +142,14 @@ func run() error {
 		return fmt.Errorf("unable to create controller Pool: %w", err)
 	}
 
-	if !config.Config.Operator.DisableWebhooks {
-		if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
-			return fmt.Errorf("unable to create webhook Pool: %w", err)
-		}
-		if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
-			return fmt.Errorf("unable to create webhook Image: %w", err)
-		}
-		if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-			return fmt.Errorf("unable to create webhook Repository: %w", err)
-		}
+	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create webhook Pool: %w", err)
+	}
+	if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create webhook Image: %w", err)
+	}
+	if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create webhook Repository: %w", err)
 	}
 
 	if err = (&controller.OrganizationReconciler{
