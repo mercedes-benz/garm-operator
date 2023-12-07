@@ -13,4 +13,3 @@ spec:
             - --garm-username=admin
             - --garm-password=LmrBG1KcBOsDfNKq4cQTGpc0hJ0kejkk
             - --operator-watch-namespace=garm-operator-system
-

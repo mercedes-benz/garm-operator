@@ -44,44 +44,44 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-      - command:
-        - /manager
-        args:
-        - --garm-server=$GARM_SERVER_URL
-        - --garm-username=$GARM_SERVER_USERNAME
-        - --garm-password=$GARM_SERVER_PASSWORD
-        - --operator-watch-namespace=$OPERATOR_WATCH_NAMESPACE
-        image: controller:latest
-        name: manager
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - "ALL"
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        # TODO(user): Configure the resources accordingly based on the project requirements.
-        # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 10m
-            memory: 64Mi
-        volumeMounts:
-          - name: serviceaccount-volume
-            mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        - command:
+            - /manager
+          args:
+            - --garm-server=$GARM_SERVER_URL
+            - --garm-username=$GARM_SERVER_USERNAME
+            - --garm-password=$GARM_SERVER_PASSWORD
+            - --operator-watch-namespace=$OPERATOR_WATCH_NAMESPACE
+          image: controller:latest
+          name: manager
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - "ALL"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # TODO(user): Configure the resources accordingly based on the project requirements.
+          # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+          volumeMounts:
+            - name: serviceaccount-volume
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       volumes:
         # use a custom token with specified expiration time - this implementation behaves like the default token mechanism
         # see: https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/#bound-service-account-token-volume

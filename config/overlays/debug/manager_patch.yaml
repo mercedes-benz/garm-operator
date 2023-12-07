@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garm-operator-controller-manager
+  namespace: garm-operator-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: manager
+          command:
+            [
+              "/dlv",
+              "--listen=:2345",
+              "--headless=true",
+              "--api-version=2",
+              "--accept-multiclient",
+              "exec",
+              "/manager",
+              "--wd",
+              "/tmp",
+              "--",
+            ]
+          args:
+            - --garm-server=http://garm-server.garm-server.svc:9997
+            - --garm-username=admin
+            - --garm-password=LmrBG1KcBOsDfNKq4cQTGpc0hJ0kejkk
+            - --operator-watch-namespace=garm-operator-system
+          ports:
+            - containerPort: 2345
+              name: delve
+              protocol: TCP
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              memory: 1Gi
