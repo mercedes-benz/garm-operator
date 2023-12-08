@@ -5,6 +5,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"strings"
 	"time"
 
@@ -48,13 +49,7 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	log := log.FromContext(ctx)
 	log.Info("Reconciling runners...", "Request", req)
 
-	instanceClient := garmClient.NewInstanceClient()
-	err := instanceClient.Login(garmClient.GarmScopeParams{
-		BaseURL:  r.BaseURL,
-		Username: r.Username,
-		Password: r.Password,
-		// Debug:    true,
-	})
+	instanceClient, err := r.instanceClient()
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -75,9 +70,9 @@ func (r *RunnerReconciler) reconcile(ctx context.Context, req ctrl.Request, inst
 		return r.handleCreateRunnerCR(ctx, req, err, garmRunner)
 	}
 
-	// delete runner on garm side and remove finalizer if deleted
+	// delete runner in garm db
 	if !runner.ObjectMeta.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, instanceClient, runner, garmRunner)
+		return r.reconcileDelete(ctx, instanceClient, garmRunner)
 	}
 
 	// sync garm runner status back to RunnerCR
@@ -118,7 +113,7 @@ func (r *RunnerReconciler) createRunnerCR(ctx context.Context, garmRunner *param
 	return ctrl.Result{}, nil
 }
 
-func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient garmClient.InstanceClient, runner *garmoperatorv1alpha1.Runner, garmRunner *params.Instance) (ctrl.Result, error) {
+func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient garmClient.InstanceClient, garmRunner *params.Instance) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	if garmRunner != nil {
 		log.Info("Deleting Runner in Garm", "Runner Name", garmRunner.Name)
@@ -127,22 +122,6 @@ func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient gar
 			return ctrl.Result{}, err
 		}
 
-	}
-	return ctrl.Result{}, nil
-}
-
-func (r *RunnerReconciler) cleanupRunnerCR(ctx context.Context, runner *garmoperatorv1alpha1.Runner) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-	log.Info("Removing finalizer and cleaning up runner CR in cluster", "Runner CR", runner.Name)
-	err := r.Delete(ctx, runner)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-	if controllerutil.ContainsFinalizer(runner, key.RunnerFinalizerName) {
-		controllerutil.RemoveFinalizer(runner, key.RunnerFinalizerName)
-		if err := r.Update(ctx, runner); err != nil {
-			return ctrl.Result{}, err
-		}
 	}
 	return ctrl.Result{}, nil
 }
@@ -239,20 +218,12 @@ func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan ch
 }
 
 func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan chan event.GenericEvent) error {
-	garmRunnerInstances := params.Instances{}
-	pools := &garmoperatorv1alpha1.PoolList{}
-
-	err := r.List(ctx, pools)
+	instanceClient, err := r.instanceClient()
 	if err != nil {
 		return err
 	}
 
-	instanceClient := garmClient.NewInstanceClient()
-	err = instanceClient.Login(garmClient.GarmScopeParams{
-		BaseURL:  r.BaseURL,
-		Username: r.Username,
-		Password: r.Password,
-	})
+	pools, err := r.fetchPools(ctx)
 	if err != nil {
 		return err
 	}
@@ -260,22 +231,44 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 	if len(pools.Items) < 1 {
 		return nil
 	}
-	namespace := pools.Items[0].Namespace
+
 	// fetching runners by pools to ensure only runners belonging to pools in same namespace are being shown
-	for _, p := range pools.Items {
-		if p.Status.ID == "" {
-			continue
-		}
-		poolRunners, err := instanceClient.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID(p.Status.ID))
-		if err != nil {
-			return err
-		}
-		garmRunnerInstances = append(garmRunnerInstances, poolRunners.Payload...)
+	garmRunnerInstances, err := r.fetchRunnerInstancesByNamespacedPools(instanceClient, pools)
+	if err != nil {
+		return err
 	}
 
-	// compare garmdb with runner cr => delete runnerCRs not present in garmdb
+	// compares garm db with RunnerCRs and deletes RunnerCRs not present in garm db
+	err = r.cleanUpNotMatchingRunnerCRs(ctx, garmRunnerInstances)
+	if err != nil {
+		return err
+	}
+
+	// triggers controller to reconcile based on instances in garm db
+	enqeueRunnerEvents(garmRunnerInstances, eventChan)
+	return nil
+}
+
+func enqeueRunnerEvents(garmRunnerInstances params.Instances, eventChan chan event.GenericEvent) {
+	for _, runner := range garmRunnerInstances {
+		runnerObj := garmoperatorv1alpha1.Runner{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      strings.ToLower(runner.Name),
+				Namespace: config.Config.Operator.WatchNamespace,
+			},
+		}
+
+		e := event.GenericEvent{
+			Object: &runnerObj,
+		}
+
+		eventChan <- e
+	}
+}
+
+func (r *RunnerReconciler) cleanUpNotMatchingRunnerCRs(ctx context.Context, garmRunnerInstances params.Instances) error {
 	runnerCRList := &garmoperatorv1alpha1.RunnerList{}
-	err = r.List(ctx, runnerCRList)
+	err := r.List(ctx, runnerCRList)
 	if err != nil {
 		return err
 	}
@@ -293,7 +286,7 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 
 	for _, runnerName := range runnersToDelete {
 		runner := &garmoperatorv1alpha1.Runner{}
-		err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: runnerName}, runner)
+		err := r.Get(ctx, types.NamespacedName{Namespace: config.Config.Operator.WatchNamespace, Name: runnerName}, runner)
 		if err != nil {
 			return err
 		}
@@ -312,22 +305,41 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan
 			}
 		}
 	}
-
-	for _, runner := range garmRunnerInstances {
-		runnerObj := garmoperatorv1alpha1.Runner{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      strings.ToLower(runner.Name),
-				Namespace: namespace,
-			},
-		}
-
-		e := event.GenericEvent{
-			Object: &runnerObj,
-		}
-
-		eventChan <- e
-	}
 	return nil
+}
+
+func (r *RunnerReconciler) fetchPools(ctx context.Context) (*garmoperatorv1alpha1.PoolList, error) {
+	pools := &garmoperatorv1alpha1.PoolList{}
+	err := r.List(ctx, pools)
+	if err != nil {
+		return nil, err
+	}
+	return pools, nil
+}
+
+func (r *RunnerReconciler) fetchRunnerInstancesByNamespacedPools(instanceClient garmClient.InstanceClient, pools *garmoperatorv1alpha1.PoolList) (params.Instances, error) {
+	garmRunnerInstances := params.Instances{}
+	for _, p := range pools.Items {
+		if p.Status.ID == "" {
+			continue
+		}
+		poolRunners, err := instanceClient.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID(p.Status.ID))
+		if err != nil {
+			return nil, err
+		}
+		garmRunnerInstances = append(garmRunnerInstances, poolRunners.Payload...)
+	}
+	return garmRunnerInstances, nil
+}
+
+func (r *RunnerReconciler) instanceClient() (garmClient.InstanceClient, error) {
+	instanceClient := garmClient.NewInstanceClient()
+	err := instanceClient.Login(garmClient.GarmScopeParams{
+		BaseURL:  r.BaseURL,
+		Username: r.Username,
+		Password: r.Password,
+	})
+	return instanceClient, err
 }
 
 func getRunnerDiff(runnerCRs, garmRunners []string) []string {
