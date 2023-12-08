@@ -114,7 +114,6 @@ operator:
   leader_election: true
   sync_period: "10m"
   watch_namespace: "garm-operator-namespace"
-  disable_webhooks: false
 ```
 
 ## Configuration Default Values
