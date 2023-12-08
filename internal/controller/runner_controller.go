@@ -4,7 +4,6 @@ package controller
 
 import (
 	"context"
-	b64 "encoding/base64"
 	"strings"
 	"time"
 
@@ -180,10 +179,7 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 	runner.Status.Status = garmRunner.Status
 	runner.Status.InstanceStatus = garmRunner.RunnerStatus
 	runner.Status.PoolID = poolName
-
-	providerFaultMsg, _ := b64.StdEncoding.DecodeString(string(garmRunner.ProviderFault))
-	runner.Status.ProviderFault = string(providerFaultMsg)
-
+	runner.Status.ProviderFault = string(garmRunner.ProviderFault)
 	runner.Status.GitHubRunnerGroup = garmRunner.GitHubRunnerGroup
 
 	if err := r.Status().Update(ctx, runner); err != nil {
