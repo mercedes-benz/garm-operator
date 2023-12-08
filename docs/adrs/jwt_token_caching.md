@@ -1,9 +1,9 @@
 <!-- SPDX-License-Identifier: MIT -->
 
 ---
-date: 2023-12-04
+date: 2023-07-24
 desc: Reduce login API calls
-state: accepted
+state: rejected
 ---
 <!--
 What is the status, such as proposed, accepted, rejected, deprecated, superseded, etc.?
@@ -87,6 +87,5 @@ As there isn't an existing `client.Client.RefreshToken()` method (xref [`garm` J
 What option was chosen? Why?
 -->
 
-As the garm-operator code should be easy to understand and maintain and we do not expect a lot of CustomResource objects 
-within a single garm-operator instance, we decided to keep the current implementation.
-
+As the `garm-operator` code should be easy to understand and maintain and
+we do not expect a lot of `CustomResource` objects within a single `garm-operator` instance, we decided to keep the current implementation.
