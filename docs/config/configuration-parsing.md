@@ -92,7 +92,6 @@ operator:
   leaderelection: false
   syncperiod: 5m0s
   watchnamespace: garm-operator-system
-  disablewebhooks: false
 ```
 
 ## Config File (yaml)
