@@ -63,7 +63,6 @@ The following flags will be parsed and can be found in the [flags package](../..
 --operator-leader-election
 --operator-sync-period
 --operator-watch-namespace
---operator-disable-webhooks
 ```
 
 ### Additional Flags
