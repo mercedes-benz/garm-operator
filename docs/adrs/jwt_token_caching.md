@@ -87,7 +87,6 @@ As there isn't an existing `client.Client.RefreshToken()` method (xref [`garm` J
 What option was chosen? Why?
 -->
 
-With the new feature of mirroring existing GitHub-Actions-Runner instances back to k8s as a `CustomResource`, we decided to review our decision of doing a full login on every reconciliation loop.
-Because Runners are more ephemeral and to reflect their state correctly, we need to poll the Garm API a lot more. Doing a login every 5 sec. as currently implemented in the runners control loop, 
-would not be efficient enough anymore and cause unnecessary load. Therefore, we decided to create a `client.Client` singleton instance, which makes sure to update the jwt token if a `401 status code`
-is thrown, as there is no refresh  endpoint available yet on the Garm API.
+As the garm-operator code should be easy to understand and maintain and we do not expect a lot of CustomResource objects 
+within a single garm-operator instance, we decided to keep the current implementation.
+
