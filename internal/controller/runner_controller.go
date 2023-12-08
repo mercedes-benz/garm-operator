@@ -5,14 +5,12 @@ package controller
 import (
 	"context"
 	b64 "encoding/base64"
-	"github.com/mercedes-benz/garm-operator/pkg/config"
-	"github.com/mercedes-benz/garm-operator/pkg/filter"
-	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
 	"strings"
 	"time"
 
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/params"
+	"github.com/life4/genesis/slices"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,10 +24,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/life4/genesis/slices"
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/config"
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
+	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
 )
 
 // RunnerReconciler reconciles a Runner object
@@ -123,7 +123,6 @@ func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient gar
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-
 	}
 	return ctrl.Result{}, nil
 }
@@ -290,7 +289,7 @@ func (r *RunnerReconciler) cleanUpNotMatchingRunnerCRs(ctx context.Context, garm
 	})
 
 	runnersToDelete := getRunnerDiff(runnerCRNameList, runnerInstanceNameList)
-	log.Log.V(1).Info("Deleting runners: ", runnersToDelete)
+	log.Log.V(1).Info("Deleting runners: ", "Runners", runnersToDelete)
 
 	for _, runnerName := range runnersToDelete {
 		runner := &garmoperatorv1alpha1.Runner{}

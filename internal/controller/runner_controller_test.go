@@ -3,11 +3,7 @@ package controller
 
 import (
 	"context"
-	"github.com/life4/genesis/slices"
-	"github.com/mercedes-benz/garm-operator/pkg/config"
-	corev1 "k8s.io/api/core/v1"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"strings"
 	"testing"
 	"time"
@@ -15,8 +11,10 @@ import (
 	commonParams "github.com/cloudbase/garm-provider-common/params"
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/params"
+	"github.com/life4/genesis/slices"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -24,10 +22,12 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
+	"github.com/mercedes-benz/garm-operator/pkg/config"
 )
 
 func TestRunnerReconciler_reconcileCreate(t *testing.T) {
