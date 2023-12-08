@@ -7,15 +7,12 @@ import (
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/go-openapi/runtime"
 
-	"github.com/mercedes-benz/garm-operator/pkg/filter"
-	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 
 type InstanceClient interface {
 	Login(garmParams GarmScopeParams) error
 	GetInstance(params *instances.GetInstanceParams) (*instances.GetInstanceOK, error)
-	GetInstanceByName(params *instances.GetInstanceParams) (*instances.GetInstanceOK, error)
 	ListInstances(params *instances.ListInstancesParams) (*instances.ListInstancesOK, error)
 	ListPoolInstances(params *instances.ListPoolInstancesParams) (*instances.ListPoolInstancesOK, error)
 	DeleteInstance(params *instances.DeleteInstanceParams) error
@@ -51,24 +48,6 @@ func (i *instanceClient) GetInstance(params *instances.GetInstanceParams) (*inst
 		return nil, err
 	}
 	return instance, nil
-}
-
-func (i *instanceClient) GetInstanceByName(params *instances.GetInstanceParams) (*instances.GetInstanceOK, error) {
-	allInstances, err := i.client.Instances.ListInstances(instances.NewListInstancesParams().WithDefaults(), i.token)
-	if err != nil {
-		return nil, err
-	}
-
-	filteredInstances := filter.Match(allInstances.Payload, instancefilter.MatchesName(params.InstanceName))
-
-	if len(filteredInstances) > 0 {
-		result := instances.NewGetInstanceOK()
-		result.Payload = filteredInstances[0]
-		return result, nil
-	}
-
-	result := instances.NewGetInstanceDefault(404)
-	return nil, result
 }
 
 func (i *instanceClient) ListInstances(params *instances.ListInstancesParams) (*instances.ListInstancesOK, error) {

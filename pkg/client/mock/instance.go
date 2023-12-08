@@ -65,21 +65,6 @@ func (mr *MockInstanceClientMockRecorder) GetInstance(params interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstance", reflect.TypeOf((*MockInstanceClient)(nil).GetInstance), params)
 }
 
-// GetInstanceByName mocks base method.
-func (m *MockInstanceClient) GetInstanceByName(params *instances.GetInstanceParams) (*instances.GetInstanceOK, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInstanceByName", params)
-	ret0, _ := ret[0].(*instances.GetInstanceOK)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetInstanceByName indicates an expected call of GetInstanceByName.
-func (mr *MockInstanceClientMockRecorder) GetInstanceByName(params interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstanceByName", reflect.TypeOf((*MockInstanceClient)(nil).GetInstanceByName), params)
-}
-
 // ListInstances mocks base method.
 func (m *MockInstanceClient) ListInstances(params *instances.ListInstancesParams) (*instances.ListInstancesOK, error) {
 	m.ctrl.T.Helper()

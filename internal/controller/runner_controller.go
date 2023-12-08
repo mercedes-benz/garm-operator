@@ -4,8 +4,10 @@ package controller
 
 import (
 	"context"
-	"fmt"
+	b64 "encoding/base64"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
+	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
 	"strings"
 	"time"
 
@@ -127,14 +129,17 @@ func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient gar
 }
 
 func (r *RunnerReconciler) getGarmRunnerInstance(client garmClient.InstanceClient, name string) (*params.Instance, error) {
-	// Problem: req.Name is not always name of garm instance like road-runner-k8s-EyCKa8uPE1to, but name of runner CR from cache which is lowercase road-runner-k8s-eycka8upe1to => GetInstanceByName can match runner in garm with name of CR
-	garmRunner, err := client.GetInstanceByName(instances.NewGetInstanceParams().WithInstanceName(name))
-	if err != nil && garmClient.IsNotFoundError(err) {
-		return nil, nil
-	} else if err != nil {
+	allInstances, err := client.ListInstances(instances.NewListInstancesParams().WithDefaults())
+	if err != nil {
 		return nil, err
 	}
-	return &garmRunner.Payload, err
+
+	filteredInstances := filter.Match(allInstances.Payload, instancefilter.MatchesName(name))
+	if len(filteredInstances) == 0 {
+		return nil, nil
+	}
+
+	return &filteredInstances[0], nil
 }
 
 func (r *RunnerReconciler) ensureFinalizer(ctx context.Context, runner *garmoperatorv1alpha1.Runner) error {
@@ -176,7 +181,10 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 	runner.Status.Status = garmRunner.Status
 	runner.Status.InstanceStatus = garmRunner.RunnerStatus
 	runner.Status.PoolID = poolName
-	runner.Status.ProviderFault = garmRunner.ProviderFault
+
+	providerFaultMsg, _ := b64.StdEncoding.DecodeString(string(garmRunner.ProviderFault))
+	runner.Status.ProviderFault = string(providerFaultMsg)
+
 	runner.Status.GitHubRunnerGroup = garmRunner.GitHubRunnerGroup
 
 	if err := r.Status().Update(ctx, runner); err != nil {
@@ -209,7 +217,12 @@ func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan ch
 			return
 		case _ = <-ticker.C:
 			log.Info("Polling Runners...")
-			err := r.EnqueueRunnerInstances(ctx, eventChan)
+			instanceClient, err := r.instanceClient()
+			if err != nil {
+				log.Error(err, "Failed to create InstanceClient")
+			}
+
+			err = r.EnqueueRunnerInstances(ctx, instanceClient, eventChan)
 			if err != nil {
 				log.Error(err, "Failed polling runner instances")
 			}
@@ -217,12 +230,7 @@ func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan ch
 	}
 }
 
-func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, eventChan chan event.GenericEvent) error {
-	instanceClient, err := r.instanceClient()
-	if err != nil {
-		return err
-	}
-
+func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, instanceClient garmClient.InstanceClient, eventChan chan event.GenericEvent) error {
 	pools, err := r.fetchPools(ctx)
 	if err != nil {
 		return err
@@ -282,7 +290,7 @@ func (r *RunnerReconciler) cleanUpNotMatchingRunnerCRs(ctx context.Context, garm
 	})
 
 	runnersToDelete := getRunnerDiff(runnerCRNameList, runnerInstanceNameList)
-	fmt.Println(runnersToDelete)
+	log.Log.V(1).Info("Deleting runners: ", runnersToDelete)
 
 	for _, runnerName := range runnersToDelete {
 		runner := &garmoperatorv1alpha1.Runner{}
@@ -296,6 +304,12 @@ func (r *RunnerReconciler) cleanUpNotMatchingRunnerCRs(ctx context.Context, garm
 			if err != nil {
 				return err
 			}
+		}
+
+		// getting RunnerCR from cache again before removing finalizer, as in the meantime object has changed
+		err = r.Get(ctx, types.NamespacedName{Namespace: config.Config.Operator.WatchNamespace, Name: runnerName}, runner)
+		if err != nil {
+			return err
 		}
 
 		if controllerutil.ContainsFinalizer(runner, key.RunnerFinalizerName) {

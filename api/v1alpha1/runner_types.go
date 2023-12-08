@@ -61,7 +61,7 @@ type RunnerStatus struct {
 
 	// ProviderFault holds any error messages captured from the IaaS provider that is
 	// responsible for managing the lifecycle of the runner.
-	ProviderFault []byte `json:"providerFault,omitempty"`
+	ProviderFault string `json:"providerFault,omitempty"`
 
 	// StatusMessages is a list of status messages sent back by the runner as it sets itself
 	// up.

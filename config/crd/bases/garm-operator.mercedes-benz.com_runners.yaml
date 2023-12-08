@@ -126,7 +126,6 @@ spec:
                 description: ProviderFault holds any error messages captured from
                   the IaaS provider that is responsible for managing the lifecycle
                   of the runner.
-                format: byte
                 type: string
               providerId:
                 description: PeoviderID is the unique ID the provider associated with
