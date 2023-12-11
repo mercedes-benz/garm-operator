@@ -148,11 +148,21 @@ spec:
                 type: string
               lastSyncError:
                 type: string
+              minIdleRunners:
+                type: integer
+              selector:
+                type: string
             required:
             - id
+            - minIdleRunners
+            - selector
             type: object
         type: object
     served: true
     storage: true
     subresources:
+      scale:
+        labelSelectorPath: .status.selector
+        specReplicasPath: .spec.minIdleRunners
+        statusReplicasPath: .status.minIdleRunners
       status: {}

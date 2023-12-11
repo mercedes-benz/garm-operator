@@ -7,9 +7,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"time"
 
 	garmProviderParams "github.com/cloudbase/garm-provider-common/params"
+	"github.com/cloudbase/garm-provider-common/util"
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/client/organizations"
@@ -97,11 +99,12 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return r.reconcileDelete(ctx, poolClient, pool, instanceClient)
 	}
 
-	return r.reconcileNormal(ctx, poolClient, pool)
+	return r.reconcileNormal(ctx, poolClient, pool, instanceClient)
 }
 
-func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
+	log := log.FromContext(ctx).
+		WithName("reconcileNormal")
 
 	gitHubScopeRef, err := r.fetchGitHubScopeCRD(ctx, pool)
 	if err != nil {
@@ -119,8 +122,8 @@ func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmCli
 	}
 
 	// pool status id has been set and id matches existing garm pool, so we know that the pool is persisted in garm and needs to be updated
-	if pool.Status.ID != "" && r.garmPoolExists(poolClient, pool.Status.ID) {
-		return r.reconcileUpdate(ctx, poolClient, pool)
+	if pool.Status.ID != "" && garmPoolExists(poolClient, pool) {
+		return r.reconcileUpdate(ctx, poolClient, pool, instanceClient)
 	}
 
 	// no pool id yet or the existing pool id is outdated, so pool cr needs by either synced to match garm pool or created
@@ -208,9 +211,7 @@ func createPool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 		poolResult = result.Payload
 	default:
 		err := fmt.Errorf("no valid scope specified: %s", scope)
-		if err != nil {
-			return params.Pool{}, err
-		}
+		return params.Pool{}, err
 	}
 
 	return poolResult, nil
@@ -226,32 +227,52 @@ func (r *PoolReconciler) getImage(ctx context.Context, pool *garmoperatorv1alpha
 	return image, nil
 }
 
-func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
+	log := log.FromContext(ctx).
+		WithName("reconcileUpdate")
+	log.Info("pool on garm side found", "id", pool.Status.ID, "name", pool.Name)
+
+	poolNeedsUpdate, idleRunners, err := r.comparePoolSpecs(ctx, pool, garmClient)
+	if err != nil {
+		log.Error(err, "error comparing pool specs")
+		return r.handleUpdateError(ctx, pool, err)
+	}
+
+	if !poolNeedsUpdate {
+		log.Info("pool CR differs from pool on garm side. Trigger a garm pool update")
+
+		err = r.updateGarmPool(ctx, garmClient, pool)
+		if err != nil {
+			log.Error(err, "error updating pool")
+			return r.handleUpdateError(ctx, pool, err)
+		}
+	}
+
+	// update pool idle runners count in status
+	pool.Status.MinIdleRunners = uint(len(idleRunners))
+	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// If there are more idle Runners than minIdleRunners are defined in
+	// the spec, we force a runner deletion.
+	if pool.Status.MinIdleRunners > pool.Spec.MinIdleRunners {
+		if err := r.alignIdleRunners(ctx, pool, idleRunners, instanceClient); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	return ctrl.Result{}, nil
+}
+
+// func (r *PoolReconciler) updatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, instanceClient garmClient.InstanceClient) (params.Pool, error) {
+func (r *PoolReconciler) updateGarmPool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool) error {
 	log := log.FromContext(ctx)
-	log.Info("existing pool found in garm, updating...", "ID", pool.Status.ID)
 
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
 		log.Error(err, "error getting image")
-		return r.handleUpdateError(ctx, pool, err)
-	}
-
-	garmPool, err := updatePool(garmClient, pool, image)
-	if err != nil {
-		log.Error(err, "error updating pool")
-		return r.handleUpdateError(ctx, pool, err)
-	}
-
-	return r.handleSuccessfulUpdate(ctx, pool, garmPool)
-}
-
-func updatePool(garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image) (params.Pool, error) {
-	extraSpecs := json.RawMessage([]byte{})
-	if pool.Spec.ExtraSpecs != "" {
-		err := json.Unmarshal([]byte(pool.Spec.ExtraSpecs), &extraSpecs)
-		if err != nil {
-			return params.Pool{}, err
-		}
+		return err
 	}
 
 	poolParams := params.UpdatePoolParams{
@@ -267,15 +288,15 @@ func updatePool(garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Poo
 		Tags:                   pool.Spec.Tags,
 		Enabled:                &pool.Spec.Enabled,
 		RunnerBootstrapTimeout: &pool.Spec.RunnerBootstrapTimeout,
-		ExtraSpecs:             extraSpecs,
+		ExtraSpecs:             json.RawMessage([]byte(pool.Spec.ExtraSpecs)),
 		GitHubRunnerGroup:      &pool.Spec.GitHubRunnerGroup,
 	}
-	result, err := garmClient.UpdatePool(pools.NewUpdatePoolParams().WithPoolID(pool.Status.ID).WithBody(poolParams))
+	_, err = garmClient.UpdatePool(pools.NewUpdatePoolParams().WithPoolID(pool.Status.ID).WithBody(poolParams))
 	if err != nil {
-		return params.Pool{}, err
+		return err
 	}
 
-	return result.Payload, err
+	return nil
 }
 
 func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
@@ -298,13 +319,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		pool.Spec.MinIdleRunners = 0
 		pool.Spec.Enabled = false
 
-		image, err := r.getImage(ctx, pool)
-		if err != nil {
-			log.Error(err, "error getting image")
-			return r.handleUpdateError(ctx, pool, err)
-		}
-
-		_, err = updatePool(garmClient, pool, image)
+		err := r.updateGarmPool(ctx, garmClient, pool)
 		if err != nil {
 			log.Error(err, "error updating pool")
 			return r.handleUpdateError(ctx, pool, err)
@@ -318,32 +333,24 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, nil
 	}
 
-	runners, err := instanceClient.ListPoolInstances(
-		instances.NewListPoolInstancesParams().WithPoolID(pool.Status.ID))
+	// get current idle runners
+	idleRunners, err := r.getIdleRunners(ctx, pool, instanceClient)
 	if err != nil {
-		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err))
+		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 	}
 
-	if len(runners.GetPayload()) > 0 {
-		for _, runner := range runners.GetPayload() {
-			switch runner.Status {
-			case garmProviderParams.InstanceRunning, garmProviderParams.InstanceError:
-				if runner.RunnerStatus != params.RunnerActive {
-					err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name))
-					if err != nil {
-						log.Error(err, "unable to delete runner", "runner", runner.Name)
-					}
-				} else {
-					log.Info("Runner has an active run that does not allow deletion", "runner", runner.Name, "state", runner.Status, "runner state", runner.RunnerStatus)
-				}
-			default:
-				log.Info("Runner is in state that does not allow deletion", "runner", runner.Name, "state", runner.Status)
-			}
+	// set current idle runners count in status
+	pool.Status.MinIdleRunners = uint(len(idleRunners))
+
+	// scale pool down only needed if spec is smaller than current min idle runners
+	// doesn't catch the case where minIdleRunners is increased and to many idle runners exist
+	if pool.Spec.MinIdleRunners < pool.Status.MinIdleRunners {
+		if err := r.alignIdleRunners(ctx, pool, idleRunners, instanceClient); err != nil {
+			return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 		}
-
-		log.Info("Not all runners could be deleted or are still in deleting phase, reconcile in 1 minute again.")
-		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, nil
 	}
+
+	// scale pool runners to 0
 
 	err = garmClient.DeletePool(
 		pools.NewDeletePoolParams().
@@ -363,7 +370,78 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	return ctrl.Result{}, nil
 }
 
-func (r *PoolReconciler) updatePoolStatus(ctx context.Context, pool *garmoperatorv1alpha1.Pool) error {
+func (r *PoolReconciler) getIdleRunners(ctx context.Context, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) ([]params.Instance, error) {
+	log := log.FromContext(ctx)
+	log.Info("discover idle runners", "pool", pool.Name)
+
+	runners, err := instanceClient.ListPoolInstances(
+		instances.NewListPoolInstancesParams().WithPoolID(pool.Status.ID))
+	if err != nil {
+		return nil, err
+	}
+
+	return extractIdleRunners(ctx, runners.GetPayload())
+}
+
+// alignIdleRunners scales down the pool to the desired state
+// of minIdleRunners. It will delete runners in a deletable state
+func (r *PoolReconciler) alignIdleRunners(ctx context.Context, pool *garmoperatorv1alpha1.Pool, idleRunners []params.Instance, instanceClient garmClient.InstanceClient) error {
+	log := log.FromContext(ctx)
+	log.Info("Scaling pool", "pool", pool.Name)
+	event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
+
+	/*
+
+		alignIdleRunners
+
+			poolMin 20 - 20 runners in a deletable state
+				scale down to 10
+				10 runners to delete
+
+			poolMin 10 - 10 runners in a deletable state
+				scale down to 0
+				10 - 0 runners to delete
+
+			poolMin 20 - 8 runners in a deletable state
+				scale down to 10
+				8 - 10 = -2 runners to delete
+
+			poolMin 10 - 10 runners in a deletable state
+				scale down to 0
+				10 runners to delete
+
+	*/
+
+	// calculate how many runners need to be deleted
+	var removableRunnersCount int
+	// if there are more runners than minIdleRunners, delete the difference
+	if len(idleRunners)-int(pool.Spec.MinIdleRunners) > 0 {
+		removableRunnersCount = len(idleRunners) - int(pool.Spec.MinIdleRunners)
+	} else {
+		removableRunnersCount = len(idleRunners)
+	}
+
+	// this is where the status.minIdleRunners comparison needs to be done
+	// if real state is larger than desired state - scale down runners
+	for i, runner := range idleRunners {
+		// do not delete more runners than minIdleRunners
+		if i == removableRunnersCount {
+			break
+		}
+		log.Info("remove runner", "runner", runner.Name, "state", runner.Status, "runner state", runner.RunnerStatus)
+		err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name))
+		if err != nil {
+			log.Error(err, "unable to delete runner", "runner", runner.Name)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	log.Info("Successfully scaled pool down", "pool", pool.Name)
+	return nil
+}
+
+func (r *PoolReconciler) updatePoolCRStatus(ctx context.Context, pool *garmoperatorv1alpha1.Pool) error {
 	log := log.FromContext(ctx)
 	if err := r.Status().Update(ctx, pool); err != nil {
 		log.Error(err, "unable to update Pool status")
@@ -410,11 +488,11 @@ func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperat
 	log := log.FromContext(ctx)
 
 	log.Error(err, "error")
-	event.Error(r.Recorder, pool, err)
+	event.Error(r.Recorder, pool, err.Error())
 
 	pool.Status.LastSyncError = err.Error()
 
-	if updateErr := r.updatePoolStatus(ctx, pool); updateErr != nil {
+	if updateErr := r.updatePoolCRStatus(ctx, pool); updateErr != nil {
 		return ctrl.Result{}, updateErr
 	}
 
@@ -423,9 +501,10 @@ func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperat
 
 func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmPool params.Pool) (ctrl.Result, error) {
 	pool.Status.ID = garmPool.ID
+	pool.Status.MinIdleRunners = garmPool.MinIdleRunners
 	pool.Status.LastSyncError = ""
 
-	if err := r.updatePoolStatus(ctx, pool); err != nil {
+	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
@@ -465,12 +544,118 @@ func (r *PoolReconciler) getExistingGarmPoolBySpecs(ctx context.Context, garmCli
 	return params.Pool{}, nil
 }
 
-func (r *PoolReconciler) garmPoolExists(garmClient garmClient.PoolClient, poolID string) bool {
-	result, err := garmClient.GetPool(pools.NewGetPoolParams().WithPoolID(poolID))
+func garmPoolExists(garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool) bool {
+	result, err := garmClient.GetPool(pools.NewGetPoolParams().WithPoolID(pool.Status.ID))
 	if err != nil {
 		return false
 	}
 	return result.Payload.ID != ""
+}
+
+func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1alpha1.Pool, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {
+	log := log.FromContext(ctx).
+		WithName("comparePoolSpecs")
+
+	image, err := r.getImage(ctx, pool)
+	if err != nil {
+		log.Error(err, "error getting image")
+		return false, []params.Instance{}, err
+	}
+
+	// get the current pool from garm
+	garmPool, err := poolClient.GetPool(pools.NewGetPoolParams().WithPoolID(pool.Status.ID))
+	if err != nil {
+		return false, []params.Instance{}, err
+	}
+
+	// if pool.Spec.RunnerPrefix is empty, set it to garms default prefix
+	if pool.Spec.RunnerPrefix == "" {
+		pool.Spec.RunnerPrefix = params.DefaultRunnerPrefix
+	}
+
+	gitHubScopeRef, err := r.fetchGitHubScopeCRD(ctx, pool)
+	if err != nil {
+		return false, []params.Instance{}, err
+	}
+
+	// github automatically adds the "self-hosted" tag as well as the OS type (linux, windows, etc)
+	// and architecture (arm, x64, etc) to all self hosted runners. When a workflow job comes in, we try
+	// to find a pool based on the labels that are set in the workflow. If we don't explicitly define these
+	// default tags for each pool, and the user targets these labels, we won't be able to match any pools.
+	// The downside is that all pools with the same OS and arch will have these default labels. Users should
+	// set distinct and unique labels on each pool, and explicitly target those labels, or risk assigning
+	// the job to the wrong worker type.
+	ghArch, err := util.ResolveToGithubArch(string(garmPool.Payload.OSArch))
+	if err != nil {
+		return false, []params.Instance{}, err
+	}
+	ghOSType, err := util.ResolveToGithubTag(garmPool.Payload.OSType)
+	if err != nil {
+		return false, []params.Instance{}, err
+	}
+
+	labels := []string{
+		"self-hosted",
+		ghArch,
+		ghOSType,
+	}
+
+	tags := []params.Tag{}
+	for _, tag := range pool.Spec.Tags {
+		tags = append(tags, params.Tag{
+			Name: tag,
+		})
+	}
+
+	for _, tag := range labels {
+		tags = append(tags, params.Tag{
+			Name: tag,
+		})
+	}
+
+	tmpGarmPool := params.Pool{
+		RunnerPrefix: params.RunnerPrefix{
+			Prefix: pool.Spec.RunnerPrefix,
+		},
+		MaxRunners:             pool.Spec.MaxRunners,
+		MinIdleRunners:         pool.Spec.MinIdleRunners,
+		Image:                  image.Spec.Tag,
+		Flavor:                 pool.Spec.Flavor,
+		OSType:                 pool.Spec.OSType,
+		OSArch:                 pool.Spec.OSArch,
+		Tags:                   tags,
+		Enabled:                pool.Spec.Enabled,
+		RunnerBootstrapTimeout: pool.Spec.RunnerBootstrapTimeout,
+		ExtraSpecs:             json.RawMessage([]byte(pool.Spec.ExtraSpecs)),
+		GitHubRunnerGroup:      pool.Spec.GitHubRunnerGroup,
+		ID:                     pool.Status.ID,
+		ProviderName:           pool.Spec.ProviderName,
+	}
+
+	switch gitHubScopeRef.GetKind() {
+	case string(garmoperatorv1alpha1.EnterpriseScope):
+		tmpGarmPool.EnterpriseID = gitHubScopeRef.GetID()
+		tmpGarmPool.EnterpriseName = gitHubScopeRef.GetName()
+	case string(garmoperatorv1alpha1.OrganizationScope):
+		tmpGarmPool.OrgID = gitHubScopeRef.GetID()
+		tmpGarmPool.OrgName = gitHubScopeRef.GetName()
+	case string(garmoperatorv1alpha1.RepositoryScope):
+		tmpGarmPool.RepoID = gitHubScopeRef.GetID()
+		tmpGarmPool.RepoName = gitHubScopeRef.GetName()
+	}
+
+	idleInstances, err := extractIdleRunners(ctx, garmPool.Payload.Instances)
+	if err != nil {
+		return false, []params.Instance{}, err
+	}
+
+	// empty instances for comparison
+	garmPool.Payload.Instances = nil
+
+	log.V(1).Info("Garm pool specification of existing pool", "garmPool", garmPool.Payload)
+	log.V(1).Info("Garm pool specification of reconciled pool CR", "poolCR", tmpGarmPool)
+
+	return reflect.DeepEqual(tmpGarmPool, garmPool.Payload), idleInstances, nil
 }
 
 func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (garmoperatorv1alpha1.GitHubScope, error) {
@@ -558,4 +743,24 @@ func (r *PoolReconciler) findPoolsForImage(ctx context.Context, obj client.Objec
 	}
 
 	return requests
+}
+
+func extractIdleRunners(ctx context.Context, instances []params.Instance) ([]params.Instance, error) {
+	log := log.FromContext(ctx)
+
+	// create a list of "deletable runners"
+	idleRunners := []params.Instance{}
+
+	// filter runners that are in state that allows deletion
+	if len(instances) > 0 {
+		for _, runner := range instances {
+			switch runner.Status {
+			case garmProviderParams.InstanceRunning, garmProviderParams.InstanceError:
+				idleRunners = append(idleRunners, runner)
+			default:
+				log.V(1).Info("Runner is in state that does not allow deletion", "runner", runner.Name, "state", runner.Status)
+			}
+		}
+	}
+	return idleRunners, nil
 }

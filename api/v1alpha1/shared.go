@@ -19,6 +19,7 @@ type GitHubScope interface {
 	GetKind() string
 	GetCredentialsName() string
 	GetID() string
+	GetName() string
 	GetPoolManagerIsRunning() bool
 	GetPoolManagerFailureReason() string
 }

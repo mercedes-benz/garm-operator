@@ -112,8 +112,10 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID:             poolID,
+					MinIdleRunners: 3,
+					Selector:       "",
+					LastSyncError:  "",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -291,8 +293,10 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID:             poolID,
+					MinIdleRunners: 3,
+					Selector:       "",
+					LastSyncError:  "",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -627,10 +631,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			pool := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Pool)
 
 			mockPoolClient := mock.NewMockPoolClient(mockCtrl)
+			mockInstanceClient := mock.NewMockInstanceClient(mockCtrl)
 
 			tt.expectGarmRequest(mockPoolClient.EXPECT())
 
-			_, err = reconciler.reconcileNormal(context.Background(), mockPoolClient, pool)
+			_, err = reconciler.reconcileNormal(context.Background(), mockPoolClient, pool, mockInstanceClient)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PoolReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -711,9 +716,9 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
-					Finalizers: []string{
-						key.PoolFinalizerName,
-					},
+					// Finalizers: []string{
+					// 	key.PoolFinalizerName,
+					// },
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
@@ -735,8 +740,9 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID:             poolID,
+					LastSyncError:  "",
+					MinIdleRunners: 2,
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -789,60 +795,99 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 				extraSpecs := json.RawMessage([]byte{})
 				gitHubRunnerGroup := ""
 
-				m.UpdatePool(pools.NewUpdatePoolParams().WithPoolID(poolID).WithBody(params.UpdatePoolParams{
-					RunnerPrefix: params.RunnerPrefix{
-						Prefix: "",
-					},
-					MaxRunners:             &maxRunners,
-					MinIdleRunners:         &minIdleRunners,
-					Image:                  "linux-ubuntu-22.04-arm64",
-					Flavor:                 "medium",
-					OSType:                 "linux",
-					OSArch:                 "arm64",
-					Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
-					Enabled:                &enabled,
-					RunnerBootstrapTimeout: &runnerBootstrapTimeout,
-					ExtraSpecs:             extraSpecs,
-					GitHubRunnerGroup:      &gitHubRunnerGroup,
-				})).Return(&pools.UpdatePoolOK{Payload: params.Pool{
-					RunnerPrefix: params.RunnerPrefix{
-						Prefix: "",
-					},
-					ID:             poolID,
-					ProviderName:   "kubernetes_external",
-					MaxRunners:     5,
-					MinIdleRunners: 0,
-					Image:          "linux-ubuntu-22.04-arm64",
-					Flavor:         "medium",
-					OSType:         "linux",
-					OSArch:         "arm64",
-					Tags: []params.Tag{
-						{
-							ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6da",
-							Name: "kubernetes",
-						},
-						{
-							ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6db",
-							Name: "linux",
-						},
-						{
-							ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6dc",
-							Name: "arm64",
-						},
-						{
-							ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6dd",
-							Name: "ubuntu",
+				instanceClient.ListPoolInstances(
+					instances.NewListPoolInstancesParams().
+						WithPoolID(poolID)).
+					Return(&instances.ListPoolInstancesOK{
+						Payload: params.Instances{
+							{
+								ID:           "c7224d9d-73d2-4d08-84f5-d8982f6e1fcf",
+								ProviderID:   "garm-gelhwdl6nbrv",
+								Name:         "garm-GElhwdl6NbrV",
+								Status:       "running",
+								RunnerStatus: "idle",
+								PoolID:       poolID,
+							},
+							{
+								ID:           "5b3b4449-8208-4fbb-8653-cab3a2185115",
+								ProviderID:   "garm-ibtxyhqc2t9j",
+								Name:         "garm-ibTxYHqc2T9J",
+								Status:       "running",
+								RunnerStatus: "idle",
+								PoolID:       poolID,
+							},
 						},
 					},
-					Enabled:        false,
-					Instances:      []params.Instance{},
-					RepoID:         "",
-					RepoName:       "",
-					OrgID:          "",
-					OrgName:        "",
-					EnterpriseID:   enterpriseID,
-					EnterpriseName: enterpriseName,
-				}}, nil)
+						nil)
+
+				instanceClient.ListPoolInstances(
+					instances.NewListPoolInstancesParams().
+						WithPoolID(poolID)).
+					Return(&instances.ListPoolInstancesOK{
+						Payload: params.Instances{},
+					},
+						nil)
+
+				m.UpdatePool(pools.NewUpdatePoolParams().
+					WithPoolID(poolID).
+					WithBody(params.UpdatePoolParams{
+						RunnerPrefix: params.RunnerPrefix{
+							Prefix: "",
+						},
+						MaxRunners:             &maxRunners,
+						MinIdleRunners:         &minIdleRunners,
+						Image:                  "linux-ubuntu-22.04-arm64",
+						Flavor:                 "medium",
+						OSType:                 "linux",
+						OSArch:                 "arm64",
+						Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+						Enabled:                &enabled,
+						RunnerBootstrapTimeout: &runnerBootstrapTimeout,
+						ExtraSpecs:             extraSpecs,
+						GitHubRunnerGroup:      &gitHubRunnerGroup,
+					})).Return(&pools.UpdatePoolOK{
+					Payload: params.Pool{
+						RunnerPrefix: params.RunnerPrefix{
+							Prefix: "",
+						},
+						ID:             poolID,
+						ProviderName:   "kubernetes_external",
+						MaxRunners:     5,
+						MinIdleRunners: 0,
+						Image:          "linux-ubuntu-22.04-arm64",
+						Flavor:         "medium",
+						OSType:         "linux",
+						OSArch:         "arm64",
+						Tags: []params.Tag{
+							{
+								ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6da",
+								Name: "kubernetes",
+							},
+							{
+								ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6db",
+								Name: "linux",
+							},
+							{
+								ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6dc",
+								Name: "arm64",
+							},
+							{
+								ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6dd",
+								Name: "ubuntu",
+							},
+						},
+						Enabled:        false,
+						Instances:      []params.Instance{},
+						RepoID:         "",
+						RepoName:       "",
+						OrgID:          "",
+						OrgName:        "",
+						EnterpriseID:   enterpriseID,
+						EnterpriseName: enterpriseName,
+					},
+				}, nil)
+
+				m.DeletePool(pools.NewDeletePoolParams().WithPoolID(poolID)).Return(nil)
 			},
 		},
 		{

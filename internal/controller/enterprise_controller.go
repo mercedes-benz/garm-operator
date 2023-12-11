@@ -124,7 +124,7 @@ func (r *EnterpriseReconciler) syncExistingEnterprise(ctx context.Context, garmE
 	if !strings.EqualFold(garmEnterprise.CredentialsName, enterprise.Spec.CredentialsName) &&
 		!strings.EqualFold(garmEnterprise.WebhookSecret, webhookSecret) {
 		err := fmt.Errorf("enterprise with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing enterprise first")
-		event.Error(r.Recorder, enterprise, err)
+		event.Error(r.Recorder, enterprise, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -264,7 +264,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteEnterprise error: %s", err))
-		event.Error(r.Recorder, enterprise, err)
+		event.Error(r.Recorder, enterprise, err.Error())
 		return ctrl.Result{}, err
 	}
 
