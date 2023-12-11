@@ -109,6 +109,12 @@ func MatchesGitHubScope(name, kind string) Predicate {
 	}
 }
 
+func MatchesID(id string) Predicate {
+	return func(p Pool) bool {
+		return p.Status.ID == id
+	}
+}
+
 func (p *PoolList) FilterByFields(predicates ...Predicate) {
 	var filteredItems []Pool
 

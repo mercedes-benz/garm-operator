@@ -62,4 +62,13 @@ resources:
     defaulting: true
     validation: true
     webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: mercedes-benz.com
+  group: garm-operator
+  kind: Runner
+  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

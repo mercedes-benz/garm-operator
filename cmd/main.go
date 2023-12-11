@@ -3,8 +3,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"os"
+	"log"
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,6 +15,7 @@ import (
 	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
@@ -36,6 +38,12 @@ func init() {
 }
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	ctrl.SetLogger(klogr.New())
 
 	// initiate flags
@@ -46,8 +54,7 @@ func main() {
 
 	// call GenerateConfig() function from config package
 	if err := config.GenerateConfig(f, configFile); err != nil {
-		setupLog.Error(err, "failed to read config")
-		os.Exit(1)
+		return fmt.Errorf("failed to read config: %w", err)
 	}
 
 	// check if dry-run flag is set to true
@@ -57,11 +64,10 @@ func main() {
 	if dryRun {
 		yamlConfig, err := yaml.Marshal(config.Config)
 		if err != nil {
-			setupLog.Error(err, "failed to marshal config as yaml")
-			os.Exit(1)
+			return fmt.Errorf("failed to marshal config as yaml: %w", err)
 		}
 		fmt.Printf("generated Config as yaml:\n%s\n", yamlConfig)
-		os.Exit(0)
+		return nil
 	}
 
 	var watchNamespaces []string
@@ -97,8 +103,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+		return fmt.Errorf("unable to start manager: %w", err)
 	}
 
 	ctx := ctrl.SetupSignalHandler()
@@ -111,8 +116,7 @@ func main() {
 			Password: config.Config.Garm.Password,
 			Email:    config.Config.Garm.Email,
 		}); err != nil {
-			setupLog.Error(err, "failed to initialize GARM")
-			os.Exit(1)
+			return fmt.Errorf("failed to initialize GARM: %w", err)
 		}
 	}
 
@@ -125,8 +129,7 @@ func main() {
 		Username: config.Config.Garm.Username,
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Enterprise")
-		os.Exit(1)
+		return fmt.Errorf("unable to create controller Enterprise: %w", err)
 	}
 	if err = (&controller.PoolReconciler{
 		Client:   mgr.GetClient(),
@@ -137,21 +140,17 @@ func main() {
 		Username: config.Config.Garm.Username,
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Pool")
-		os.Exit(1)
+		return fmt.Errorf("unable to create controller Pool: %w", err)
 	}
 
 	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Pool")
-		os.Exit(1)
+		return fmt.Errorf("unable to create webhook Pool: %w", err)
 	}
 	if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Image")
-		os.Exit(1)
+		return fmt.Errorf("unable to create webhook Image: %w", err)
 	}
 	if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Repository")
-		os.Exit(1)
+		return fmt.Errorf("unable to create webhook Repository: %w", err)
 	}
 
 	if err = (&controller.OrganizationReconciler{
@@ -163,8 +162,7 @@ func main() {
 		Username: config.Config.Garm.Username,
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Organization")
-		os.Exit(1)
+		return fmt.Errorf("unable to create controller Organization: %w", err)
 	}
 
 	if err = (&controller.RepositoryReconciler{
@@ -176,23 +174,41 @@ func main() {
 		Username: config.Config.Garm.Username,
 		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Repository")
-		os.Exit(1)
+		return fmt.Errorf("unable to create controller Repository: %w", err)
 	}
+
+	eventChan := make(chan event.GenericEvent)
+	runnerReconciler := &controller.RunnerReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+
+		BaseURL:  config.Config.Garm.Server,
+		Username: config.Config.Garm.Username,
+		Password: config.Config.Garm.Password,
+	}
+
+	// setup controller so it can reconcile if events from eventChan are queued
+	if err = runnerReconciler.SetupWithManager(mgr, eventChan); err != nil {
+		return fmt.Errorf("unable to create controller Runner: %w", err)
+	}
+
+	// fetch runner instances periodically and enqueue reconcile events for runner ctrl if external system has changed
+	ctx, cancel := context.WithCancel(context.Background())
+	go runnerReconciler.PollRunnerInstances(ctx, eventChan)
+	defer cancel()
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
+		return fmt.Errorf("unable to set up health check: %w", err)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
+		return fmt.Errorf("unable to set up ready check: %w", err)
 	}
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctx); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+		return fmt.Errorf("unable to start manager: %w", err)
 	}
+	return nil
 }

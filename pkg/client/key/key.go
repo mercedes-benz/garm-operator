@@ -8,5 +8,6 @@ const (
 	OrganizationFinalizerName = groupName + "/organization"
 	RepositoryFinalizerName   = groupName + "/repository"
 	PoolFinalizerName         = groupName + "/pool"
+	RunnerFinalizerName       = groupName + "/runner"
 	PausedAnnotation          = groupName + "/paused"
 )

@@ -5,4 +5,5 @@ resources:
   - garm-operator_v1alpha1_organization.yaml
   - garm-operator_v1alpha1_image.yaml
   - garm-operator_v1alpha1_repository.yaml
+  - garm-operator_v1alpha1_runner.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

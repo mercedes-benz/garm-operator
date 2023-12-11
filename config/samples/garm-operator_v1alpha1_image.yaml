@@ -10,4 +10,4 @@ metadata:
   name: runner-default
   namespace: garm-operator-system
 spec:
-  tag: linux-ubuntu-22.04-arm64
+  tag: default-runner:linux-ubuntu-22.04-amd64-main-e4de304

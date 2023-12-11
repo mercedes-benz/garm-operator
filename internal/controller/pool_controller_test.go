@@ -26,6 +26,8 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 )
 
+const namespaceName = "test-namespace"
+
 func TestPoolController_ReconcileCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -34,7 +36,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 	poolID := "fb2bceeb-f74d-435d-9648-626c75cb23ce"
 	enterpriseID := "93068607-2d0d-4b76-a950-0e40d31955b8"
 	enterpriseName := "test-enterprise"
-	namespaceName := "test-namespace"
 
 	tests := []struct {
 		name string
@@ -651,7 +652,6 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 	poolID := "fb2bceeb-f74d-435d-9648-626c75cb23ce"
 	enterpriseID := "93068607-2d0d-4b76-a950-0e40d31955b8"
 	enterpriseName := "test-enterprise"
-	namespaceName := "test-namespace"
 
 	tests := []struct {
 		name string

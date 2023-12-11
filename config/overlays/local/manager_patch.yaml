@@ -9,6 +9,8 @@ spec:
       containers:
         - name: manager
           args:
-            - --garm-server=<GARM_SERVER>
-            - --garm-username=<GARM_USERNAME>
-            - --garm-password=<GARM_PASSWORD>
+            - --garm-server=http://garm-server.garm-server.svc.cluster.local:9997
+            - --garm-username=admin
+            - --garm-password=LmrBG1KcBOsDfNKq4cQTGpc0hJ0kejkk
+            - --operator-watch-namespace=garm-operator-system
+

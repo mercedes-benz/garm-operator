@@ -26,6 +26,7 @@ k8s_resource(
         'images.garm-operator.mercedes-benz.com:customresourcedefinition',
         'organizations.garm-operator.mercedes-benz.com:customresourcedefinition',
         'pools.garm-operator.mercedes-benz.com:customresourcedefinition',
+        'runners.garm-operator.mercedes-benz.com:customresourcedefinition',
         'repositories.garm-operator.mercedes-benz.com:customresourcedefinition',
         'garm-operator-controller-manager:serviceaccount',
         'garm-operator-leader-election-role:role',
