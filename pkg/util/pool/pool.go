@@ -19,19 +19,19 @@ import (
 	poolfilter "github.com/mercedes-benz/garm-operator/pkg/filter/pool"
 )
 
-func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (params.Pool, error) {
+func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (*params.Pool, error) {
 	log := log.FromContext(ctx)
 	log.Info("Getting existing garm pools by pool.spec")
 
 	id := gitHubScopeRef.GetID()
 	scope, err := garmoperatorv1alpha1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
 	if err != nil {
-		return params.Pool{}, err
+		return &params.Pool{}, err
 	}
 
 	garmPools, err := garmClient.ListAllPools(pools.NewListPoolsParams())
 	if err != nil {
-		return params.Pool{}, err
+		return &params.Pool{}, err
 	}
 	filteredGarmPools := filter.Match(garmPools.Payload,
 		poolfilter.MatchesImage(image.Spec.Tag),
@@ -41,16 +41,16 @@ func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, p
 	)
 
 	if len(filteredGarmPools) > 1 {
-		return params.Pool{}, errors.New("can not create pool, multiple instances matching flavour, image and provider found in garm")
+		return &params.Pool{}, errors.New("can not create pool, multiple instances matching flavour, image and provider found in garm")
 	}
 
 	// sync
 	if len(filteredGarmPools) == 1 {
-		return filteredGarmPools[0], nil
+		return &filteredGarmPools[0], nil
 	}
 
 	// create
-	return params.Pool{}, nil
+	return &params.Pool{}, nil
 }
 
 func UpdatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image) error {
@@ -157,4 +157,12 @@ func CreatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 	}
 
 	return poolResult, nil
+}
+
+func GarmPoolExists(garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool) bool {
+	result, err := garmClient.GetPool(pools.NewGetPoolParams().WithPoolID(pool.Status.ID))
+	if err != nil {
+		return false
+	}
+	return result.Payload.ID != ""
 }

@@ -45,6 +45,10 @@ type PoolReconciler struct {
 	Password string
 }
 
+const (
+	imageField = "spec.image"
+)
+
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=pools,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=images,verbs=get;list;watch;create;update;patch;delete
@@ -116,7 +120,7 @@ func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmCli
 	}
 
 	// pool status id has been set and id matches existing garm pool, so we know that the pool is persisted in garm and needs to be updated
-	if pool.Status.ID != "" && garmPoolExists(poolClient, pool) {
+	if pool.Status.ID != "" && poolUtil.GarmPoolExists(poolClient, pool) {
 		return r.reconcileUpdate(ctx, poolClient, pool, instanceClient)
 	}
 
@@ -128,23 +132,32 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	log := log.FromContext(ctx)
 	log.Info("status.ID is empty and pool doesn't exist on garm side. Creating new pool in garm")
 
-	garmPool, err := r.syncPools(ctx, garmClient, pool, gitHubScopeRef)
+	// get image cr object by name
+	image, err := r.getImage(ctx, pool)
+	if err != nil {
+		return r.handleUpdateError(ctx, pool, err)
+	}
+
+	// check if there is already a pool with the same spec on garm side
+	matchingGarmPool, err := poolUtil.GetGarmPoolBySpecs(ctx, garmClient, pool, image, gitHubScopeRef)
+	if err != nil {
+		return r.handleUpdateError(ctx, pool, err)
+	}
+
+	if matchingGarmPool != nil {
+		log.Info("Found garm pool with matching specs, syncing IDs", "garmID", matchingGarmPool.ID)
+		event.Creating(r.Recorder, pool, fmt.Sprintf("found garm pool with matching specs, syncing IDs: %s", matchingGarmPool.ID))
+		return r.handleUpdateError(ctx, pool, err)
+	}
+
+	// create new pool in garm
+	garmPool, err := poolUtil.CreatePool(ctx, garmClient, pool, image, gitHubScopeRef)
 	if err != nil {
 		return r.handleUpdateError(ctx, pool, fmt.Errorf("failed creating pool %s: %s", pool.Name, err.Error()))
 	}
 	log.Info("creating pool in garm succeeded")
 	event.Info(r.Recorder, pool, "creating pool in garm succeeded")
 	return r.handleSuccessfulUpdate(ctx, pool, garmPool)
-}
-
-func (r *PoolReconciler) getImage(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (*garmoperatorv1alpha1.Image, error) {
-	image := &garmoperatorv1alpha1.Image{}
-	if pool.Spec.ImageName != "" {
-		if err := r.Get(ctx, types.NamespacedName{Name: pool.Spec.ImageName, Namespace: pool.Namespace}, image); err != nil {
-			return nil, err
-		}
-	}
-	return image, nil
 }
 
 func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
@@ -279,40 +292,6 @@ func (r *PoolReconciler) updatePoolCRStatus(ctx context.Context, pool *garmopera
 	return nil
 }
 
-func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1alpha1.Pool) error {
-	if !controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) {
-		controllerutil.AddFinalizer(pool, key.PoolFinalizerName)
-		return r.Update(ctx, pool)
-	}
-	return nil
-}
-
-func (r *PoolReconciler) syncPools(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (params.Pool, error) {
-	log := log.FromContext(ctx)
-
-	// get image cr object by name
-	image, err := r.getImage(ctx, pool)
-	if err != nil {
-		return params.Pool{}, err
-	}
-
-	matchingGarmPool, err := poolUtil.GetGarmPoolBySpecs(ctx, garmClient, pool, image, gitHubScopeRef)
-	if err != nil {
-		return params.Pool{}, err
-	}
-
-	isGarmPoolEmpty := matchingGarmPool.ID == ""
-
-	// we found a garm pool, return it to sync ids
-	if !isGarmPoolEmpty {
-		log.Info("Found garm pool with matching specs, syncing IDs", "garmID", matchingGarmPool.ID)
-		event.Creating(r.Recorder, pool, fmt.Sprintf("found garm pool with matching specs, syncing IDs: %s", matchingGarmPool.ID))
-		return matchingGarmPool, err
-	}
-
-	return poolUtil.CreatePool(ctx, garmClient, pool, image, gitHubScopeRef)
-}
-
 func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperatorv1alpha1.Pool, err error) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
@@ -339,12 +318,12 @@ func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmo
 	return ctrl.Result{}, nil
 }
 
-func garmPoolExists(garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool) bool {
-	result, err := garmClient.GetPool(pools.NewGetPoolParams().WithPoolID(pool.Status.ID))
-	if err != nil {
-		return false
+func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1alpha1.Pool) error {
+	if !controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) {
+		controllerutil.AddFinalizer(pool, key.PoolFinalizerName)
+		return r.Update(ctx, pool)
 	}
-	return result.Payload.ID != ""
+	return nil
 }
 
 func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1alpha1.Pool, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {
@@ -463,31 +442,14 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoper
 	return gitHubScope.(garmoperatorv1alpha1.GitHubScope), nil
 }
 
-const (
-	imageField = "spec.image"
-)
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *PoolReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// setup index for image
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &garmoperatorv1alpha1.Pool{}, imageField, func(rawObj client.Object) []string {
-		pool := rawObj.(*garmoperatorv1alpha1.Pool)
-		if pool.Spec.ImageName == "" {
-			return nil
+func (r *PoolReconciler) getImage(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (*garmoperatorv1alpha1.Image, error) {
+	image := &garmoperatorv1alpha1.Image{}
+	if pool.Spec.ImageName != "" {
+		if err := r.Get(ctx, types.NamespacedName{Name: pool.Spec.ImageName, Namespace: pool.Namespace}, image); err != nil {
+			return nil, err
 		}
-		return []string{pool.Spec.ImageName}
-	}); err != nil {
-		return err
 	}
-
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1alpha1.Pool{}).
-		Watches(
-			&garmoperatorv1alpha1.Image{},
-			handler.EnqueueRequestsFromMapFunc(r.findPoolsForImage),
-			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
-		).
-		Complete(r)
+	return image, nil
 }
 
 func (r *PoolReconciler) findPoolsForImage(ctx context.Context, obj client.Object) []reconcile.Request {
@@ -514,4 +476,27 @@ func (r *PoolReconciler) findPoolsForImage(ctx context.Context, obj client.Objec
 	}
 
 	return requests
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *PoolReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// setup index for image
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &garmoperatorv1alpha1.Pool{}, imageField, func(rawObj client.Object) []string {
+		pool := rawObj.(*garmoperatorv1alpha1.Pool)
+		if pool.Spec.ImageName == "" {
+			return nil
+		}
+		return []string{pool.Spec.ImageName}
+	}); err != nil {
+		return err
+	}
+
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&garmoperatorv1alpha1.Pool{}).
+		Watches(
+			&garmoperatorv1alpha1.Image{},
+			handler.EnqueueRequestsFromMapFunc(r.findPoolsForImage),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
+		Complete(r)
 }
