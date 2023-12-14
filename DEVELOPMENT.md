@@ -5,6 +5,7 @@
 <!-- toc -->
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
+  - [🐛 Debugging](#-debugging)
 <!-- /toc -->
 
 ## Prerequisites
@@ -27,3 +28,41 @@ All other remaining tools (e.g. `kustomize`) are getting installed automatically
 
    The `make tilt-up` command will give you the URL to the local tilt environment.
 1. Time to start developing. 🎉
+
+
+### 🐛 Debugging
+
+To improve the local development process, we add [delve](https://github.com/go-delve/delve) into `garm-operator` container image.
+This allows us to debug the `garm-operator` running in the local `kind` cluster.
+
+The following steps are required to start debugging the `garm-operator`:
+
+1. set the `mode` variable from `local` to `debug` in the `Tiltfile`
+
+   This will start the `garm-operator` container with the `command` and `args` specified in the [`config/overlays/debug/manager_patch.yaml`](config/overlays/debug/manager_patch.yaml) file. (Ensure that the correct GARM credentials are set.)
+
+   The `garm-operator-controller-manager` pod should log then print the following log message which indicates that you are able to attach a debugger to the `garm-operator`:
+
+   ```
+   2023-12-08T15:39:21Z warning layer=rpc Listening for remote connections (connections are not authenticated nor encrypted)
+   API server listening at: [::]:2345
+   ```
+
+1. IDE configuration
+   1. VSCode
+      1. Create a `launch.json` file in the `.vscode` directory with the following content:
+         ```json
+         {
+             "version": "0.2.0",
+             "configurations": [
+                 {
+                     "name": "garm-operator - attach",
+                     "type": "go",
+                     "request": "attach",
+                     "mode": "remote",
+                     "port": 2345
+                 }
+             ]
+         }
+         ```
+1. Happy debugging 🐛

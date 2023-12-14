@@ -13,7 +13,15 @@ deploy_cert_manager(
     version='v1.12.0' # the version of cert-manager to deploy
 )
 
-templated_yaml = kustomize('config/overlays/local')
+# mode could be either 'local' or 'debug'
+# when set to 'debug', delve will be used within the container to start
+# the manager binary and the dlv debug port will be exposed
+#
+# for more details, please read the DEVELOPMENT.md
+mode = 'local' 
+
+# kustomize overlays
+templated_yaml = kustomize('config/overlays/' + mode)
 k8s_yaml(templated_yaml)
 
 # for not having uncategorized resources in the tilt ui
@@ -39,6 +47,9 @@ k8s_resource(
         'garm-operator-validating-webhook-configuration:validatingwebhookconfiguration',
         ],
     labels=["operator"],
+    port_forwards=[2345], # dlv debug port
 )
 
-docker_build('localhost:5000/controller', '.')
+docker_build('localhost:5000/controller', '.', 
+    ignore=['.github', 'config', 'docs', 'hack', '*.md']
+)
