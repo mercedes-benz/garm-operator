@@ -146,15 +146,18 @@ spec:
             properties:
               id:
                 type: string
+              idleRunners:
+                type: integer
               lastSyncError:
                 type: string
-              minIdleRunners:
+              runners:
                 type: integer
               selector:
                 type: string
             required:
             - id
-            - minIdleRunners
+            - idleRunners
+            - runners
             - selector
             type: object
         type: object
@@ -164,5 +167,5 @@ spec:
       scale:
         labelSelectorPath: .status.selector
         specReplicasPath: .spec.minIdleRunners
-        statusReplicasPath: .status.minIdleRunners
+        statusReplicasPath: .status.idleRunners
       status: {}

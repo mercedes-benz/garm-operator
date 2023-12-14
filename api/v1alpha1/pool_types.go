@@ -41,16 +41,17 @@ type PoolSpec struct {
 
 // PoolStatus defines the observed state of Pool
 type PoolStatus struct {
-	ID             string `json:"id"`
-	MinIdleRunners uint   `json:"minIdleRunners"`
-	Selector       string `json:"selector"`
+	ID          string `json:"id"`
+	IdleRunners uint   `json:"idleRunners"`
+	Runners     uint   `json:"runners"`
+	Selector    string `json:"selector"`
 
 	LastSyncError string `json:"lastSyncError,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:subresource:scale:specpath=.spec.minIdleRunners,statuspath=.status.minIdleRunners,selectorpath=.status.selector
+//+kubebuilder:subresource:scale:specpath=.spec.minIdleRunners,statuspath=.status.idleRunners,selectorpath=.status.selector
 //+kubebuilder:resource:path=pools,scope=Namespaced,categories=garm
 //+kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
 //+kubebuilder:printcolumn:name="MinIdleRunners",type=string,JSONPath=`.spec.minIdleRunners`

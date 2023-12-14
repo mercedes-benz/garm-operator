@@ -25,6 +25,19 @@ func GetIdleRunners(ctx context.Context, pool *garmoperatorv1alpha1.Pool, instan
 	return ExtractIdleRunners(ctx, runners.GetPayload())
 }
 
+func GetAllRunners(ctx context.Context, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) ([]params.Instance, error) {
+	log := log.FromContext(ctx)
+	log.Info("discover idle runners", "pool", pool.Name)
+
+	runners, err := instanceClient.ListPoolInstances(
+		instances.NewListPoolInstancesParams().WithPoolID(pool.Status.ID))
+	if err != nil {
+		return nil, err
+	}
+
+	return runners.Payload, nil
+}
+
 // ExtractIdleRunners returns a list of runners that are in a state that allows deletion
 func ExtractIdleRunners(ctx context.Context, instances []params.Instance) ([]params.Instance, error) {
 	log := log.FromContext(ctx)
@@ -82,7 +95,7 @@ func AlignIdleRunners(ctx context.Context, pool *garmoperatorv1alpha1.Pool, idle
 		removableRunnersCount = len(idleRunners)
 	}
 
-	// this is where the status.minIdleRunners comparison needs to be done
+	// this is where the status.idleRunners comparison needs to be done
 	// if real state is larger than desired state - scale down runners
 	for i, runner := range idleRunners {
 		// do not delete more runners than minIdleRunners

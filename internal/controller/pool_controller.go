@@ -144,10 +144,11 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 		return r.handleUpdateError(ctx, pool, err)
 	}
 
+	//if !reflect.DeepEqual(matchingGarmPool, params.Pool{}) {
 	if matchingGarmPool != nil {
 		log.Info("Found garm pool with matching specs, syncing IDs", "garmID", matchingGarmPool.ID)
 		event.Creating(r.Recorder, pool, fmt.Sprintf("found garm pool with matching specs, syncing IDs: %s", matchingGarmPool.ID))
-		return r.handleUpdateError(ctx, pool, err)
+		return r.handleSuccessfulUpdate(ctx, pool, *matchingGarmPool)
 	}
 
 	// create new pool in garm
@@ -165,9 +166,14 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		WithName("reconcileUpdate")
 	log.Info("pool on garm side found", "id", pool.Status.ID, "name", pool.Name)
 
-	poolNeedsUpdate, idleRunners, err := r.comparePoolSpecs(ctx, pool, garmClient)
+	poolNeedsUpdate, runners, err := r.comparePoolSpecs(ctx, pool, garmClient)
 	if err != nil {
 		log.Error(err, "error comparing pool specs")
+		return r.handleUpdateError(ctx, pool, err)
+	}
+
+	idleRunners, err := poolUtil.ExtractIdleRunners(ctx, runners)
+	if err != nil {
 		return r.handleUpdateError(ctx, pool, err)
 	}
 
@@ -187,14 +193,15 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 	}
 
 	// update pool idle runners count in status
-	pool.Status.MinIdleRunners = uint(len(idleRunners))
+	pool.Status.IdleRunners = uint(len(idleRunners))
+	pool.Status.Runners = uint(len(runners))
 	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	// If there are more idle Runners than minIdleRunners are defined in
 	// the spec, we force a runner deletion.
-	if pool.Status.MinIdleRunners > pool.Spec.MinIdleRunners {
+	if pool.Status.IdleRunners > pool.Spec.MinIdleRunners {
 		log.Info("Scaling pool", "pool", pool.Name)
 		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
 		if err := poolUtil.AlignIdleRunners(ctx, pool, idleRunners, instanceClient); err != nil {
@@ -211,6 +218,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	log.Info("Deleting Pool", "pool", pool.Name)
 	event.Deleting(r.Recorder, pool, "")
 
+	// this is to make the deletion of a "pending" pool CR possible
 	if pool.Status.ID == "" && controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) {
 		controllerutil.RemoveFinalizer(pool, key.PoolFinalizerName)
 		if err := r.Update(ctx, pool); err != nil {
@@ -221,41 +229,44 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		return ctrl.Result{}, nil
 	}
 
-	if controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) && pool.Spec.MinIdleRunners != 0 {
-		pool.Spec.MinIdleRunners = 0
-		pool.Spec.Enabled = false
+	pool.Spec.MinIdleRunners = 0
+	pool.Spec.Enabled = false
+	if err := r.Update(ctx, pool); err != nil {
+		return r.handleUpdateError(ctx, pool, err)
+	}
 
-		image, err := r.getImage(ctx, pool)
-		if err != nil {
-			log.Error(err, "error getting image")
-			return r.handleUpdateError(ctx, pool, err)
-		}
+	image, err := r.getImage(ctx, pool)
+	if err != nil {
+		log.Error(err, "error getting image")
+		return r.handleUpdateError(ctx, pool, err)
+	}
 
-		if err = poolUtil.UpdatePool(ctx, garmClient, pool, image); err != nil {
-			log.Error(err, "error updating pool")
-			return r.handleUpdateError(ctx, pool, err)
-		}
-
-		if err := r.Update(ctx, pool); err != nil {
-			return r.handleUpdateError(ctx, pool, err)
-		}
-		log.Info("scaling pool down before deleting")
-		event.Deleting(r.Recorder, pool, "scaling down runners in pool before deleting")
-		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, nil
+	if err = poolUtil.UpdatePool(ctx, garmClient, pool, image); err != nil {
+		log.Error(err, "error updating pool")
+		return r.handleUpdateError(ctx, pool, err)
 	}
 
 	// get current idle runners
-	idleRunners, err := poolUtil.GetIdleRunners(ctx, pool, instanceClient)
+	runners, err := poolUtil.GetAllRunners(ctx, pool, instanceClient)
+	if err != nil {
+		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
+	}
+
+	idleRunners, err := poolUtil.ExtractIdleRunners(ctx, runners)
 	if err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 	}
 
 	// set current idle runners count in status
-	pool.Status.MinIdleRunners = uint(len(idleRunners))
+	pool.Status.IdleRunners = uint(len(idleRunners))
+	pool.Status.Runners = uint(len(runners))
+	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
+		return r.handleUpdateError(ctx, pool, err)
+	}
 
 	// scale pool down only needed if spec is smaller than current min idle runners
 	// doesn't catch the case where minIdleRunners is increased and to many idle runners exist
-	if pool.Spec.MinIdleRunners < pool.Status.MinIdleRunners {
+	if pool.Status.IdleRunners > pool.Spec.MinIdleRunners {
 		log.Info("Scaling pool", "pool", pool.Name)
 		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
 		if err := poolUtil.AlignIdleRunners(ctx, pool, idleRunners, instanceClient); err != nil {
@@ -263,7 +274,12 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		}
 	}
 
-	// scale pool runners to 0
+	// if the pool still contains runners, we need
+	if pool.Status.Runners != 0 {
+		log.Info("scaling pool down before deleting")
+		event.Info(r.Recorder, pool, fmt.Sprintf("pool still contains %d runners. Reconcile again", pool.Status.Runners))
+		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
+	}
 
 	err = garmClient.DeletePool(
 		pools.NewDeletePoolParams().
@@ -309,7 +325,7 @@ func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperat
 
 func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmPool params.Pool) (ctrl.Result, error) {
 	pool.Status.ID = garmPool.ID
-	pool.Status.MinIdleRunners = garmPool.MinIdleRunners
+	pool.Status.IdleRunners = garmPool.MinIdleRunners
 	pool.Status.LastSyncError = ""
 
 	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
