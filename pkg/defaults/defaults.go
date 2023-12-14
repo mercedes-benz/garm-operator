@@ -12,6 +12,9 @@ const (
 	DefaultSyncPeriod             = 5 * time.Minute
 	DefaultWatchNamespace         = ""
 
+	DefaultSyncRunners         = true
+	DefaultSyncRunnersInterval = 5 * time.Second
+
 	// default values for garm configuration
 	DefaultGarmInit  = true
 	DefaultGarmEmail = "garm-operator@localhost"

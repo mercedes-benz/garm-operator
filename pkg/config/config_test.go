@@ -27,9 +27,11 @@ func TestGenerateConfig(t *testing.T) {
 		{
 			name: "ConfigFromDefaultAndEnvs",
 			envvars: map[string]string{
-				"GARM_SERVER":   "http://localhost:9997",
-				"GARM_USERNAME": "admin",
-				"GARM_PASSWORD": "password",
+				"GARM_SERVER":                    "http://localhost:9997",
+				"GARM_USERNAME":                  "admin",
+				"GARM_PASSWORD":                  "password",
+				"OPERATOR_SYNC_RUNNERS":          "true",
+				"OPERATOR_SYNC_RUNNERS_INTERVAL": "20s",
 			},
 			wantCfg: AppConfig{
 				Operator: OperatorConfig{
@@ -38,6 +40,8 @@ func TestGenerateConfig(t *testing.T) {
 					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
 					WatchNamespace:         "",
+					SyncRunners:            true,
+					SyncRunnersInterval:    20 * time.Second,
 				},
 				Garm: GarmConfig{
 					Server:   "http://localhost:9997",
@@ -62,6 +66,8 @@ func TestGenerateConfig(t *testing.T) {
 					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
 					WatchNamespace:         "",
+					SyncRunners:            true,
+					SyncRunnersInterval:    5 * time.Second,
 				},
 				Garm: GarmConfig{
 					Server:   "http://localhost:9997",
@@ -75,14 +81,18 @@ func TestGenerateConfig(t *testing.T) {
 		{
 			name: "ConfigFromDefaultEnvsAndFlags",
 			envvars: map[string]string{
-				"GARM_SERVER":   "http://localhost:1234",
-				"GARM_USERNAME": "admin1234",
-				"GARM_PASSWORD": "password1234",
+				"GARM_SERVER":                    "http://localhost:1234",
+				"GARM_USERNAME":                  "admin1234",
+				"GARM_PASSWORD":                  "password1234",
+				"OPERATOR_SYNC_RUNNERS":          "true",
+				"OPERATOR_SYNC_RUNNERS_INTERVAL": "20s",
 			},
 			flags: map[string]string{
-				"garm-server":   "http://localhost:9997",
-				"garm-username": "admin",
-				"garm-password": "password",
+				"garm-server":                    "http://localhost:9997",
+				"garm-username":                  "admin",
+				"garm-password":                  "password",
+				"operator-sync-runners":          "true",
+				"operator-sync-runners-interval": "10s",
 			},
 			wantCfg: AppConfig{
 				Operator: OperatorConfig{
@@ -91,6 +101,8 @@ func TestGenerateConfig(t *testing.T) {
 					LeaderElection:         false,
 					SyncPeriod:             5 * time.Minute,
 					WatchNamespace:         "",
+					SyncRunners:            true,
+					SyncRunnersInterval:    10 * time.Second,
 				},
 				Garm: GarmConfig{
 					Server:   "http://localhost:9997",
@@ -119,6 +131,8 @@ func TestGenerateConfig(t *testing.T) {
 					LeaderElection:         true,
 					SyncPeriod:             10 * time.Minute,
 					WatchNamespace:         "garm-operator-namespace",
+					SyncRunners:            true,
+					SyncRunnersInterval:    15 * time.Second,
 				},
 				Garm: GarmConfig{
 					Server:   "http://garm-server:9997",

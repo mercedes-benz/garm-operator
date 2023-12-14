@@ -203,7 +203,7 @@ func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager, eventChan chan eve
 
 func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan chan event.GenericEvent) {
 	log := log.FromContext(ctx)
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(config.Config.Operator.SyncRunnersInterval)
 	for {
 		select {
 		case <-ctx.Done():

@@ -197,6 +197,11 @@ func run() error {
 	go runnerReconciler.PollRunnerInstances(ctx, eventChan)
 	defer cancel()
 
+	// exit goroutine for polling runner instances
+	if !config.Config.Operator.SyncRunners {
+		cancel()
+	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
