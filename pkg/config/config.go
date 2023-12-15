@@ -30,8 +30,7 @@ type OperatorConfig struct {
 	LeaderElection         bool          `koanf:"leader_election"`
 	SyncPeriod             time.Duration `koanf:"sync_period" validate:"required"`
 	WatchNamespace         string        `koanf:"watch_namespace"`
-	SyncRunners            bool          `koanf:"sync_runners"`
-	SyncRunnersInterval    time.Duration `koanf:"sync_runners_interval"`
+	SyncRunnersInterval    time.Duration `koanf:"sync_runners_interval" validate:"gte=5s,lte=5m"`
 }
 
 type AppConfig struct {

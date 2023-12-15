@@ -25,7 +25,6 @@ func InitiateFlags() *pflag.FlagSet {
 	f.Bool("operator-leader-election", defaults.DefaultLeaderElection, "Enable leader election for controller manager. "+"Enabling this will ensure there is only one active controller manager.")
 	f.Duration("operator-sync-period", defaults.DefaultSyncPeriod, "The minimum interval at which watched resources are reconciled (e.g. 5m)")
 	f.String("operator-watch-namespace", defaults.DefaultWatchNamespace, "Namespace that the controller watches to reconcile garm objects. "+"If unspecified, the controller watches for garm objects across all namespaces.")
-	f.Bool("operator-sync-runners", defaults.DefaultSyncRunners, "Toggles weather GitHub Runners are reflected back to cluster as CustomResource")
 	f.Duration("operator-sync-runners-interval", defaults.DefaultSyncRunnersInterval, "Specifies interval in which runners from garm-api are polled and synced to Runner CustomResource")
 
 	f.String("garm-server", "", "The address of the GARM server")
