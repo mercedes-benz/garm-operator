@@ -13,6 +13,9 @@ import (
 
 // PoolSpec defines the desired state of Pool
 // See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142
+
+// +kubebuilder:validation:Required
+// +kubebuilder:validation:XValidation:rule="self.minIdleRunners <= self.maxRunners",message="minIdleRunners must be less than or equal to maxRunners"
 type PoolSpec struct {
 	// Defines in which Scope Runners a registered. Has a reference to either an Enterprise, Org or Repo CRD
 	GitHubScopeRef         corev1.TypedLocalObjectReference `json:"githubScopeRef"`

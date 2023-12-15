@@ -75,7 +75,6 @@ spec:
           metadata:
             type: object
           spec:
-            description: 'PoolSpec defines the desired state of Pool See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142'
             properties:
               enabled:
                 type: boolean
@@ -141,6 +140,9 @@ spec:
             - runnerBootstrapTimeout
             - tags
             type: object
+            x-kubernetes-validations:
+            - message: minIdleRunners must be less than or equal to maxRunners
+              rule: self.minIdleRunners <= self.maxRunners
           status:
             description: PoolStatus defines the observed state of Pool
             properties:
