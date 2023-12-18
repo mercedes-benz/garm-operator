@@ -29,6 +29,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
+	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
 // RunnerReconciler reconciles a Runner object
@@ -59,6 +60,7 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 }
 
 func (r *RunnerReconciler) reconcile(ctx context.Context, req ctrl.Request, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
 	// try fetch runner instance in garm db with events coming from reconcile loop events of RunnerCR or from manually enqueued events of garm api.
 	garmRunner, err := r.getGarmRunnerInstance(instanceClient, req.Name)
 	if err != nil {
@@ -69,6 +71,13 @@ func (r *RunnerReconciler) reconcile(ctx context.Context, req ctrl.Request, inst
 	runner := &garmoperatorv1alpha1.Runner{}
 	if err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: strings.ToLower(req.Name)}, runner); err != nil {
 		return r.handleCreateRunnerCR(ctx, req, err, garmRunner)
+	}
+
+	annotations.SetLastSyncTime(runner)
+	err = r.Update(ctx, runner)
+	if err != nil {
+		log.Error(err, "can not set annotation")
+		return ctrl.Result{}, err
 	}
 
 	// delete runner in garm db

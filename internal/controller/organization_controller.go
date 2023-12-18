@@ -61,6 +61,13 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 
+	annotations.SetLastSyncTime(organization)
+	err = r.Update(ctx, organization)
+	if err != nil {
+		log.Error(err, "can not set annotation")
+		return ctrl.Result{}, err
+	}
+
 	organizationClient := garmClient.NewOrganizationClient()
 	err = organizationClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,

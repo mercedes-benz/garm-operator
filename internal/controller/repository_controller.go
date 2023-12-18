@@ -61,6 +61,13 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	annotations.SetLastSyncTime(repository)
+	err = r.Update(ctx, repository)
+	if err != nil {
+		log.Error(err, "can not set annotation")
+		return ctrl.Result{}, err
+	}
+
 	repositoryClient := garmClient.NewRepositoryClient()
 	err = repositoryClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,

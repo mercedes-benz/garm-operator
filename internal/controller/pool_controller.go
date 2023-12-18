@@ -72,8 +72,15 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
+	annotations.SetLastSyncTime(pool)
+	err := r.Update(ctx, pool)
+	if err != nil {
+		log.Error(err, "can not set annotation")
+		return ctrl.Result{}, err
+	}
+
 	poolClient := garmClient.NewPoolClient()
-	err := poolClient.Login(garmClient.GarmScopeParams{
+	err = poolClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
 		Username: r.Username,
 		Password: r.Password,
