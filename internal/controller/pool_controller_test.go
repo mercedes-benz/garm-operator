@@ -502,7 +502,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
-
 				m.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
 					RunnerPrefix: params.RunnerPrefix{
 						Prefix: "",
@@ -762,7 +761,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
-						//APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						// APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind: string(garmoperatorv1alpha1.EnterpriseScope),
 						Name: enterpriseName,
 					},
@@ -957,7 +956,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
-						//APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						// APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
 						Kind: string(garmoperatorv1alpha1.EnterpriseScope),
 						Name: enterpriseName,
 					},

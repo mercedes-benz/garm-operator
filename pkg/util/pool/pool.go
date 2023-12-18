@@ -25,7 +25,7 @@ func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, p
 	log := log.FromContext(ctx)
 	log.Info("Getting existing garm pools by pool.spec")
 
-	githubScopeRefId := gitHubScopeRef.GetID()
+	githubScopeRefID := gitHubScopeRef.GetID()
 	githubScopeRefName := gitHubScopeRef.GetName()
 	scope, err := garmoperatorv1alpha1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
 	if err != nil {
@@ -41,18 +41,18 @@ func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, p
 		poolfilter.MatchesImage(image.Spec.Tag),
 		poolfilter.MatchesFlavor(pool.Spec.Flavor),
 		poolfilter.MatchesProvider(pool.Spec.ProviderName),
-		poolfilter.MatchesGitHubScope(scope, githubScopeRefId),
+		poolfilter.MatchesGitHubScope(scope, githubScopeRefID),
 	)
 
 	log.WithValues("image", image.Spec.Tag,
 		"flavor", pool.Spec.Flavor,
 		"provider", pool.Spec.ProviderName,
 		"scope", scope,
-		"githubScopeRefId", githubScopeRefId,
+		"githubScopeRefId", githubScopeRefID,
 		"githubScopeRefName", githubScopeRefName,
 	).Info(fmt.Sprintf("%d garm pools with same spec found", len(filteredGarmPools)))
 
-	// TODO: @rafalgalaw - can this happen?
+	//nolint TODO: @rafalgalaw - can this happen?
 	// i guess it's blocked by the fact that we can't create a pool with the same spec on garm side
 	if len(filteredGarmPools) > 1 {
 		return nil, errors.New("can not create pool, multiple instances matching flavour, image and provider found in garm")

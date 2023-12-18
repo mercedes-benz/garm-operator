@@ -144,7 +144,6 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 		return r.handleUpdateError(ctx, pool, err)
 	}
 
-	//if !reflect.DeepEqual(matchingGarmPool, params.Pool{}) {
 	if matchingGarmPool != nil {
 		log.Info("Found garm pool with matching specs, syncing IDs", "garmID", matchingGarmPool.ID)
 		event.Creating(r.Recorder, pool, fmt.Sprintf("found garm pool with matching specs, syncing IDs: %s", matchingGarmPool.ID))
