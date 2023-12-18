@@ -130,7 +130,7 @@ func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmCli
 
 func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
-	log.Info("status.ID is empty and pool doesn't exist on garm side. Creating new pool in garm")
+	log.Info("Pool doesn't exist on garm side. Creating new pool in garm")
 
 	// get image cr object by name
 	image, err := r.getImage(ctx, pool)
@@ -417,9 +417,6 @@ func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperato
 
 	// empty instances for comparison
 	garmPool.Payload.Instances = nil
-
-	log.Info("Garm pool specification of existing pool", "garmPool", garmPool.Payload)
-	log.Info("Garm pool specification of reconciled pool CR", "poolCR", tmpGarmPool)
 
 	return reflect.DeepEqual(tmpGarmPool, garmPool.Payload), idleInstances, nil
 }
