@@ -11,3 +11,4 @@ operator:
   leader_election: true
   sync_period: "10m"
   watch_namespace: "garm-operator-namespace"
+  sync_runners_interval: 15s
