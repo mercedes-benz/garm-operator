@@ -19,7 +19,7 @@ HEADER="SPDX-License-Identifier: MIT"
 
 all_files=()
 export IFS=$'\n'
-while IFS='' read -r line; do all_error_files+=("$line"); done < <(git ls-files | grep -v -E '\.excalidraw$|\.jpeg$|\.jpg$|\.png$|\.yaml$|^(go.sum|LICENSE|hack/boilerplate.go.txt)$|.*zz_generated.deepcopy.go$')
+while IFS='' read -r line; do all_error_files+=("$line"); done < <(git ls-files | grep -v -E '\.excalidraw$|\.jpeg$|\.jpg$|\.gif$|\.png$|\.yaml$|^(go.sum|LICENSE|hack/boilerplate.go.txt)$|.*zz_generated.deepcopy.go$')
 unset IFS
 
 errors=()

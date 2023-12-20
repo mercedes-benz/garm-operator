@@ -46,6 +46,10 @@ func (o *Organization) GetID() string {
 	return o.Status.ID
 }
 
+func (o *Organization) GetName() string {
+	return o.ObjectMeta.Name
+}
+
 func (o *Organization) GetPoolManagerIsRunning() bool {
 	return o.Status.PoolManagerIsRunning
 }

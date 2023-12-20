@@ -125,7 +125,7 @@ func (r *RepositoryReconciler) syncExistingRepo(ctx context.Context, garmReposit
 	if !strings.EqualFold(garmRepository.CredentialsName, repository.Spec.CredentialsName) &&
 		!strings.EqualFold(garmRepository.WebhookSecret, webhookSecret) {
 		err := fmt.Errorf("repository with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing repository first")
-		event.Error(r.Recorder, repository, err)
+		event.Error(r.Recorder, repository, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -262,7 +262,7 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteRepository error: %s", err))
-		event.Error(r.Recorder, repository, err)
+		event.Error(r.Recorder, repository, err.Error())
 		return ctrl.Result{}, err
 	}
 

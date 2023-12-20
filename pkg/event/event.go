@@ -12,6 +12,7 @@ const (
 	CreatingEvent = "Creating"
 	UpdatingEvent = "Updating"
 	DeletingEvent = "Deleting"
+	ScalingEvent  = "Scaling"
 	ErrorEvent    = "Error"
 	InfoEvent     = "Info"
 )
@@ -28,10 +29,14 @@ func Deleting(recorder record.EventRecorder, obj client.Object, msg string) {
 	recorder.Event(obj, corev1.EventTypeNormal, DeletingEvent, msg)
 }
 
+func Scaling(recorder record.EventRecorder, obj client.Object, msg string) {
+	recorder.Event(obj, corev1.EventTypeNormal, ScalingEvent, msg)
+}
+
 func Info(recorder record.EventRecorder, obj client.Object, msg string) {
 	recorder.Event(obj, corev1.EventTypeNormal, InfoEvent, msg)
 }
 
-func Error(recorder record.EventRecorder, obj client.Object, err error) {
-	recorder.Event(obj, corev1.EventTypeWarning, ErrorEvent, err.Error())
+func Error(recorder record.EventRecorder, obj client.Object, msg string) {
+	recorder.Event(obj, corev1.EventTypeWarning, ErrorEvent, msg)
 }

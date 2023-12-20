@@ -123,7 +123,7 @@ func (r *OrganizationReconciler) syncExistingOrg(ctx context.Context, garmOrgani
 	if !strings.EqualFold(garmOrganization.CredentialsName, organization.Spec.CredentialsName) &&
 		!strings.EqualFold(garmOrganization.WebhookSecret, webhookSecret) {
 		err := fmt.Errorf("organization with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing organization first")
-		event.Error(r.Recorder, organization, err)
+		event.Error(r.Recorder, organization, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -259,7 +259,7 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garm
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteOrganization error: %s", err))
-		event.Error(r.Recorder, organization, err)
+		event.Error(r.Recorder, organization, err.Error())
 		return ctrl.Result{}, err
 	}
 
