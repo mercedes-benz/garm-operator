@@ -18,16 +18,17 @@ import (
 // +kubebuilder:validation:XValidation:rule="self.minIdleRunners <= self.maxRunners",message="minIdleRunners must be less than or equal to maxRunners"
 type PoolSpec struct {
 	// Defines in which Scope Runners a registered. Has a reference to either an Enterprise, Org or Repo CRD
-	GitHubScopeRef         corev1.TypedLocalObjectReference `json:"githubScopeRef"`
-	ProviderName           string                           `json:"providerName"`
-	MaxRunners             uint                             `json:"maxRunners"`
-	MinIdleRunners         uint                             `json:"minIdleRunners"`
-	Flavor                 string                           `json:"flavor"`
-	OSType                 commonParams.OSType              `json:"osType"`
-	OSArch                 commonParams.OSArch              `json:"osArch"`
-	Tags                   []string                         `json:"tags"`
-	Enabled                bool                             `json:"enabled"`
-	RunnerBootstrapTimeout uint                             `json:"runnerBootstrapTimeout"`
+	GitHubScopeRef corev1.TypedLocalObjectReference `json:"githubScopeRef"`
+	ProviderName   string                           `json:"providerName"`
+	MaxRunners     uint                             `json:"maxRunners"`
+	// +kubebuilder:default=0
+	MinIdleRunners         uint                `json:"minIdleRunners"`
+	Flavor                 string              `json:"flavor"`
+	OSType                 commonParams.OSType `json:"osType"`
+	OSArch                 commonParams.OSArch `json:"osArch"`
+	Tags                   []string            `json:"tags"`
+	Enabled                bool                `json:"enabled"`
+	RunnerBootstrapTimeout uint                `json:"runnerBootstrapTimeout"`
 
 	// The name of the image resource, this image resource must exists in the same namespace as the pool
 	ImageName string `json:"imageName"`
