@@ -112,6 +112,7 @@ spec:
               maxRunners:
                 type: integer
               minIdleRunners:
+                default: 0
                 type: integer
               osArch:
                 type: string
