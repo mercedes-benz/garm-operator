@@ -36,7 +36,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 		expectedObject    *garmoperatorv1alpha1.Organization
 	}{
 		{
-			name: "organization exist - no op",
+			name: "organization exist - update",
 			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-organization",
@@ -87,20 +87,31 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
-				m.GetOrganization(
-					organizations.NewGetOrgParams().
-						WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&organizations.GetOrgOK{
+				m.ListOrganizations(organizations.NewListOrgsParams()).Return(&organizations.ListOrgsOK{Payload: params.Organizations{
+					{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-organization",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}}, nil)
+				m.UpdateOrganization(organizations.NewUpdateOrgParams().
+					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&organizations.UpdateOrgOK{
 					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
 						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 					},
 				}, nil)
 			},
 		},
 		{
-			name: "organization exist - but spec has changed",
+			name: "organization exist but spec has changed - update",
 			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-organization",
@@ -151,24 +162,20 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
-				m.GetOrganization(
-					organizations.NewGetOrgParams().
-						WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&organizations.GetOrgOK{
-					Payload: params.Organization{
+				m.ListOrganizations(organizations.NewListOrgsParams()).Return(&organizations.ListOrgsOK{Payload: params.Organizations{
+					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
 					},
-				}, nil)
-
+				}}, nil)
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
-					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").WithBody(params.UpdateEntityParams{
-					CredentialsName: "has-changed",
-					WebhookSecret:   "has-changed",
-				}),
-				).Return(&organizations.UpdateOrgOK{
+					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "has-changed",
+						WebhookSecret:   "has-changed",
+					})).Return(&organizations.UpdateOrgOK{
 					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
@@ -179,7 +186,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 			},
 		},
 		{
-			name: "organization exist but pool status has changed - updating status",
+			name: "organization exist but pool status has changed - update",
 			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-organization",
@@ -232,14 +239,25 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
-				m.GetOrganization(
-					organizations.NewGetOrgParams().
-						WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&organizations.GetOrgOK{
+				m.ListOrganizations(organizations.NewListOrgsParams()).Return(&organizations.ListOrgsOK{Payload: params.Organizations{
+					{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-organization",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}}, nil)
+				m.UpdateOrganization(organizations.NewUpdateOrgParams().
+					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&organizations.UpdateOrgOK{
 					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
 						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 						PoolManagerStatus: params.PoolManagerStatus{
 							IsRunning:     false,
 							FailureReason: "no resources available",
@@ -249,7 +267,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 			},
 		},
 		{
-			name: "organization does not exist - create",
+			name: "organization does not exist - create and update",
 			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-organization",
@@ -299,9 +317,9 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "another-non-operator-managed-organization",
 						CredentialsName: "totally-unsecure",
+						WebhookSecret:   "foobar",
 					},
 				}}, nil)
-
 				m.CreateOrganization(organizations.NewCreateOrgParams().WithBody(
 					params.CreateOrgParams{
 						Name:            "new-organization",
@@ -315,17 +333,30 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 					},
 				}, nil)
+				m.UpdateOrganization(organizations.NewUpdateOrgParams().
+					WithOrgID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&organizations.UpdateOrgOK{
+					Payload: params.Organization{
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+						Name:            "new-organization",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}, nil)
 			},
 		},
 		{
-			name: "organization already exist in garm - adopt",
+			name: "organization already exist in garm - update",
 			object: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-organization",
 					Namespace: "default",
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "totally-insecure",
+					CredentialsName: "foobar",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -352,7 +383,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "totally-insecure",
+					CredentialsName: "foobar",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -370,6 +401,102 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						CredentialsName: "totally-insecure",
 					},
 				}}, nil)
+				m.UpdateOrganization(organizations.NewUpdateOrgParams().
+					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-12345").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&organizations.UpdateOrgOK{
+					Payload: params.Organization{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
+						Name:            "new-organization",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}, nil)
+			},
+		},
+		{
+			name: "organization does not exist in garm - create and update",
+			object: &garmoperatorv1alpha1.Organization{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-organization",
+					Namespace: "default",
+					Finalizers: []string{
+						key.OrganizationFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.OrganizationStatus{
+					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("foobar"),
+					},
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Organization{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-organization",
+					Namespace: "default",
+					Finalizers: []string{
+						key.OrganizationFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.OrganizationStatus{
+					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+				},
+			},
+			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
+				m.ListOrganizations(organizations.NewListOrgsParams()).Return(&organizations.ListOrgsOK{Payload: params.Organizations{
+					{},
+				}}, nil)
+				m.CreateOrganization(organizations.NewCreateOrgParams().WithBody(
+					params.CreateOrgParams{
+						Name:            "existing-organization",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&organizations.CreateOrgOK{
+					Payload: params.Organization{
+						Name:            "existing-organization",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+					},
+				}, nil)
+				m.UpdateOrganization(organizations.NewUpdateOrgParams().
+					WithOrgID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&organizations.UpdateOrgOK{
+					Payload: params.Organization{
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+						Name:            "existing-organization",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}, nil)
 			},
 		},
 	}
