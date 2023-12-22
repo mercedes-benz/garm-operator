@@ -94,43 +94,27 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 		return ctrl.Result{}, err
 	}
 
-	if repository.Status.ID == "" {
-		garmRepository, err := r.getExistingGarmRepo(ctx, client, repository)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-
-		repoExists := !reflect.ValueOf(garmRepository).IsZero()
-
-		if repoExists {
-			return r.syncExistingRepo(ctx, garmRepository, repository, webhookSecret)
-		}
-
-		return r.createRepository(ctx, client, repository, webhookSecret)
-	}
-
-	if repository.Status.ID != "" {
-		return r.updateRepository(ctx, client, repository, webhookSecret)
-	}
-
-	log.Info("reconciling repository successfully done")
-
-	return ctrl.Result{}, nil
-}
-
-func (r *RepositoryReconciler) syncExistingRepo(ctx context.Context, garmRepository params.Repository, repository *garmoperatorv1alpha1.Repository, webhookSecret string) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-	log.WithValues("repository", repository.Name)
-
-	if !strings.EqualFold(garmRepository.CredentialsName, repository.Spec.CredentialsName) &&
-		!strings.EqualFold(garmRepository.WebhookSecret, webhookSecret) {
-		err := fmt.Errorf("repository with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing repository first")
-		event.Error(r.Recorder, repository, err)
+	garmRepository, err := r.getExistingGarmRepo(ctx, client, repository)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	log.Info("garm repository object found for given repository CR")
+	// create repository on garm side if it does not exist
+	if reflect.ValueOf(garmRepository).IsZero() {
+		garmRepository, err = r.createRepository(ctx, client, repository, webhookSecret)
+		if err != nil {
+			event.Error(r.Recorder, repository, err)
+			return ctrl.Result{}, err
+		}
+	}
 
+	// update repository anytime
+	garmRepository, err = r.updateRepository(ctx, client, garmRepository.ID, webhookSecret, repository.Spec.CredentialsName)
+	if err != nil {
+		event.Error(r.Recorder, repository, err)
+		return ctrl.Result{}, err
+	}
+	// set and update repository status
 	repository.Status.ID = garmRepository.ID
 	repository.Status.PoolManagerFailureReason = garmRepository.PoolManagerStatus.FailureReason
 	repository.Status.PoolManagerIsRunning = garmRepository.PoolManagerStatus.IsRunning
@@ -139,17 +123,16 @@ func (r *RepositoryReconciler) syncExistingRepo(ctx context.Context, garmReposit
 		return ctrl.Result{}, err
 	}
 
-	log.Info("existing garm repository object successfully adopted")
-	event.Info(r.Recorder, repository, "existing garm repository object successfully adopted")
+	log.Info("reconciling repository successfully done")
 
 	return ctrl.Result{}, nil
 }
 
-func (r *RepositoryReconciler) createRepository(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository, webhookSecret string) (ctrl.Result, error) {
+func (r *RepositoryReconciler) createRepository(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository, webhookSecret string) (params.Repository, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
-	log.Info("status.ID is empty and repository doesn't exist on garm side. Creating new repository in garm")
+	log.Info("Repository doesn't exist on garm side. Creating new repository in garm.")
 	event.Creating(r.Recorder, repository, "repository doesn't exist on garm side")
 
 	retValue, err := client.CreateRepository(
@@ -160,79 +143,44 @@ func (r *RepositoryReconciler) createRepository(ctx context.Context, client garm
 				Owner:           repository.Spec.Owner,
 				WebhookSecret:   webhookSecret, // gh hook secret
 			}))
-	log.V(1).Info(fmt.Sprintf("repository %s created - return Value %v", repository.Name, retValue))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateRepository error: %s", err))
-		return ctrl.Result{}, err
+		return params.Repository{}, err
 	}
 
-	repository.Status.ID = retValue.Payload.ID
-	repository.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
-	repository.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-
-	if err := r.Status().Update(ctx, repository); err != nil {
-		return ctrl.Result{}, err
-	}
+	log.V(1).Info(fmt.Sprintf("repository %s created - return Value %v", repository.Name, retValue))
 
 	log.Info("creating repository in garm succeeded")
 	event.Info(r.Recorder, repository, "creating repository in garm succeeded")
 
-	return ctrl.Result{}, nil
+	return retValue.Payload, nil
 }
 
-func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository, webhookSecret string) (ctrl.Result, error) {
+func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garmClient.RepositoryClient, statusID, webhookSecret, credentialsName string) (params.Repository, error) {
 	log := log.FromContext(ctx)
-	log.WithValues("repository", repository.Name)
+	log.V(1).Info("update credentials and webhook secret in garm repository")
 
-	log.Info("comparing repository with garm repository object")
-	garmRepository, err := client.GetRepository(
-		repositories.NewGetRepoParams().
-			WithRepoID(repository.Status.ID),
-	)
+	// update credentials and webhook secret
+	retValue, err := client.UpdateRepository(
+		repositories.NewUpdateRepoParams().
+			WithRepoID(statusID).
+			WithBody(params.UpdateEntityParams{
+				CredentialsName: credentialsName,
+				WebhookSecret:   webhookSecret, // gh hook secret
+			}))
 	if err != nil {
-		log.V(1).Info(fmt.Sprintf("client.GetRepository error: %s", err))
-		return ctrl.Result{}, err
+		log.V(1).Info(fmt.Sprintf("client.UpdateRepository error: %s", err))
+		return params.Repository{}, err
 	}
 
-	repository.Status.PoolManagerFailureReason = garmRepository.Payload.PoolManagerStatus.FailureReason
-	repository.Status.PoolManagerIsRunning = garmRepository.Payload.PoolManagerStatus.IsRunning
-
-	log.V(1).Info("compare credentials and webhook secret with garm repository object")
-
-	if repository.Spec.CredentialsName != garmRepository.Payload.CredentialsName &&
-		webhookSecret != garmRepository.Payload.WebhookSecret {
-		log.Info("repository credentials or webhook secret has changed, updating garm repository object")
-		event.Updating(r.Recorder, repository, "repository credentials or webhook secret has changed")
-
-		// update credentials and webhook secret
-		retValue, err := client.UpdateRepository(
-			repositories.NewUpdateRepoParams().
-				WithRepoID(repository.Status.ID).
-				WithBody(params.UpdateEntityParams{
-					CredentialsName: repository.Spec.CredentialsName,
-					WebhookSecret:   webhookSecret, // gh hook secret
-				}))
-		if err != nil {
-			log.V(1).Info(fmt.Sprintf("client.UpdateRepository error: %s", err))
-			return ctrl.Result{}, err
-		}
-
-		repository.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
-		repository.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-	}
-
-	if err := r.Status().Update(ctx, repository); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
+	return retValue.Payload, nil
 }
 
 func (r *RepositoryReconciler) getExistingGarmRepo(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository) (params.Repository, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
-	log.Info("status.ID is empty, checking if repository already exists on garm side")
+	log.Info("checking if repository already exists on garm side")
 	repositories, err := client.ListRepositories(repositories.NewListReposParams())
 	if err != nil {
 		return params.Repository{}, fmt.Errorf("getExistingGarmRepo: %w", err)
