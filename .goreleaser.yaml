@@ -61,8 +61,8 @@ release:
     - glob: tmp/garm_operator_all.yaml
     - glob: tmp/garm_operator_crds.yaml
     - glob: tmp/garm_operator.yaml
-    # - glob: tmp/3RD_PARTY_LICENSES.txt
-    # - glob: tmp/BlackDuck_RiskReport.pdf
+    - glob: tmp/3RD_PARTY_LICENSES.txt
+    - glob: tmp/BlackDuck_RiskReport.pdf
   header: |
     Container image is available at `ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }}` 
 
