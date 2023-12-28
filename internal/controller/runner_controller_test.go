@@ -114,9 +114,6 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &RunnerReconciler{
 				Client:   client,
-				BaseURL:  "http://domain.does.not.exist:9997",
-				Username: "admin",
-				Password: "admin",
 				Recorder: record.NewFakeRecorder(3),
 			}
 
@@ -261,9 +258,6 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &RunnerReconciler{
 				Client:   client,
-				BaseURL:  "http://domain.does.not.exist:9997",
-				Username: "admin",
-				Password: "admin",
 				Recorder: record.NewFakeRecorder(3),
 			}
 
@@ -439,9 +433,6 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &RunnerReconciler{
 				Client:   client,
-				BaseURL:  "http://domain.does.not.exist:9997",
-				Username: "admin",
-				Password: "admin",
 				Recorder: record.NewFakeRecorder(3),
 			}
 

@@ -663,9 +663,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &PoolReconciler{
 				Client:   client,
-				BaseURL:  "http://domain.does.not.exist:9997",
-				Username: "admin",
-				Password: "admin",
 				Recorder: record.NewFakeRecorder(3),
 			}
 
@@ -1099,9 +1096,6 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &PoolReconciler{
 				Client:   client,
-				BaseURL:  "http://domain.does.not.exist:9997",
-				Username: "admin",
-				Password: "admin",
 				Recorder: record.NewFakeRecorder(3),
 			}
 
