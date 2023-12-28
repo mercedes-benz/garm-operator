@@ -37,10 +37,6 @@ type RunnerReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
-
-	BaseURL  string
-	Username string
-	Password string
 }
 
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=runners,verbs=get;list;watch;create;update;patch;delete
@@ -51,10 +47,7 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	log := log.FromContext(ctx)
 	log.Info("Reconciling runners...", "Request", req)
 
-	instanceClient, err := r.instanceClient()
-	if err != nil {
-		return ctrl.Result{}, err
-	}
+	instanceClient := garmClient.NewInstanceClient()
 
 	return r.reconcile(ctx, req, instanceClient)
 }
@@ -221,12 +214,9 @@ func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan ch
 			return
 		case _ = <-ticker.C:
 			log.Info("Polling Runners...")
-			instanceClient, err := r.instanceClient()
-			if err != nil {
-				log.Error(err, "Failed to create InstanceClient")
-			}
+			instanceClient := garmClient.NewInstanceClient()
 
-			err = r.EnqueueRunnerInstances(ctx, instanceClient, eventChan)
+			err := r.EnqueueRunnerInstances(ctx, instanceClient, eventChan)
 			if err != nil {
 				log.Error(err, "Failed polling runner instances")
 			}
@@ -348,16 +338,6 @@ func (r *RunnerReconciler) fetchRunnerInstancesByNamespacedPools(instanceClient 
 		garmRunnerInstances = append(garmRunnerInstances, poolRunners.Payload...)
 	}
 	return garmRunnerInstances, nil
-}
-
-func (r *RunnerReconciler) instanceClient() (garmClient.InstanceClient, error) {
-	instanceClient := garmClient.NewInstanceClient()
-	err := instanceClient.Login(garmClient.GarmScopeParams{
-		BaseURL:  r.BaseURL,
-		Username: r.Username,
-		Password: r.Password,
-	})
-	return instanceClient, err
 }
 
 func getRunnerDiff(runnerCRs, garmRunners []string) []string {

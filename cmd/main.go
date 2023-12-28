@@ -108,37 +108,27 @@ func run() error {
 
 	ctx := ctrl.SetupSignalHandler()
 
-	if config.Config.Garm.Init {
-		initClient := client.NewInitClient()
-		if err = initClient.Init(ctx, client.GarmScopeParams{
-			BaseURL:  config.Config.Garm.Server,
-			Username: config.Config.Garm.Username,
-			Password: config.Config.Garm.Password,
-			Email:    config.Config.Garm.Email,
-		}); err != nil {
-			return fmt.Errorf("failed to initialize GARM: %w", err)
-		}
+	if err = client.CreateInstance(client.GarmScopeParams{
+		BaseURL:  config.Config.Garm.Server,
+		Username: config.Config.Garm.Username,
+		Password: config.Config.Garm.Password,
+		Email:    config.Config.Garm.Email,
+	}); err != nil {
+		return fmt.Errorf("unable to setup garm: %w", err)
 	}
 
 	if err = (&controller.EnterpriseReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("enterprise-controller"),
-
-		BaseURL:  config.Config.Garm.Server,
-		Username: config.Config.Garm.Username,
-		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller Enterprise: %w", err)
 	}
+
 	if err = (&controller.PoolReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("pool-controller"),
-
-		BaseURL:  config.Config.Garm.Server,
-		Username: config.Config.Garm.Username,
-		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller Pool: %w", err)
 	}
@@ -146,9 +136,11 @@ func run() error {
 	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create webhook Pool: %w", err)
 	}
+
 	if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create webhook Image: %w", err)
 	}
+
 	if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create webhook Repository: %w", err)
 	}
@@ -157,10 +149,6 @@ func run() error {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("organization-controller"),
-
-		BaseURL:  config.Config.Garm.Server,
-		Username: config.Config.Garm.Username,
-		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller Organization: %w", err)
 	}
@@ -169,10 +157,6 @@ func run() error {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("repository-controller"),
-
-		BaseURL:  config.Config.Garm.Server,
-		Username: config.Config.Garm.Username,
-		Password: config.Config.Garm.Password,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller Repository: %w", err)
 	}
@@ -181,10 +165,6 @@ func run() error {
 	runnerReconciler := &controller.RunnerReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-
-		BaseURL:  config.Config.Garm.Server,
-		Username: config.Config.Garm.Username,
-		Password: config.Config.Garm.Password,
 	}
 
 	// setup controller so it can reconcile if events from eventChan are queued

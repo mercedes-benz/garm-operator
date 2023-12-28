@@ -9,7 +9,6 @@ import (
 	reflect "reflect"
 
 	organizations "github.com/cloudbase/garm/client/organizations"
-	client "github.com/mercedes-benz/garm-operator/pkg/client"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -93,20 +92,6 @@ func (m *MockOrganizationClient) ListOrganizations(param *organizations.ListOrgs
 func (mr *MockOrganizationClientMockRecorder) ListOrganizations(param interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockOrganizationClient)(nil).ListOrganizations), param)
-}
-
-// Login mocks base method.
-func (m *MockOrganizationClient) Login(garmParams client.GarmScopeParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", garmParams)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Login indicates an expected call of Login.
-func (mr *MockOrganizationClientMockRecorder) Login(garmParams interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockOrganizationClient)(nil).Login), garmParams)
 }
 
 // UpdateOrganization mocks base method.

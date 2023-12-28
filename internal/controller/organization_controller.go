@@ -31,10 +31,6 @@ type OrganizationReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
-
-	BaseURL  string
-	Username string
-	Password string
 }
 
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
@@ -69,15 +65,6 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	organizationClient := garmClient.NewOrganizationClient()
-	err = organizationClient.Login(garmClient.GarmScopeParams{
-		BaseURL:  r.BaseURL,
-		Username: r.Username,
-		Password: r.Password,
-		// Debug:    true,
-	})
-	if err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// Handle deleted organizations
 	if !organization.DeletionTimestamp.IsZero() {

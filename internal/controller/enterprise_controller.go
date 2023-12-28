@@ -31,10 +31,6 @@ type EnterpriseReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
-
-	BaseURL  string
-	Username string
-	Password string
 }
 
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
@@ -70,15 +66,6 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	enterpriseClient := garmClient.NewEnterpriseClient()
-	err = enterpriseClient.Login(garmClient.GarmScopeParams{
-		BaseURL:  r.BaseURL,
-		Username: r.Username,
-		Password: r.Password,
-		// Debug:    true,
-	})
-	if err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// Handle deleted enterprises
 	if !enterprise.DeletionTimestamp.IsZero() {

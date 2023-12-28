@@ -3,15 +3,11 @@
 package client
 
 import (
-	"github.com/cloudbase/garm/client"
 	"github.com/cloudbase/garm/client/enterprises"
-	"github.com/go-openapi/runtime"
-
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 
 type EnterpriseClient interface {
-	Login(garmParams GarmScopeParams) error
 	ListEnterprises(param *enterprises.ListEnterprisesParams) (*enterprises.ListEnterprisesOK, error)
 	CreateEnterprise(param *enterprises.CreateEnterpriseParams) (*enterprises.CreateEnterpriseOK, error)
 	GetEnterprise(param *enterprises.GetEnterpriseParams) (*enterprises.GetEnterpriseOK, error)
@@ -20,77 +16,73 @@ type EnterpriseClient interface {
 }
 
 type enterpriseClient struct {
-	client *client.GarmAPI
-	token  runtime.ClientAuthInfoWriter
+	BaseClient
 }
 
 func NewEnterpriseClient() EnterpriseClient {
-	return &enterpriseClient{}
-}
-
-func (s *enterpriseClient) Login(garmParams GarmScopeParams) error {
-	metrics.TotalGarmCalls.WithLabelValues("Login").Inc()
-	garmClient, token, err := newGarmClient(garmParams)
-	if err != nil {
-		metrics.GarmCallErrors.WithLabelValues("Login").Inc()
-		return err
+	return &enterpriseClient{
+		Instance,
 	}
-	s.client = garmClient
-	s.token = token
-
-	return nil
 }
 
 func (s *enterpriseClient) ListEnterprises(param *enterprises.ListEnterprisesParams) (*enterprises.ListEnterprisesOK, error) {
-	metrics.TotalGarmCalls.WithLabelValues("enterprises.List").Inc()
-	enterprises, err := s.client.Enterprises.ListEnterprises(param, s.token)
-	if err != nil {
-		metrics.GarmCallErrors.WithLabelValues("enterprises.List").Inc()
-		return nil, err
-	}
-
-	return enterprises, nil
+	return EnsureAuth(func() (*enterprises.ListEnterprisesOK, error) {
+		metrics.TotalGarmCalls.WithLabelValues("enterprises.List").Inc()
+		enterprises, err := s.Client().Enterprises.ListEnterprises(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("enterprises.List").Inc()
+			return nil, err
+		}
+		return enterprises, nil
+	})
 }
 
 func (s *enterpriseClient) CreateEnterprise(param *enterprises.CreateEnterpriseParams) (*enterprises.CreateEnterpriseOK, error) {
-	metrics.TotalGarmCalls.WithLabelValues("enterprises.Create").Inc()
-	enterprise, err := s.client.Enterprises.CreateEnterprise(param, s.token)
-	if err != nil {
-		metrics.GarmCallErrors.WithLabelValues("enterprises.Create").Inc()
-		return nil, err
-	}
-
-	return enterprise, nil
+	return EnsureAuth(func() (*enterprises.CreateEnterpriseOK, error) {
+		metrics.TotalGarmCalls.WithLabelValues("enterprises.Create").Inc()
+		enterprise, err := s.Client().Enterprises.CreateEnterprise(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("enterprises.Create").Inc()
+			return nil, err
+		}
+		return enterprise, nil
+	})
 }
 
 func (s *enterpriseClient) GetEnterprise(param *enterprises.GetEnterpriseParams) (*enterprises.GetEnterpriseOK, error) {
-	metrics.TotalGarmCalls.WithLabelValues("enterprises.Get").Inc()
-	enterprise, err := s.client.Enterprises.GetEnterprise(param, s.token)
-	if err != nil {
-		metrics.GarmCallErrors.WithLabelValues("enterprises.Get").Inc()
-		return nil, err
-	}
-	return enterprise, nil
+	return EnsureAuth(func() (*enterprises.GetEnterpriseOK, error) {
+		metrics.TotalGarmCalls.WithLabelValues("enterprises.Get").Inc()
+		enterprise, err := s.Client().Enterprises.GetEnterprise(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("enterprises.Get").Inc()
+			return nil, err
+		}
+		return enterprise, nil
+	})
 }
 
 func (s *enterpriseClient) DeleteEnterprise(param *enterprises.DeleteEnterpriseParams) error {
-	metrics.TotalGarmCalls.WithLabelValues("enterprises.Delete").Inc()
-	err := s.client.Enterprises.DeleteEnterprise(param, s.token)
-	if err != nil {
-		metrics.GarmCallErrors.WithLabelValues("enterprises.Delete").Inc()
-		return err
-	}
+	_, err := EnsureAuth(func() (interface{}, error) {
+		metrics.TotalGarmCalls.WithLabelValues("enterprises.Delete").Inc()
+		err := s.Client().Enterprises.DeleteEnterprise(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("enterprises.Delete").Inc()
+			return nil, err
+		}
 
-	return nil
+		return nil, nil
+	})
+	return err
 }
 
 func (s *enterpriseClient) UpdateEnterprise(param *enterprises.UpdateEnterpriseParams) (*enterprises.UpdateEnterpriseOK, error) {
-	metrics.TotalGarmCalls.WithLabelValues("enterprises.Update").Inc()
-	enterprise, err := s.client.Enterprises.UpdateEnterprise(param, s.token)
-	if err != nil {
-		metrics.GarmCallErrors.WithLabelValues("enterprises.Update").Inc()
-		return nil, err
-	}
-
-	return enterprise, nil
+	return EnsureAuth(func() (*enterprises.UpdateEnterpriseOK, error) {
+		metrics.TotalGarmCalls.WithLabelValues("enterprises.Update").Inc()
+		enterprise, err := s.Client().Enterprises.UpdateEnterprise(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("enterprises.Update").Inc()
+			return nil, err
+		}
+		return enterprise, nil
+	})
 }

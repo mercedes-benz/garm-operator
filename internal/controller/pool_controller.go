@@ -39,10 +39,6 @@ type PoolReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
-
-	BaseURL  string
-	Username string
-	Password string
 }
 
 const (
@@ -80,24 +76,8 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	poolClient := garmClient.NewPoolClient()
-	err = poolClient.Login(garmClient.GarmScopeParams{
-		BaseURL:  r.BaseURL,
-		Username: r.Username,
-		Password: r.Password,
-	})
-	if err != nil {
-		return r.handleUpdateError(ctx, pool, err)
-	}
 
 	instanceClient := garmClient.NewInstanceClient()
-	err = instanceClient.Login(garmClient.GarmScopeParams{
-		BaseURL:  r.BaseURL,
-		Username: r.Username,
-		Password: r.Password,
-	})
-	if err != nil {
-		return r.handleUpdateError(ctx, pool, err)
-	}
 
 	// handle deletion
 	if !pool.ObjectMeta.DeletionTimestamp.IsZero() {
