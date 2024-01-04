@@ -95,41 +95,28 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 		return ctrl.Result{}, err
 	}
 
-	if enterprise.Status.ID == "" {
-		garmEnterprise, err := r.getExistingGarmEnterprise(ctx, client, enterprise)
+	garmEnterprise, err := r.getExistingGarmEnterprise(ctx, client, enterprise)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// create enterprise on garm side if it does not exist
+	if reflect.ValueOf(garmEnterprise).IsZero() {
+		garmEnterprise, err = r.createEnterprise(ctx, client, enterprise, webhookSecret)
 		if err != nil {
+			event.Error(r.Recorder, enterprise, err.Error())
 			return ctrl.Result{}, err
 		}
-
-		if !reflect.ValueOf(garmEnterprise).IsZero() {
-			return r.syncExistingEnterprise(ctx, garmEnterprise, enterprise, webhookSecret)
-		}
-
-		return r.createEnterprise(ctx, client, enterprise, webhookSecret)
 	}
 
-	if enterprise.Status.ID != "" {
-		return r.updateEnterprise(ctx, client, enterprise, webhookSecret)
-	}
-
-	log.Info("reconciling enterprise successfully done")
-
-	return ctrl.Result{}, nil
-}
-
-func (r *EnterpriseReconciler) syncExistingEnterprise(ctx context.Context, garmEnterprise params.Enterprise, enterprise *garmoperatorv1alpha1.Enterprise, webhookSecret string) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-	log.WithValues("enterprise", enterprise.Name)
-
-	if !strings.EqualFold(garmEnterprise.CredentialsName, enterprise.Spec.CredentialsName) &&
-		!strings.EqualFold(garmEnterprise.WebhookSecret, webhookSecret) {
-		err := fmt.Errorf("enterprise with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing enterprise first")
+	// update enterprise anytime
+	garmEnterprise, err = r.updateEnterprise(ctx, client, garmEnterprise.ID, webhookSecret, enterprise.Spec.CredentialsName)
+	if err != nil {
 		event.Error(r.Recorder, enterprise, err.Error())
 		return ctrl.Result{}, err
 	}
 
-	log.Info("garm enterprise object found for given enterprise CR")
-
+	// set and update enterprise status
 	enterprise.Status.ID = garmEnterprise.ID
 	enterprise.Status.PoolManagerFailureReason = garmEnterprise.PoolManagerStatus.FailureReason
 	enterprise.Status.PoolManagerIsRunning = garmEnterprise.PoolManagerStatus.IsRunning
@@ -138,17 +125,16 @@ func (r *EnterpriseReconciler) syncExistingEnterprise(ctx context.Context, garmE
 		return ctrl.Result{}, err
 	}
 
-	log.Info("existing garm enterprise object successfully adopted")
-	event.Info(r.Recorder, enterprise, "existing garm enterprise object successfully adopted")
+	log.Info("reconciling enterprise successfully done")
 
 	return ctrl.Result{}, nil
 }
 
-func (r *EnterpriseReconciler) createEnterprise(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise, webhookSecret string) (ctrl.Result, error) {
+func (r *EnterpriseReconciler) createEnterprise(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise, webhookSecret string) (params.Enterprise, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("enterprise", enterprise.Name)
 
-	log.Info("status.ID is empty and enterprise doesn't exist on garm side. Creating new enterprise in garm")
+	log.Info("Enterprise doesn't exist on garm side. Creating new enterprise in garm.")
 	event.Creating(r.Recorder, enterprise, "enterprise doesn't exist on garm side")
 
 	retValue, err := client.CreateEnterprise(
@@ -158,83 +144,44 @@ func (r *EnterpriseReconciler) createEnterprise(ctx context.Context, client garm
 				CredentialsName: enterprise.Spec.CredentialsName,
 				WebhookSecret:   webhookSecret, // gh hook secret
 			}))
-	log.V(1).Info(fmt.Sprintf("enterprise %s created - return Value %v", enterprise.Name, retValue))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateEnterprise error: %s", err))
-		return ctrl.Result{}, err
+		return params.Enterprise{}, err
 	}
 
-	enterprise.Status.ID = retValue.Payload.ID
-	enterprise.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
-	enterprise.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-
-	if err := r.Status().Update(ctx, enterprise); err != nil {
-		return ctrl.Result{}, err
-	}
+	log.V(1).Info(fmt.Sprintf("enterprise %s created - return Value %v", enterprise.Name, retValue))
 
 	log.Info("creating enterprise in garm succeeded")
 	event.Info(r.Recorder, enterprise, "creating enterprise in garm succeeded")
 
-	return ctrl.Result{}, nil
+	return retValue.Payload, nil
 }
 
-func (r *EnterpriseReconciler) updateEnterprise(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise, webhookSecret string) (ctrl.Result, error) {
+func (r *EnterpriseReconciler) updateEnterprise(ctx context.Context, client garmClient.EnterpriseClient, statusID, webhookSecret, credentialsName string) (params.Enterprise, error) {
 	log := log.FromContext(ctx)
-	log.WithValues("enterprise", enterprise.Name)
+	log.V(1).Info("update credentials and webhook secret in garm enterprise")
 
-	log.Info("comparing enterprise with garm enterprise object")
-	garmEnterprise, err := client.GetEnterprise(
-		enterprises.NewGetEnterpriseParams().
-			WithEnterpriseID(enterprise.Status.ID),
-	)
+	// update credentials and webhook secret
+	retValue, err := client.UpdateEnterprise(
+		enterprises.NewUpdateEnterpriseParams().
+			WithEnterpriseID(statusID).
+			WithBody(params.UpdateEntityParams{
+				CredentialsName: credentialsName,
+				WebhookSecret:   webhookSecret, // gh hook secret
+			}))
 	if err != nil {
-		log.V(1).Info(fmt.Sprintf("client.GetEnterprise error: %s", err))
-		return ctrl.Result{}, err
+		log.V(1).Info(fmt.Sprintf("client.UpdateEnterprise error: %s", err))
+		return params.Enterprise{}, err
 	}
 
-	enterprise.Status.PoolManagerFailureReason = garmEnterprise.Payload.PoolManagerStatus.FailureReason
-	enterprise.Status.PoolManagerIsRunning = garmEnterprise.Payload.PoolManagerStatus.IsRunning
-
-	if err := r.Status().Update(ctx, enterprise); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	log.V(1).Info("compare credentials and webhook secret with garm enterprise object")
-
-	if enterprise.Spec.CredentialsName != garmEnterprise.Payload.CredentialsName &&
-		webhookSecret != garmEnterprise.Payload.WebhookSecret {
-		log.Info("enterprise credentials or webhook secret has changed, updating garm enterprise object")
-		event.Updating(r.Recorder, enterprise, "enterprise credentials or webhook secret has changed")
-
-		// update credentials and webhook secret
-		retValue, err := client.UpdateEnterprise(
-			enterprises.NewUpdateEnterpriseParams().
-				WithEnterpriseID(enterprise.Status.ID).
-				WithBody(params.UpdateEntityParams{
-					CredentialsName: enterprise.Spec.CredentialsName,
-					WebhookSecret:   webhookSecret, // gh hook secret
-				}))
-		if err != nil {
-			log.V(1).Info(fmt.Sprintf("client.UpdateEnterprise error: %s", err))
-			return ctrl.Result{}, err
-		}
-
-		enterprise.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
-		enterprise.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-	}
-
-	if err := r.Status().Update(ctx, enterprise); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
+	return retValue.Payload, nil
 }
 
 func (r *EnterpriseReconciler) getExistingGarmEnterprise(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (params.Enterprise, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("enterprise", enterprise.Name)
 
-	log.Info("status.ID is empty, checking if enterprise already exists on garm side")
+	log.Info("checking if enterprise already exists on garm side")
 	enterprises, err := client.ListEnterprises(enterprises.NewListEnterprisesParams())
 	if err != nil {
 		return params.Enterprise{}, fmt.Errorf("getExistingGarmEnterprise: %w", err)
@@ -256,7 +203,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	log.WithValues("enterprise", enterprise.Name)
 
 	log.Info("starting enterprise deletion")
-	event.Deleting(r.Recorder, enterprise, "starting organization deletion")
+	event.Deleting(r.Recorder, enterprise, "starting enterprise deletion")
 
 	err := scope.DeleteEnterprise(
 		enterprises.NewDeleteEnterpriseParams().

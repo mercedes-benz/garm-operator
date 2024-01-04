@@ -36,7 +36,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 		expectedObject    *garmoperatorv1alpha1.Repository
 	}{
 		{
-			name: "repo exist - no op",
+			name: "repository exist - update",
 			object: &garmoperatorv1alpha1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
@@ -47,7 +47,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
 					CredentialsName: "foobar",
-					Owner:           "test-org",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -78,7 +78,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
 					CredentialsName: "foobar",
-					Owner:           "test-org",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -89,21 +89,33 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
-				m.GetRepository(
-					repositories.NewGetRepoParams().
-						WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&repositories.GetRepoOK{
+				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
+					{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-repository",
+						Owner:           "test-repo",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}}, nil)
+				m.UpdateRepository(repositories.NewUpdateRepoParams().
+					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&repositories.UpdateRepoOK{
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
-						Owner:           "test-org",
+						Owner:           "test-repo",
 						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 					},
 				}, nil)
 			},
 		},
 		{
-			name: "repository exist - but spec has changed",
+			name: "repository exist but spec has changed - update",
 			object: &garmoperatorv1alpha1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
@@ -114,7 +126,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
 					CredentialsName: "has-changed",
-					Owner:           "test-org",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -145,7 +157,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
 					CredentialsName: "has-changed",
-					Owner:           "test-org",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -156,29 +168,25 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
-				m.GetRepository(
-					repositories.NewGetRepoParams().
-						WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&repositories.GetRepoOK{
-					Payload: params.Repository{
+				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
+					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
-						Owner:           "test-org",
+						Owner:           "test-repo",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
 					},
-				}, nil)
-
+				}}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
-					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").WithBody(params.UpdateEntityParams{
-					CredentialsName: "has-changed",
-					WebhookSecret:   "has-changed",
-				}),
-				).Return(&repositories.UpdateRepoOK{
+					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "has-changed",
+						WebhookSecret:   "has-changed",
+					})).Return(&repositories.UpdateRepoOK{
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
-						Owner:           "test-org",
+						Owner:           "test-repo",
 						CredentialsName: "has-changed",
 						WebhookSecret:   "has-changed",
 					},
@@ -186,7 +194,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			},
 		},
 		{
-			name: "repository exist but pool status has changed - updating status",
+			name: "repository exist but pool status has changed - update",
 			object: &garmoperatorv1alpha1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
@@ -197,7 +205,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
 					CredentialsName: "foobar",
-					Owner:           "test-org",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -228,7 +236,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
 					CredentialsName: "foobar",
-					Owner:           "test-org",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -241,15 +249,27 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
-				m.GetRepository(
-					repositories.NewGetRepoParams().
-						WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&repositories.GetRepoOK{
+				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
+					{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-repository",
+						Owner:           "test-repo",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}}, nil)
+				m.UpdateRepository(repositories.NewUpdateRepoParams().
+					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&repositories.UpdateRepoOK{
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
-						Owner:           "test-org",
+						Owner:           "test-repo",
 						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 						PoolManagerStatus: params.PoolManagerStatus{
 							IsRunning:     false,
 							FailureReason: "no resources available",
@@ -259,7 +279,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			},
 		},
 		{
-			name: "repository does not exist - create",
+			name: "repository does not exist - create and update",
 			object: &garmoperatorv1alpha1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
@@ -267,7 +287,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
 					CredentialsName: "foobar",
-					Owner:           "test-org",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -295,7 +315,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
 					CredentialsName: "foobar",
-					Owner:           "test-org",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -308,40 +328,54 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
 				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
 					{
-						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
-						Name:            "another-non-operator-managed-repository",
-						Owner:           "test-org",
-						CredentialsName: "totally-unsecure",
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-repository",
+						Owner:           "test-repo",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 					},
 				}}, nil)
-
 				m.CreateRepository(repositories.NewCreateRepoParams().WithBody(
 					params.CreateRepoParams{
 						Name:            "new-repository",
-						Owner:           "test-org",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
+						Owner:           "test-repo",
 					})).Return(&repositories.CreateRepoOK{
 					Payload: params.Repository{
 						Name:            "new-repository",
-						Owner:           "test-org",
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+						Owner:           "test-repo",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
+					},
+				}, nil)
+				m.UpdateRepository(repositories.NewUpdateRepoParams().
+					WithRepoID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&repositories.UpdateRepoOK{
+					Payload: params.Repository{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+						Name:            "new-repository",
+						Owner:           "test-repo",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 					},
 				}, nil)
 			},
 		},
 		{
-			name: "repository already exist in garm - adopt",
+			name: "repository already exist in garm - update",
 			object: &garmoperatorv1alpha1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
 					Namespace: "default",
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "totally-insecure",
-					Owner:           "test-org",
+					CredentialsName: "foobar",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -368,8 +402,8 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "totally-insecure",
-					Owner:           "test-org",
+					CredentialsName: "foobar",
+					Owner:           "test-repo",
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -384,10 +418,112 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-repository",
-						Owner:           "test-org",
+						Owner:           "test-repo",
 						CredentialsName: "totally-insecure",
 					},
 				}}, nil)
+				m.UpdateRepository(repositories.NewUpdateRepoParams().
+					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-12345").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&repositories.UpdateRepoOK{
+					Payload: params.Repository{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
+						Name:            "new-repository",
+						Owner:           "test-repo",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}, nil)
+			},
+		},
+		{
+			name: "repository does not exist in garm - create and update",
+			object: &garmoperatorv1alpha1.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-repository",
+					Namespace: "default",
+					Finalizers: []string{
+						key.RepositoryFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.RepositorySpec{
+					CredentialsName: "foobar",
+					Owner:           "test-repo",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.RepositoryStatus{
+					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("foobar"),
+					},
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-repository",
+					Namespace: "default",
+					Finalizers: []string{
+						key.RepositoryFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.RepositorySpec{
+					CredentialsName: "foobar",
+					Owner:           "test-repo",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.RepositoryStatus{
+					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+				},
+			},
+			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
+				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
+					{},
+				}}, nil)
+				m.CreateRepository(repositories.NewCreateRepoParams().WithBody(
+					params.CreateRepoParams{
+						Name:            "existing-repository",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+						Owner:           "test-repo",
+					})).Return(&repositories.CreateRepoOK{
+					Payload: params.Repository{
+						Name:            "existing-repository",
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+						Owner:           "test-repo",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}, nil)
+				m.UpdateRepository(repositories.NewUpdateRepoParams().
+					WithRepoID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&repositories.UpdateRepoOK{
+					Payload: params.Repository{
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+						Name:            "existing-repository",
+						Owner:           "test-repo",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}, nil)
 			},
 		},
 	}
