@@ -103,7 +103,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	if reflect.ValueOf(garmOrganization).IsZero() {
 		garmOrganization, err = r.createOrganization(ctx, client, organization, webhookSecret)
 		if err != nil {
-			event.Error(r.Recorder, organization, err)
+			event.Error(r.Recorder, organization, err.Error())
 			return ctrl.Result{}, err
 		}
 	}
@@ -111,7 +111,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	// update organization anytime
 	garmOrganization, err = r.updateOrganization(ctx, client, garmOrganization.ID, webhookSecret, organization.Spec.CredentialsName)
 	if err != nil {
-		event.Error(r.Recorder, organization, err)
+		event.Error(r.Recorder, organization, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -210,7 +210,7 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garm
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteOrganization error: %s", err))
-		event.Error(r.Recorder, organization, err)
+		event.Error(r.Recorder, organization, err.Error())
 		return ctrl.Result{}, err
 	}
 

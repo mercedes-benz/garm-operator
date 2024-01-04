@@ -103,7 +103,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	if reflect.ValueOf(garmRepository).IsZero() {
 		garmRepository, err = r.createRepository(ctx, client, repository, webhookSecret)
 		if err != nil {
-			event.Error(r.Recorder, repository, err)
+			event.Error(r.Recorder, repository, err.Error())
 			return ctrl.Result{}, err
 		}
 	}
@@ -111,7 +111,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	// update repository anytime
 	garmRepository, err = r.updateRepository(ctx, client, garmRepository.ID, webhookSecret, repository.Spec.CredentialsName)
 	if err != nil {
-		event.Error(r.Recorder, repository, err)
+		event.Error(r.Recorder, repository, err.Error())
 		return ctrl.Result{}, err
 	}
 	// set and update repository status
@@ -210,7 +210,7 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteRepository error: %s", err))
-		event.Error(r.Recorder, repository, err)
+		event.Error(r.Recorder, repository, err.Error())
 		return ctrl.Result{}, err
 	}
 

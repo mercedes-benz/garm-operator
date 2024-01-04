@@ -31,22 +31,22 @@ jobs:
         with:
           go-version: '1.21.5'
 
-      # - name: Synopsys Detect
-      #   run: |
-      #     GITHUB_REF="$(echo $GITHUB_REF_NAME | tr ':/' '_')"
-      #     BLACKDUCK_SCAN_VERSION_NAME="${GITHUB_REF}_${GITHUB_SHA}"
-      #     export BLACKDUCK_SCAN_VERSION_NAME
+      - name: Synopsys Detect
+        run: |
+          GITHUB_REF="$(echo $GITHUB_REF_NAME | tr ':/' '_')"
+          BLACKDUCK_SCAN_VERSION_NAME="${GITHUB_REF}_${GITHUB_SHA}"
+          export BLACKDUCK_SCAN_VERSION_NAME
 
-      #     # create the tmp directory as we also do during the release process
-      #     mkdir -p tmp
+          # create the tmp directory as we also do during the release process
+          mkdir -p tmp
 
-      #     ./hack/foss-scan.sh
+          ./hack/foss-scan.sh
 
-      #     mv tmp/Black_Duck_Notices_Report.txt tmp/3RD_PARTY_LICENSES.txt
-      #   env:
-      #     BLACKDUCK_URL: ${{ secrets.BLACKDUCK_URL }}
-      #     BLACKDUCK_PROJECT_NAME: ${{ secrets.BLACKDUCK_PROJECT_NAME }}
-      #     BLACKDUCK_TOKEN: ${{ secrets.BLACKDUCK_TOKEN }}
+          mv tmp/Black_Duck_Notices_Report.txt tmp/3RD_PARTY_LICENSES.txt
+        env:
+          BLACKDUCK_URL: ${{ secrets.BLACKDUCK_URL }}
+          BLACKDUCK_PROJECT_NAME: ${{ secrets.BLACKDUCK_PROJECT_NAME }}
+          BLACKDUCK_TOKEN: ${{ secrets.BLACKDUCK_TOKEN }}
 
       - name: release
         run: make release

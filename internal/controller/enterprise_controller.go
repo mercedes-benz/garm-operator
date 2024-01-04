@@ -104,7 +104,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	if reflect.ValueOf(garmEnterprise).IsZero() {
 		garmEnterprise, err = r.createEnterprise(ctx, client, enterprise, webhookSecret)
 		if err != nil {
-			event.Error(r.Recorder, enterprise, err)
+			event.Error(r.Recorder, enterprise, err.Error())
 			return ctrl.Result{}, err
 		}
 	}
@@ -112,7 +112,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	// update enterprise anytime
 	garmEnterprise, err = r.updateEnterprise(ctx, client, garmEnterprise.ID, webhookSecret, enterprise.Spec.CredentialsName)
 	if err != nil {
-		event.Error(r.Recorder, enterprise, err)
+		event.Error(r.Recorder, enterprise, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -211,7 +211,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteEnterprise error: %s", err))
-		event.Error(r.Recorder, enterprise, err)
+		event.Error(r.Recorder, enterprise, err.Error())
 		return ctrl.Result{}, err
 	}
 

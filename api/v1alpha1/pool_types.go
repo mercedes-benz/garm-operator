@@ -13,18 +13,22 @@ import (
 
 // PoolSpec defines the desired state of Pool
 // See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142
+
+// +kubebuilder:validation:Required
+// +kubebuilder:validation:XValidation:rule="self.minIdleRunners <= self.maxRunners",message="minIdleRunners must be less than or equal to maxRunners"
 type PoolSpec struct {
 	// Defines in which Scope Runners a registered. Has a reference to either an Enterprise, Org or Repo CRD
-	GitHubScopeRef         corev1.TypedLocalObjectReference `json:"githubScopeRef"`
-	ProviderName           string                           `json:"providerName"`
-	MaxRunners             uint                             `json:"maxRunners"`
-	MinIdleRunners         uint                             `json:"minIdleRunners"`
-	Flavor                 string                           `json:"flavor"`
-	OSType                 commonParams.OSType              `json:"osType"`
-	OSArch                 commonParams.OSArch              `json:"osArch"`
-	Tags                   []string                         `json:"tags"`
-	Enabled                bool                             `json:"enabled"`
-	RunnerBootstrapTimeout uint                             `json:"runnerBootstrapTimeout"`
+	GitHubScopeRef corev1.TypedLocalObjectReference `json:"githubScopeRef"`
+	ProviderName   string                           `json:"providerName"`
+	MaxRunners     uint                             `json:"maxRunners"`
+	// +kubebuilder:default=0
+	MinIdleRunners         uint                `json:"minIdleRunners"`
+	Flavor                 string              `json:"flavor"`
+	OSType                 commonParams.OSType `json:"osType"`
+	OSArch                 commonParams.OSArch `json:"osArch"`
+	Tags                   []string            `json:"tags"`
+	Enabled                bool                `json:"enabled"`
+	RunnerBootstrapTimeout uint                `json:"runnerBootstrapTimeout"`
 
 	// The name of the image resource, this image resource must exists in the same namespace as the pool
 	ImageName string `json:"imageName"`
@@ -41,12 +45,17 @@ type PoolSpec struct {
 
 // PoolStatus defines the observed state of Pool
 type PoolStatus struct {
-	ID            string `json:"id"`
+	ID          string `json:"id"`
+	IdleRunners uint   `json:"idleRunners"`
+	Runners     uint   `json:"runners"`
+	Selector    string `json:"selector"`
+
 	LastSyncError string `json:"lastSyncError,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:subresource:scale:specpath=.spec.minIdleRunners,statuspath=.status.idleRunners,selectorpath=.status.selector
 //+kubebuilder:resource:path=pools,scope=Namespaced,categories=garm
 //+kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
 //+kubebuilder:printcolumn:name="MinIdleRunners",type=string,JSONPath=`.spec.minIdleRunners`
