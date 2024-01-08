@@ -10,4 +10,5 @@ const (
 	PoolFinalizerName         = groupName + "/pool"
 	RunnerFinalizerName       = groupName + "/runner"
 	PausedAnnotation          = groupName + "/paused"
+	LastSyncTimeAnnotation    = groupName + "/last-sync-time"
 )

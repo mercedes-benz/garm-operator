@@ -62,6 +62,13 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	annotations.SetLastSyncTime(enterprise)
+	err = r.Update(ctx, enterprise)
+	if err != nil {
+		log.Error(err, "can not set annotation")
+		return ctrl.Result{}, err
+	}
+
 	enterpriseClient := garmClient.NewEnterpriseClient()
 	err = enterpriseClient.Login(garmClient.GarmScopeParams{
 		BaseURL:  r.BaseURL,
