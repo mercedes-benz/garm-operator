@@ -7,6 +7,7 @@ import (
 	"github.com/cloudbase/garm/client/organizations"
 	"github.com/cloudbase/garm/client/pools"
 	"github.com/cloudbase/garm/client/repositories"
+
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 

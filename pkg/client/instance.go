@@ -4,6 +4,7 @@ package client
 
 import (
 	"github.com/cloudbase/garm/client/instances"
+
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 

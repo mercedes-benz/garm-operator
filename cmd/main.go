@@ -173,7 +173,7 @@ func run() error {
 	}
 
 	// fetch runner instances periodically and enqueue reconcile events for runner ctrl if external system has changed
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	go runnerReconciler.PollRunnerInstances(ctx, eventChan)
 	defer cancel()
 
