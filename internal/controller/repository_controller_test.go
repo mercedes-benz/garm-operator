@@ -544,9 +544,6 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &RepositoryReconciler{
 				Client:   client,
-				BaseURL:  "http://domain.does.not.exist:9997",
-				Username: "admin",
-				Password: "admin",
 				Recorder: record.NewFakeRecorder(3),
 			}
 
@@ -639,9 +636,6 @@ func TestRepositoryReconciler_reconcileDelete(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &RepositoryReconciler{
 				Client:   client,
-				BaseURL:  "http://domain.does.not.exist:9997",
-				Username: "admin",
-				Password: "admin",
 				Recorder: record.NewFakeRecorder(3),
 			}
 

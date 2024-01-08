@@ -16,3 +16,5 @@ package mock
 //go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt instance.go > _instance.go && mv _instance.go instance.go"
 //go:generate ../../../bin/mockgen -package mock -destination=repository.go -source=../repository.go Repository
 //go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt repository.go > _repository.go && mv _repository.go repository.go"
+//go:generate ../../../bin/mockgen -package mock -destination=client.go -source=../client.go GarmClient
+//go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt client.go > _client.go && mv _client.go client.go"

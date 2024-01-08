@@ -9,7 +9,6 @@ import (
 	reflect "reflect"
 
 	instances "github.com/cloudbase/garm/client/instances"
-	client "github.com/mercedes-benz/garm-operator/pkg/client"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -93,18 +92,4 @@ func (m *MockInstanceClient) ListPoolInstances(params *instances.ListPoolInstanc
 func (mr *MockInstanceClientMockRecorder) ListPoolInstances(params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPoolInstances", reflect.TypeOf((*MockInstanceClient)(nil).ListPoolInstances), params)
-}
-
-// Login mocks base method.
-func (m *MockInstanceClient) Login(garmParams client.GarmScopeParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", garmParams)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Login indicates an expected call of Login.
-func (mr *MockInstanceClientMockRecorder) Login(garmParams interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockInstanceClient)(nil).Login), garmParams)
 }

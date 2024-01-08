@@ -31,10 +31,6 @@ type RepositoryReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
-
-	BaseURL  string
-	Username string
-	Password string
 }
 
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
@@ -69,15 +65,6 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	repositoryClient := garmClient.NewRepositoryClient()
-	err = repositoryClient.Login(garmClient.GarmScopeParams{
-		BaseURL:  r.BaseURL,
-		Username: r.Username,
-		Password: r.Password,
-		// Debug:    true,
-	})
-	if err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// Handle deleted repositories
 	if !repository.DeletionTimestamp.IsZero() {
