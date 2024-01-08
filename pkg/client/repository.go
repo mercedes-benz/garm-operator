@@ -16,19 +16,19 @@ type RepositoryClient interface {
 }
 
 type repositoryClient struct {
-	BaseClient
+	GarmClient
 }
 
 func NewRepositoryClient() RepositoryClient {
 	return &repositoryClient{
-		Instance,
+		Client,
 	}
 }
 
 func (s *repositoryClient) ListRepositories(param *repositories.ListReposParams) (*repositories.ListReposOK, error) {
 	return EnsureAuth(func() (*repositories.ListReposOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("repository.List").Inc()
-		repositories, err := s.Client().Repositories.ListRepos(param, s.Token())
+		repositories, err := s.GarmAPI().Repositories.ListRepos(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("repository.List").Inc()
 			return nil, err
@@ -40,7 +40,7 @@ func (s *repositoryClient) ListRepositories(param *repositories.ListReposParams)
 func (s *repositoryClient) CreateRepository(param *repositories.CreateRepoParams) (*repositories.CreateRepoOK, error) {
 	return EnsureAuth(func() (*repositories.CreateRepoOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("repository.Create").Inc()
-		repository, err := s.Client().Repositories.CreateRepo(param, s.Token())
+		repository, err := s.GarmAPI().Repositories.CreateRepo(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("repository.Create").Inc()
 			return nil, err
@@ -52,7 +52,7 @@ func (s *repositoryClient) CreateRepository(param *repositories.CreateRepoParams
 func (s *repositoryClient) GetRepository(param *repositories.GetRepoParams) (*repositories.GetRepoOK, error) {
 	return EnsureAuth(func() (*repositories.GetRepoOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("repository.Get").Inc()
-		repository, err := s.Client().Repositories.GetRepo(param, s.Token())
+		repository, err := s.GarmAPI().Repositories.GetRepo(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("repository.Get").Inc()
 			return nil, err
@@ -64,7 +64,7 @@ func (s *repositoryClient) GetRepository(param *repositories.GetRepoParams) (*re
 func (s *repositoryClient) DeleteRepository(param *repositories.DeleteRepoParams) error {
 	_, err := EnsureAuth(func() (interface{}, error) {
 		metrics.TotalGarmCalls.WithLabelValues("repository.Delete").Inc()
-		err := s.Client().Repositories.DeleteRepo(param, s.Token())
+		err := s.GarmAPI().Repositories.DeleteRepo(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("repository.Delete").Inc()
 			return nil, err
@@ -77,7 +77,7 @@ func (s *repositoryClient) DeleteRepository(param *repositories.DeleteRepoParams
 func (s *repositoryClient) UpdateRepository(param *repositories.UpdateRepoParams) (*repositories.UpdateRepoOK, error) {
 	return EnsureAuth(func() (*repositories.UpdateRepoOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("repository.Update").Inc()
-		repository, err := s.Client().Repositories.UpdateRepo(param, s.Token())
+		repository, err := s.GarmAPI().Repositories.UpdateRepo(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("repository.Update").Inc()
 			return nil, err

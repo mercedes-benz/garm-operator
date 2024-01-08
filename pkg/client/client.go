@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	garmClient "github.com/cloudbase/garm/client"
+	garm "github.com/cloudbase/garm/client"
 	apiClientFirstRun "github.com/cloudbase/garm/client/first_run"
 	apiClientLogin "github.com/cloudbase/garm/client/login"
 	"github.com/cloudbase/garm/params"
@@ -20,7 +20,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 
-var Instance BaseClient
+var Client GarmClient
 
 type GarmScopeParams struct {
 	BaseURL  string
@@ -30,41 +30,41 @@ type GarmScopeParams struct {
 	Email    string
 }
 
-type BaseClient interface {
-	Client() *garmClient.GarmAPI
+type GarmClient interface {
+	GarmAPI() *garm.GarmAPI
 	Token() runtime.ClientAuthInfoWriter
 	Login() error
 	Init() error
 }
 
-type baseClient struct {
-	client     *garmClient.GarmAPI
+type garmClient struct {
+	client     *garm.GarmAPI
 	token      runtime.ClientAuthInfoWriter
 	garmParams GarmScopeParams
 }
 
-func (s *baseClient) Client() *garmClient.GarmAPI {
+func (s *garmClient) GarmAPI() *garm.GarmAPI {
 	return s.client
 }
 
-func (s *baseClient) Token() runtime.ClientAuthInfoWriter {
+func (s *garmClient) Token() runtime.ClientAuthInfoWriter {
 	return s.token
 }
 
-func (s *baseClient) Login() error {
+func (s *garmClient) Login() error {
 	metrics.TotalGarmCalls.WithLabelValues("Login").Inc()
-	garmClient, authInfoWriter, err := newGarmClient(s.garmParams)
+	authenticatedClient, authInfoWriter, err := newGarmClient(s.garmParams)
 	if err != nil {
 		metrics.GarmCallErrors.WithLabelValues("Login").Inc()
 		return err
 	}
-	s.client = garmClient
+	s.client = authenticatedClient
 	s.token = authInfoWriter
 
 	return nil
 }
 
-func (s *baseClient) Init() error {
+func (s *garmClient) Init() error {
 	ctx := context.Background()
 	metrics.TotalGarmCalls.WithLabelValues("Init").Inc()
 	err := initializeGarm(ctx, s.garmParams)
@@ -77,19 +77,19 @@ func (s *baseClient) Init() error {
 }
 
 func CreateInstance(garmParams GarmScopeParams) error {
-	Instance = &baseClient{
+	Client = &garmClient{
 		garmParams: garmParams,
 	}
-	if err := Instance.Init(); err != nil {
+	if err := Client.Init(); err != nil {
 		return fmt.Errorf("failed to initialize GARM: %w", err)
 	}
-	if err := Instance.Login(); err != nil {
+	if err := Client.Login(); err != nil {
 		return fmt.Errorf("failed to login to garm client: %w", err)
 	}
 	return nil
 }
 
-func newGarmClient(garmParams GarmScopeParams) (*garmClient.GarmAPI, runtime.ClientAuthInfoWriter, error) {
+func newGarmClient(garmParams GarmScopeParams) (*garm.GarmAPI, runtime.ClientAuthInfoWriter, error) {
 	if garmParams.BaseURL == "" {
 		return nil, nil, errors.New("baseURL is mandatory to create a garm client")
 	}
@@ -107,16 +107,16 @@ func newGarmClient(garmParams GarmScopeParams) (*garmClient.GarmAPI, runtime.Cli
 		return nil, nil, fmt.Errorf("failed to parse base url %s: %s", garmParams.BaseURL, err)
 	}
 
-	apiPath, err := url.JoinPath(baseURLParsed.Path, garmClient.DefaultBasePath)
+	apiPath, err := url.JoinPath(baseURLParsed.Path, garm.DefaultBasePath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to join base url path %s with %s: %s", baseURLParsed.Path, garmClient.DefaultBasePath, err)
+		return nil, nil, fmt.Errorf("failed to join base url path %s with %s: %s", baseURLParsed.Path, garm.DefaultBasePath, err)
 	}
 
-	transportCfg := garmClient.DefaultTransportConfig().
+	transportCfg := garm.DefaultTransportConfig().
 		WithHost(baseURLParsed.Host).
 		WithBasePath(apiPath).
 		WithSchemes([]string{baseURLParsed.Scheme})
-	apiCli := garmClient.NewHTTPClientWithConfig(nil, transportCfg)
+	apiCli := garm.NewHTTPClientWithConfig(nil, transportCfg)
 	authToken := openapiRuntimeClient.BearerToken("")
 
 	newLoginParamsReq := apiClientLogin.NewLoginParams()
@@ -155,16 +155,16 @@ func initializeGarm(ctx context.Context, garmParams GarmScopeParams) error {
 		return fmt.Errorf("failed to parse base url %s: %s", garmParams.BaseURL, err)
 	}
 
-	apiPath, err := url.JoinPath(baseURLParsed.Path, garmClient.DefaultBasePath)
+	apiPath, err := url.JoinPath(baseURLParsed.Path, garm.DefaultBasePath)
 	if err != nil {
-		return fmt.Errorf("failed to join base url path %s with %s: %s", baseURLParsed.Path, garmClient.DefaultBasePath, err)
+		return fmt.Errorf("failed to join base url path %s with %s: %s", baseURLParsed.Path, garm.DefaultBasePath, err)
 	}
 
-	transportCfg := garmClient.DefaultTransportConfig().
+	transportCfg := garm.DefaultTransportConfig().
 		WithHost(baseURLParsed.Host).
 		WithBasePath(apiPath).
 		WithSchemes([]string{baseURLParsed.Scheme})
-	apiCli := garmClient.NewHTTPClientWithConfig(nil, transportCfg)
+	apiCli := garm.NewHTTPClientWithConfig(nil, transportCfg)
 	authToken := openapiRuntimeClient.BearerToken("")
 
 	resp, err := apiCli.FirstRun.FirstRun(newUserReq, authToken)
@@ -196,12 +196,12 @@ func EnsureAuth[T interface{}](f Func[T]) (T, error) {
 	if err != nil && IsUnauthenticatedError(err) {
 		metrics.GarmCallErrors.WithLabelValues("client.Unauthenticated").Inc()
 
-		err = Instance.Init()
+		err = Client.Init()
 		if err != nil {
 			return result, err
 		}
 
-		err = Instance.Login()
+		err = Client.Login()
 		if err != nil {
 			return result, err
 		}

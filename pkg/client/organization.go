@@ -16,19 +16,19 @@ type OrganizationClient interface {
 }
 
 type organizationClient struct {
-	BaseClient
+	GarmClient
 }
 
 func NewOrganizationClient() OrganizationClient {
 	return &organizationClient{
-		Instance,
+		Client,
 	}
 }
 
 func (s *organizationClient) ListOrganizations(param *organizations.ListOrgsParams) (*organizations.ListOrgsOK, error) {
 	return EnsureAuth(func() (*organizations.ListOrgsOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("organization.List").Inc()
-		organizations, err := s.Client().Organizations.ListOrgs(param, s.Token())
+		organizations, err := s.GarmAPI().Organizations.ListOrgs(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("organization.List").Inc()
 			return nil, err
@@ -40,7 +40,7 @@ func (s *organizationClient) ListOrganizations(param *organizations.ListOrgsPara
 func (s *organizationClient) CreateOrganization(param *organizations.CreateOrgParams) (*organizations.CreateOrgOK, error) {
 	return EnsureAuth(func() (*organizations.CreateOrgOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("organization.Create").Inc()
-		organization, err := s.Client().Organizations.CreateOrg(param, s.Token())
+		organization, err := s.GarmAPI().Organizations.CreateOrg(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("organization.Create").Inc()
 			return nil, err
@@ -52,7 +52,7 @@ func (s *organizationClient) CreateOrganization(param *organizations.CreateOrgPa
 func (s *organizationClient) GetOrganization(param *organizations.GetOrgParams) (*organizations.GetOrgOK, error) {
 	return EnsureAuth(func() (*organizations.GetOrgOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("organization.Get").Inc()
-		organization, err := s.Client().Organizations.GetOrg(param, s.Token())
+		organization, err := s.GarmAPI().Organizations.GetOrg(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("organization.Get").Inc()
 			return nil, err
@@ -64,7 +64,7 @@ func (s *organizationClient) GetOrganization(param *organizations.GetOrgParams) 
 func (s *organizationClient) DeleteOrganization(param *organizations.DeleteOrgParams) error {
 	_, err := EnsureAuth(func() (interface{}, error) {
 		metrics.TotalGarmCalls.WithLabelValues("organization.Delete").Inc()
-		err := s.Client().Organizations.DeleteOrg(param, s.Token())
+		err := s.GarmAPI().Organizations.DeleteOrg(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("organization.Delete").Inc()
 			return nil, err
@@ -77,7 +77,7 @@ func (s *organizationClient) DeleteOrganization(param *organizations.DeleteOrgPa
 func (s *organizationClient) UpdateOrganization(param *organizations.UpdateOrgParams) (*organizations.UpdateOrgOK, error) {
 	return EnsureAuth(func() (*organizations.UpdateOrgOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("organization.Update").Inc()
-		organization, err := s.Client().Organizations.UpdateOrg(param, s.Token())
+		organization, err := s.GarmAPI().Organizations.UpdateOrg(param, s.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("organization.Update").Inc()
 			return nil, err

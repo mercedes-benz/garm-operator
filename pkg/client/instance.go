@@ -15,19 +15,19 @@ type InstanceClient interface {
 }
 
 type instanceClient struct {
-	BaseClient
+	GarmClient
 }
 
 func NewInstanceClient() InstanceClient {
 	return &instanceClient{
-		Instance,
+		Client,
 	}
 }
 
 func (i *instanceClient) GetInstance(params *instances.GetInstanceParams) (*instances.GetInstanceOK, error) {
 	return EnsureAuth(func() (*instances.GetInstanceOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("instances.Get").Inc()
-		instance, err := i.Client().Instances.GetInstance(params, i.Token())
+		instance, err := i.GarmAPI().Instances.GetInstance(params, i.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("instances.Get").Inc()
 			return nil, err
@@ -39,7 +39,7 @@ func (i *instanceClient) GetInstance(params *instances.GetInstanceParams) (*inst
 func (i *instanceClient) ListInstances(params *instances.ListInstancesParams) (*instances.ListInstancesOK, error) {
 	return EnsureAuth(func() (*instances.ListInstancesOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("instances.List").Inc()
-		instances, err := i.Client().Instances.ListInstances(params, i.Token())
+		instances, err := i.GarmAPI().Instances.ListInstances(params, i.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("instances.List").Inc()
 			return nil, err
@@ -51,7 +51,7 @@ func (i *instanceClient) ListInstances(params *instances.ListInstancesParams) (*
 func (i *instanceClient) ListPoolInstances(params *instances.ListPoolInstancesParams) (*instances.ListPoolInstancesOK, error) {
 	return EnsureAuth(func() (*instances.ListPoolInstancesOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("instances.ListPool").Inc()
-		instances, err := i.Client().Instances.ListPoolInstances(params, i.Token())
+		instances, err := i.GarmAPI().Instances.ListPoolInstances(params, i.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("instances.ListPool").Inc()
 			return nil, err
@@ -63,7 +63,7 @@ func (i *instanceClient) ListPoolInstances(params *instances.ListPoolInstancesPa
 func (i *instanceClient) DeleteInstance(params *instances.DeleteInstanceParams) error {
 	_, err := EnsureAuth(func() (interface{}, error) {
 		metrics.TotalGarmCalls.WithLabelValues("instances.Delete").Inc()
-		err := i.Client().Instances.DeleteInstance(params, i.Token())
+		err := i.GarmAPI().Instances.DeleteInstance(params, i.Token())
 		if err != nil {
 			metrics.GarmCallErrors.WithLabelValues("instances.ListPool").Inc()
 			return nil, err
