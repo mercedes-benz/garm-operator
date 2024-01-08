@@ -36,7 +36,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		expectedObject    *garmoperatorv1alpha1.Enterprise
 	}{
 		{
-			name: "enterprise exist - no op",
+			name: "enterprise exist - update",
 			object: &garmoperatorv1alpha1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
@@ -87,20 +87,31 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.GetEnterprise(
-					enterprises.NewGetEnterpriseParams().
-						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&enterprises.GetEnterpriseOK{
+				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
+					{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-enterprise",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}}, nil)
+				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
+					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&enterprises.UpdateEnterpriseOK{
 					Payload: params.Enterprise{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
 						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 					},
 				}, nil)
 			},
 		},
 		{
-			name: "enterprise exist - but spec has changed",
+			name: "enterprise exist but spec has changed - update",
 			object: &garmoperatorv1alpha1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
@@ -151,24 +162,20 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.GetEnterprise(
-					enterprises.NewGetEnterpriseParams().
-						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&enterprises.GetEnterpriseOK{
-					Payload: params.Enterprise{
+				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
+					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
 					},
-				}, nil)
-
+				}}, nil)
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
-					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").WithBody(params.UpdateEntityParams{
-					CredentialsName: "has-changed",
-					WebhookSecret:   "has-changed",
-				}),
-				).Return(&enterprises.UpdateEnterpriseOK{
+					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "has-changed",
+						WebhookSecret:   "has-changed",
+					})).Return(&enterprises.UpdateEnterpriseOK{
 					Payload: params.Enterprise{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
@@ -179,7 +186,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			},
 		},
 		{
-			name: "enterprise exist but pool status has changed - updating status",
+			name: "enterprise exist but pool status has changed - update",
 			object: &garmoperatorv1alpha1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
@@ -232,14 +239,25 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
-				m.GetEnterprise(
-					enterprises.NewGetEnterpriseParams().
-						WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e"),
-				).Return(&enterprises.GetEnterpriseOK{
+				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
+					{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-enterprise",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}}, nil)
+				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
+					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&enterprises.UpdateEnterpriseOK{
 					Payload: params.Enterprise{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
 						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 						PoolManagerStatus: params.PoolManagerStatus{
 							IsRunning:     false,
 							FailureReason: "no resources available",
@@ -249,7 +267,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			},
 		},
 		{
-			name: "enterprise does not exist - create",
+			name: "enterprise does not exist - create and update",
 			object: &garmoperatorv1alpha1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
@@ -296,12 +314,12 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
 				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
 					{
-						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
-						Name:            "another-non-operator-managed-enterprise",
-						CredentialsName: "totally-unsecure",
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+						Name:            "existing-enterprise",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 					},
 				}}, nil)
-
 				m.CreateEnterprise(enterprises.NewCreateEnterpriseParams().WithBody(
 					params.CreateEnterpriseParams{
 						Name:            "new-enterprise",
@@ -309,16 +327,29 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.CreateEnterpriseOK{
 					Payload: params.Enterprise{
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "new-enterprise",
 						CredentialsName: "foobar",
 						WebhookSecret:   "foobar",
+					},
+				}, nil)
+				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
+					WithEnterpriseID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&enterprises.UpdateEnterpriseOK{
+					Payload: params.Enterprise{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+						Name:            "new-enterprise",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
 					},
 				}, nil)
 			},
 		},
 		{
-			name: "enterprise already exist in garm - adopt",
+			name: "enterprise already exist in garm - update",
 			object: &garmoperatorv1alpha1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
@@ -370,6 +401,102 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						CredentialsName: "totally-insecure",
 					},
 				}}, nil)
+				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
+					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-12345").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "totally-insecure",
+						WebhookSecret:   "foobar",
+					})).Return(&enterprises.UpdateEnterpriseOK{
+					Payload: params.Enterprise{
+						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
+						Name:            "new-enterprise",
+						CredentialsName: "totally-insecure",
+						WebhookSecret:   "foobar",
+					},
+				}, nil)
+			},
+		},
+		{
+			name: "enterprise does not exist in garm - create update",
+			object: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{
+					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("foobar"),
+					},
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{
+					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+				},
+			},
+			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
+				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
+					{},
+				}}, nil)
+				m.CreateEnterprise(enterprises.NewCreateEnterpriseParams().WithBody(
+					params.CreateEnterpriseParams{
+						Name:            "existing-enterprise",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&enterprises.CreateEnterpriseOK{
+					Payload: params.Enterprise{
+						Name:            "existing-enterprise",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+					},
+				}, nil)
+				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
+					WithEnterpriseID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					WithBody(params.UpdateEntityParams{
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					})).Return(&enterprises.UpdateEnterpriseOK{
+					Payload: params.Enterprise{
+						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
+						Name:            "existing-enterprise",
+						CredentialsName: "foobar",
+						WebhookSecret:   "foobar",
+					},
+				}, nil)
 			},
 		},
 	}

@@ -101,41 +101,28 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 		return ctrl.Result{}, err
 	}
 
-	if organization.Status.ID == "" {
-		garmOrganization, err := r.getExistingGarmOrg(ctx, client, organization)
+	garmOrganization, err := r.getExistingGarmOrg(ctx, client, organization)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// create organization on garm side if it does not exist
+	if reflect.ValueOf(garmOrganization).IsZero() {
+		garmOrganization, err = r.createOrganization(ctx, client, organization, webhookSecret)
 		if err != nil {
+			event.Error(r.Recorder, organization, err.Error())
 			return ctrl.Result{}, err
 		}
-
-		if !reflect.ValueOf(garmOrganization).IsZero() {
-			return r.syncExistingOrg(ctx, garmOrganization, organization, webhookSecret)
-		}
-
-		return r.createOrganization(ctx, client, organization, webhookSecret)
 	}
 
-	if organization.Status.ID != "" {
-		return r.updateOrganization(ctx, client, organization, webhookSecret)
-	}
-
-	log.Info("reconciling organization successfully done")
-
-	return ctrl.Result{}, nil
-}
-
-func (r *OrganizationReconciler) syncExistingOrg(ctx context.Context, garmOrganization params.Organization, organization *garmoperatorv1alpha1.Organization, webhookSecret string) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-	log.WithValues("organization", organization.Name)
-
-	if !strings.EqualFold(garmOrganization.CredentialsName, organization.Spec.CredentialsName) &&
-		!strings.EqualFold(garmOrganization.WebhookSecret, webhookSecret) {
-		err := fmt.Errorf("organization with the same name already exists, but credentials and/or webhook secret are different. Please delete the existing organization first")
+	// update organization anytime
+	garmOrganization, err = r.updateOrganization(ctx, client, garmOrganization.ID, webhookSecret, organization.Spec.CredentialsName)
+	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
 		return ctrl.Result{}, err
 	}
 
-	log.Info("garm organization object found for given organization CR")
-
+	// set and update organization status
 	organization.Status.ID = garmOrganization.ID
 	organization.Status.PoolManagerFailureReason = garmOrganization.PoolManagerStatus.FailureReason
 	organization.Status.PoolManagerIsRunning = garmOrganization.PoolManagerStatus.IsRunning
@@ -144,17 +131,16 @@ func (r *OrganizationReconciler) syncExistingOrg(ctx context.Context, garmOrgani
 		return ctrl.Result{}, err
 	}
 
-	log.Info("existing garm organization object successfully adopted")
-	event.Info(r.Recorder, organization, "existing garm organization object successfully adopted")
+	log.Info("reconciling organization successfully done")
 
 	return ctrl.Result{}, nil
 }
 
-func (r *OrganizationReconciler) createOrganization(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization, webhookSecret string) (ctrl.Result, error) {
+func (r *OrganizationReconciler) createOrganization(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization, webhookSecret string) (params.Organization, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("organization", organization.Name)
 
-	log.Info("status.ID is empty and organization doesn't exist on garm side. Creating new organization in garm")
+	log.Info("Organization doesn't exist on garm side. Creating new organization in garm.")
 	event.Creating(r.Recorder, organization, "organization doesn't exist on garm side")
 
 	retValue, err := client.CreateOrganization(
@@ -164,79 +150,44 @@ func (r *OrganizationReconciler) createOrganization(ctx context.Context, client 
 				CredentialsName: organization.Spec.CredentialsName,
 				WebhookSecret:   webhookSecret, // gh hook secret
 			}))
-	log.V(1).Info(fmt.Sprintf("organization %s created - return Value %v", organization.Name, retValue))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateOrganization error: %s", err))
-		return ctrl.Result{}, err
+		return params.Organization{}, err
 	}
 
-	organization.Status.ID = retValue.Payload.ID
-	organization.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
-	organization.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-
-	if err := r.Status().Update(ctx, organization); err != nil {
-		return ctrl.Result{}, err
-	}
+	log.V(1).Info(fmt.Sprintf("organization %s created - return Value %v", organization.Name, retValue))
 
 	log.Info("creating organization in garm succeeded")
 	event.Info(r.Recorder, organization, "creating organization in garm succeeded")
 
-	return ctrl.Result{}, nil
+	return retValue.Payload, nil
 }
 
-func (r *OrganizationReconciler) updateOrganization(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization, webhookSecret string) (ctrl.Result, error) {
+func (r *OrganizationReconciler) updateOrganization(ctx context.Context, client garmClient.OrganizationClient, statusID, webhookSecret, credentialsName string) (params.Organization, error) {
 	log := log.FromContext(ctx)
-	log.WithValues("organization", organization.Name)
+	log.V(1).Info("update credentials and webhook secret in garm organization")
 
-	log.Info("comparing organization with garm organization object")
-	garmOrganization, err := client.GetOrganization(
-		organizations.NewGetOrgParams().
-			WithOrgID(organization.Status.ID),
-	)
+	// update credentials and webhook secret
+	retValue, err := client.UpdateOrganization(
+		organizations.NewUpdateOrgParams().
+			WithOrgID(statusID).
+			WithBody(params.UpdateEntityParams{
+				CredentialsName: credentialsName,
+				WebhookSecret:   webhookSecret, // gh hook secret
+			}))
 	if err != nil {
-		log.V(1).Info(fmt.Sprintf("client.GetOrganization error: %s", err))
-		return ctrl.Result{}, err
+		log.V(1).Info(fmt.Sprintf("client.UpdateOrganization error: %s", err))
+		return params.Organization{}, err
 	}
 
-	organization.Status.PoolManagerFailureReason = garmOrganization.Payload.PoolManagerStatus.FailureReason
-	organization.Status.PoolManagerIsRunning = garmOrganization.Payload.PoolManagerStatus.IsRunning
-
-	log.V(1).Info("compare credentials and webhook secret with garm organization object")
-
-	if organization.Spec.CredentialsName != garmOrganization.Payload.CredentialsName &&
-		webhookSecret != garmOrganization.Payload.WebhookSecret {
-		log.Info("organization credentials or webhook secret has changed, updating garm organization object")
-		event.Updating(r.Recorder, organization, "organization credentials or webhook secret has changed")
-
-		// update credentials and webhook secret
-		retValue, err := client.UpdateOrganization(
-			organizations.NewUpdateOrgParams().
-				WithOrgID(organization.Status.ID).
-				WithBody(params.UpdateEntityParams{
-					CredentialsName: organization.Spec.CredentialsName,
-					WebhookSecret:   webhookSecret, // gh hook secret
-				}))
-		if err != nil {
-			log.V(1).Info(fmt.Sprintf("client.UpdateOrganization error: %s", err))
-			return ctrl.Result{}, err
-		}
-
-		organization.Status.PoolManagerFailureReason = retValue.Payload.PoolManagerStatus.FailureReason
-		organization.Status.PoolManagerIsRunning = retValue.Payload.PoolManagerStatus.IsRunning
-	}
-
-	if err := r.Status().Update(ctx, organization); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
+	return retValue.Payload, nil
 }
 
 func (r *OrganizationReconciler) getExistingGarmOrg(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (params.Organization, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("organization", organization.Name)
 
-	log.Info("status.ID is empty, checking if organization already exists on garm side")
+	log.Info("checking if organization already exists on garm side")
 	organizations, err := client.ListOrganizations(organizations.NewListOrgsParams())
 	if err != nil {
 		return params.Organization{}, fmt.Errorf("getExistingGarmOrg: %w", err)
