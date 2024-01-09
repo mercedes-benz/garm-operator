@@ -15,6 +15,7 @@ import (
 	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	ctrl_controller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -130,7 +131,11 @@ func run() error {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("enterprise-controller"),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr,
+		ctrl_controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.EnterpriseConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Enterprise: %w", err)
 	}
 
@@ -138,7 +143,11 @@ func run() error {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("pool-controller"),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr,
+		ctrl_controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.PoolConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Pool: %w", err)
 	}
 
@@ -158,7 +167,11 @@ func run() error {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("organization-controller"),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr,
+		ctrl_controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.OrganizationConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Organization: %w", err)
 	}
 
@@ -166,7 +179,11 @@ func run() error {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("repository-controller"),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr,
+		ctrl_controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.RepositoryConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Repository: %w", err)
 	}
 
@@ -177,7 +194,11 @@ func run() error {
 	}
 
 	// setup controller so it can reconcile if events from eventChan are queued
-	if err = runnerReconciler.SetupWithManager(mgr, eventChan); err != nil {
+	if err = runnerReconciler.SetupWithManager(mgr, eventChan,
+		ctrl_controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.RunnerConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Runner: %w", err)
 	}
 

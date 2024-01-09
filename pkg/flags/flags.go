@@ -27,6 +27,12 @@ func InitiateFlags() *pflag.FlagSet {
 	f.String("operator-watch-namespace", defaults.DefaultWatchNamespace, "Namespace that the controller watches to reconcile garm objects. "+"If unspecified, the controller watches for garm objects across all namespaces.")
 	f.Duration("operator-sync-runners-interval", defaults.DefaultSyncRunnersInterval, "Specifies interval in which runners from garm-api are polled and synced to Runner CustomResource")
 
+	f.Int("operator-runner-concurrency", defaults.DefaultRunnerConcurrency, "Specifies the maximum number of concurrent runners that can be reconciled simultaneously")
+	f.Int("operator-repository-concurrency", defaults.DefaultRepositoryConcurrency, "Specifies the maximum number of concurrent repositories that can be reconciled simultaneously")
+	f.Int("operator-enterprise-concurrency", defaults.DefaultEnterpriseConcurrency, "Specifies the maximum number of concurrent enterprises that can be reconciled simultaneously")
+	f.Int("operator-organization-concurrency", defaults.DefaultOrganizationConcurrency, "Specifies the maximum number of concurrent organizations that can be reconciled simultaneously")
+	f.Int("operator-pool-concurrency", defaults.DefaultPoolConcurrency, "Specifies the maximum number of concurrent pools that can be reconciled simultaneously")
+
 	f.String("garm-server", "", "The address of the GARM server")
 	f.String("garm-username", "", "The username for the GARM server")
 	f.String("garm-password", "", "The password for the GARM server")

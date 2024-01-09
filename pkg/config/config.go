@@ -25,12 +25,17 @@ type GarmConfig struct {
 }
 
 type OperatorConfig struct {
-	MetricsBindAddress     string        `koanf:"metrics_bind_address" validate:"required,hostname_port"`
-	HealthProbeBindAddress string        `koanf:"health_probe_bind_address" validate:"required,hostname_port"`
-	LeaderElection         bool          `koanf:"leader_election"`
-	SyncPeriod             time.Duration `koanf:"sync_period" validate:"required"`
-	WatchNamespace         string        `koanf:"watch_namespace"`
-	SyncRunnersInterval    time.Duration `koanf:"sync_runners_interval" validate:"gte=5s,lte=5m"`
+	MetricsBindAddress      string        `koanf:"metrics_bind_address" validate:"required,hostname_port"`
+	HealthProbeBindAddress  string        `koanf:"health_probe_bind_address" validate:"required,hostname_port"`
+	LeaderElection          bool          `koanf:"leader_election"`
+	SyncPeriod              time.Duration `koanf:"sync_period" validate:"required"`
+	WatchNamespace          string        `koanf:"watch_namespace"`
+	SyncRunnersInterval     time.Duration `koanf:"sync_runners_interval" validate:"gte=5s,lte=5m"`
+	RunnerConcurrency       int           `koanf:"runner_concurrency" validate:"gte=1"`
+	RepositoryConcurrency   int           `koanf:"repository_concurrency" validate:"gte=1"`
+	EnterpriseConcurrency   int           `koanf:"enterprise_concurrency" validate:"gte=1"`
+	OrganizationConcurrency int           `koanf:"organization_concurrency" validate:"gte=1"`
+	PoolConcurrency         int           `koanf:"pool_concurrency" validate:"gte=1"`
 }
 
 type AppConfig struct {
