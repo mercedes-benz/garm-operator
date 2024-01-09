@@ -752,9 +752,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:       "my-enterprise-pool",
-					Namespace:  namespaceName,
-					Finalizers: []string{},
+					Name:      "my-enterprise-pool",
+					Namespace: namespaceName,
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
@@ -947,9 +946,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:       "my-enterprise-pool",
-					Namespace:  namespaceName,
-					Finalizers: []string{},
+					Name:      "my-enterprise-pool",
+					Namespace: namespaceName,
 				},
 				Spec: garmoperatorv1alpha1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
