@@ -15,13 +15,14 @@ import (
 	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
-	"github.com/mercedes-benz/garm-operator/internal/controller"
+	garmcontroller "github.com/mercedes-benz/garm-operator/internal/controller"
 	"github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/flags"
@@ -126,19 +127,27 @@ func run() error {
 		return fmt.Errorf("unable to setup garm: %w", err)
 	}
 
-	if err = (&controller.EnterpriseReconciler{
+	if err = (&garmcontroller.EnterpriseReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("enterprise-controller"),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr,
+		controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.EnterpriseConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Enterprise: %w", err)
 	}
 
-	if err = (&controller.PoolReconciler{
+	if err = (&garmcontroller.PoolReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("pool-controller"),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr,
+		controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.PoolConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Pool: %w", err)
 	}
 
@@ -154,30 +163,42 @@ func run() error {
 		return fmt.Errorf("unable to create webhook Repository: %w", err)
 	}
 
-	if err = (&controller.OrganizationReconciler{
+	if err = (&garmcontroller.OrganizationReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("organization-controller"),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr,
+		controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.OrganizationConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Organization: %w", err)
 	}
 
-	if err = (&controller.RepositoryReconciler{
+	if err = (&garmcontroller.RepositoryReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("repository-controller"),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr,
+		controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.RepositoryConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Repository: %w", err)
 	}
 
 	eventChan := make(chan event.GenericEvent)
-	runnerReconciler := &controller.RunnerReconciler{
+	runnerReconciler := &garmcontroller.RunnerReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}
 
 	// setup controller so it can reconcile if events from eventChan are queued
-	if err = runnerReconciler.SetupWithManager(mgr, eventChan); err != nil {
+	if err = runnerReconciler.SetupWithManager(mgr, eventChan,
+		controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.RunnerConcurrency,
+		},
+	); err != nil {
 		return fmt.Errorf("unable to create controller Runner: %w", err)
 	}
 

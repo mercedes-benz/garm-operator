@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -192,9 +193,10 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager, eventChan chan event.GenericEvent) error {
+func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager, eventChan chan event.GenericEvent, options controller.Options) error {
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		For(&garmoperatorv1alpha1.Runner{}).
+		WithOptions(options).
 		Build(r)
 	if err != nil {
 		return err

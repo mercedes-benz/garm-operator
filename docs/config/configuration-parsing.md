@@ -45,6 +45,12 @@ OPERATOR_HEALTH_PROBE_BIND_ADDRESS
 OPERATOR_LEADER_ELECTION
 OPERATOR_SYNC_PERIOD
 OPERATOR_WATCH_NAMESPACE
+
+OPERATOR_ENTERPRISE_CONCURRENCY
+OPERATOR_ORGANIZATION_CONCURRENCY
+OPERATOR_POOL_CONCURRENCY
+OPERATOR_REPOSITORY_CONCURRENCY
+OPERATOR_RUNNER_CONCURRENCY
 ```
 
 ## Flags
@@ -63,6 +69,12 @@ The following flags will be parsed and can be found in the [flags package](../..
 --operator-leader-election
 --operator-sync-period
 --operator-watch-namespace
+
+--operator-enterprise-concurrency
+--operator-organization-concurrency
+--operator-pool-concurrency
+--operator-repository-concurrency
+--operator-runner-concurrency
 ```
 
 ### Additional Flags
@@ -87,11 +99,16 @@ garm:
   init: false
   email: ""
 operator:
-  metricsbindaddress: :8080
-  healthprobebindaddress: :8081
-  leaderelection: false
-  syncperiod: 5m0s
-  watchnamespace: garm-operator-system
+  metrics_bind_address: :8080
+  health_probe_bind_address: :8081
+  leader_election: false
+  sync_period: 5m0s
+  watch_namespace: garm-operator-system
+  enterprise_concurrency: 1
+  organization_concurrency: 3
+  pool_concurrency: 10
+  repository_concurrency: 5
+  runner_concurrency: 20
 ```
 
 ## Config File (yaml)
@@ -113,6 +130,11 @@ operator:
   leader_election: true
   sync_period: "10m"
   watch_namespace: "garm-operator-namespace"
+  enterprise_concurrency: 1
+  organization_concurrency: 3
+  pool_concurrency: 10
+  repository_concurrency: 5
+  runner_concurrency: 20
 ```
 
 ## Configuration Default Values
