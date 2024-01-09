@@ -6,6 +6,7 @@
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
   - [🐛 Debugging](#-debugging)
+  - [⚙️ Bootstrap garm-server with garm-provider-k8s for local development](#-bootstrap-garm-server-with-garm-provider-k8s-for-local-development)
 <!-- /toc -->
 
 ## Prerequisites
@@ -65,4 +66,33 @@ The following steps are required to start debugging the `garm-operator`:
              ]
          }
          ```
+   1. IntelliJ
+      1. Create a `.run` folder in the root of your project if not present. Create a`garm-operator debug.run.xml` file with the following content:
+      ```xml
+      <component name="ProjectRunConfigurationManager">
+         <configuration default="false" name="garm-operator debug" type="GoRemoteDebugConfigurationType" factoryName="Go Remote">
+             <option name="disconnectOption" value="ASK" />
+             <method v="2" />
+         </configuration>
+      </component>
+      ```
+      You can now choose your config in IntelliJs `Run Configurations` and hit `Debug`
+         
+      ![img_2.png](docs/assets/intellij-debugging.png)
+
 1. Happy debugging 🐛
+
+
+### ⚙️ Bootstrap garm-server with garm-provider-k8s for local development
+
+If you need a `garm-server` with a configured [garm-provider-k8s](https://github.com/mercedes-benz/garm-provider-k8s) in your local cluster to spin up some `k8s based runners` for testing, you can do the following:
+
+Clone the `garm-provider-k8s` repo:
+   ```bash
+   $ git clone https://github.com/mercedes-benz/garm-provider-k8s && cd ./garm-provider-k8s
+   ```
+And follow this [guide](https://github.com/mercedes-benz/garm-provider-k8s/blob/main/DEVELOPMENT.md). But `instead` of the `make tilt-up` in the `garm-provider-k8s` repo, execute the folling command. Make sure you are in your `kind-garm-operator` kubernetes context:
+   ```bash
+   $ RUNNER_IMAGE="localhost:5000/runner:linux-ubuntu-22.04-x86_64" make build copy docker-build docker-build-summerwind-runner && kubectl apply -k hack/local-development/kubernetes/
+   ```
+Essentially this does the same as the `make tilt-up` target in `garm-provider-k8s`, but in your local garm-operator cluster. Otherwise, a separate cluster will be spawned with the latest garm-operator release.
