@@ -17,6 +17,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	"github.com/mercedes-benz/garm-operator/internal/controller"
@@ -70,15 +72,23 @@ func run() error {
 		return nil
 	}
 
-	var watchNamespaces []string
+	var watchNamespaces map[string]cache.Config
 	if config.Config.Operator.WatchNamespace != "" {
-		watchNamespaces = []string{config.Config.Operator.WatchNamespace}
+		watchNamespaces = map[string]cache.Config{
+			config.Config.Operator.WatchNamespace: {},
+		}
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     config.Config.Operator.MetricsBindAddress,
-		Port:                   9443,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress: config.Config.Operator.MetricsBindAddress,
+		},
+		WebhookServer: webhook.NewServer(
+			webhook.Options{
+				Port: 9443,
+			},
+		),
 		HealthProbeBindAddress: config.Config.Operator.HealthProbeBindAddress,
 		LeaderElection:         config.Config.Operator.LeaderElection,
 		LeaderElectionID:       "b608d8b3.mercedes-benz.com",
@@ -96,10 +106,9 @@ func run() error {
 		//
 		// Default Sync Period = 10 hours.
 		// Set default via flag to 5 minutes
-		SyncPeriod: &config.Config.Operator.SyncPeriod,
 		Cache: cache.Options{
-			Namespaces: watchNamespaces,
-			SyncPeriod: &config.Config.Operator.SyncPeriod,
+			DefaultNamespaces: watchNamespaces,
+			SyncPeriod:        &config.Config.Operator.SyncPeriod,
 		},
 	})
 	if err != nil {
