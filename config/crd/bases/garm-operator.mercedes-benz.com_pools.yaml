@@ -149,17 +149,17 @@ spec:
             properties:
               id:
                 type: string
-              idleRunners:
-                type: integer
               lastSyncError:
                 type: string
+              longRunningIdleRunners:
+                type: integer
               runners:
                 type: integer
               selector:
                 type: string
             required:
             - id
-            - idleRunners
+            - longRunningIdleRunners
             - runners
             - selector
             type: object

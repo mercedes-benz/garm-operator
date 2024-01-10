@@ -24,6 +24,7 @@ func InitiateFlags() *pflag.FlagSet {
 	f.String("operator-health-probe-bind-address", defaults.DefaultHealthProbeBindAddress, "The address the probe endpoint binds to.")
 	f.Bool("operator-leader-election", defaults.DefaultLeaderElection, "Enable leader election for controller manager. "+"Enabling this will ensure there is only one active controller manager.")
 	f.Duration("operator-sync-period", defaults.DefaultSyncPeriod, "The minimum interval at which watched resources are reconciled (e.g. 5m)")
+	f.Duration("operator-min-idle-runners-age", defaults.DefaultMinIdleRunnersAge, "The minimum age an idle runner should have to get marked for deletion (e.g. 30m)")
 	f.String("operator-watch-namespace", defaults.DefaultWatchNamespace, "Namespace that the controller watches to reconcile garm objects. "+"If unspecified, the controller watches for garm objects across all namespaces.")
 	f.Duration("operator-sync-runners-interval", defaults.DefaultSyncRunnersInterval, "Specifies interval in which runners from garm-api are polled and synced to Runner CustomResource")
 
