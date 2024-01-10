@@ -37,6 +37,7 @@ type OperatorConfig struct {
 	EnterpriseConcurrency   int           `koanf:"enterpriseConcurrency" validate:"gte=1" yaml:"enterpriseConcurrency"`
 	OrganizationConcurrency int           `koanf:"organizationConcurrency" validate:"gte=1" yaml:"organizationConcurrency"`
 	PoolConcurrency         int           `koanf:"poolConcurrency" validate:"gte=1" yaml:"poolConcurrency"`
+	RunnerReconciliation    bool          `koanf:"runnerReconciliation" yaml:"runnerReconciliation"`
 }
 
 type AppConfig struct {

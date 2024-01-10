@@ -23,4 +23,7 @@ const (
 	DefaultEnterpriseConcurrency   = 1
 	DefaultOrganizationConcurrency = 5
 	DefaultPoolConcurrency         = 10
+
+	// default values for controller reconciliation configuration
+	DefaultRunnerReconciliation = false
 )
