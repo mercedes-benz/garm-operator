@@ -3,9 +3,14 @@
 package annotations
 
 import (
+	"context"
 	"time"
 
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 )
@@ -25,10 +30,11 @@ func hasAnnotation(o metav1.Object, annotation string) bool {
 	return ok
 }
 
-func SetLastSyncTime(o metav1.Object) {
+func SetLastSyncTime(o client.Object, client client.Client) error {
 	now := time.Now().UTC()
 	newAnnotations := appendAnnotations(o, key.LastSyncTimeAnnotation, now.Format(time.RFC3339))
 	o.SetAnnotations(newAnnotations)
+	return client.Update(context.Background(), o)
 }
 
 func appendAnnotations(o metav1.Object, kayValuePair ...string) map[string]string {

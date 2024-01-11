@@ -59,13 +59,6 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	annotations.SetLastSyncTime(enterprise)
-	err = r.Update(ctx, enterprise)
-	if err != nil {
-		log.Error(err, "can not set annotation")
-		return ctrl.Result{}, err
-	}
-
 	enterpriseClient := garmClient.NewEnterpriseClient()
 
 	// Handle deleted enterprises
@@ -117,6 +110,11 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	enterprise.Status.PoolManagerIsRunning = garmEnterprise.PoolManagerStatus.IsRunning
 
 	if err := r.Status().Update(ctx, enterprise); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err = annotations.SetLastSyncTime(enterprise, r.Client); err != nil {
+		log.Error(err, fmt.Sprintf("can not set annotation: %s", key.LastSyncTimeAnnotation))
 		return ctrl.Result{}, err
 	}
 

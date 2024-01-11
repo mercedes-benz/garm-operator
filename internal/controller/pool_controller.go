@@ -69,13 +69,6 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	annotations.SetLastSyncTime(pool)
-	err := r.Update(ctx, pool)
-	if err != nil {
-		log.Error(err, "can not set annotation")
-		return ctrl.Result{}, err
-	}
-
 	poolClient := garmClient.NewPoolClient()
 
 	instanceClient := garmClient.NewInstanceClient()
@@ -196,6 +189,12 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		}
 	}
 
+	err = annotations.SetLastSyncTime(pool, r.Client)
+	if err != nil {
+		log.Error(err, "can not set annotation")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -311,6 +310,8 @@ func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperat
 }
 
 func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmPool params.Pool) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+
 	pool.Status.ID = garmPool.ID
 	pool.Status.IdleRunners = garmPool.MinIdleRunners
 	pool.Status.LastSyncError = ""
@@ -318,6 +319,12 @@ func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmo
 	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	if err := annotations.SetLastSyncTime(pool, r.Client); err != nil {
+		log.Error(err, "can not set annotation")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 

@@ -58,13 +58,6 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	annotations.SetLastSyncTime(repository)
-	err = r.Update(ctx, repository)
-	if err != nil {
-		log.Error(err, "can not set annotation")
-		return ctrl.Result{}, err
-	}
-
 	repositoryClient := garmClient.NewRepositoryClient()
 
 	// Handle deleted repositories
@@ -115,6 +108,11 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	repository.Status.PoolManagerIsRunning = garmRepository.PoolManagerStatus.IsRunning
 
 	if err := r.Status().Update(ctx, repository); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err = annotations.SetLastSyncTime(repository, r.Client); err != nil {
+		log.Error(err, "can not set annotation")
 		return ctrl.Result{}, err
 	}
 
