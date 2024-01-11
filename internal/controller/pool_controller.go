@@ -11,6 +11,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/client/pools"
 	"github.com/cloudbase/garm/params"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -169,30 +170,41 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		}
 	}
 
-	// update pool idle runners count in status
-	pool.Status.LongRunningIdleRunners = uint(len(longRunningIdleRunners))
-	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
-		return ctrl.Result{}, err
-	}
+	longRunningIdleRunnersCount := len(longRunningIdleRunners)
 
+	switch {
 	// scale to zero
-	// when scale to zero is desired, we immediately scale down to zero - by deleting all idle runners
-	if pool.Spec.MinIdleRunners == 0 {
+	// when scale to zero is desired, we immediately scale down to zero by deleting all idle runners
+	case pool.Spec.MinIdleRunners == 0:
 		log.Info("Scaling pool", "pool", pool.Name)
 		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
-		if err := poolUtil.AlignIdleRunners(ctx, pool, runners, instanceClient); err != nil {
-			return ctrl.Result{}, err
+
+		runners = poolUtil.ExtractDeletableRunners(ctx, runners)
+		for _, runner := range runners {
+			if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
+				log.Error(err, "unable to delete runner", "runner", runner.Name)
+			}
+			longRunningIdleRunnersCount--
+		}
+	// If there are more old idle Runners than minIdleRunners are defined in
+	// the spec, we delete old idle runners
+	case uint(len(longRunningIdleRunners)) > pool.Spec.MinIdleRunners:
+		log.Info("Scaling pool", "pool", pool.Name)
+		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale long running idle runners down to %d", pool.Spec.MinIdleRunners))
+
+		runners := poolUtil.ExtractDeletableRunners(ctx, longRunningIdleRunners)
+		for _, runner := range runners {
+			if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
+				log.Error(err, "unable to delete runner", "runner", runner.Name)
+			}
+			longRunningIdleRunnersCount--
 		}
 	}
 
-	// If there are more idle Runners than minIdleRunners are defined in
-	// the spec, we force a runner deletion.
-	if uint(len(longRunningIdleRunners)) > pool.Spec.MinIdleRunners {
-		log.Info("Scaling pool", "pool", pool.Name)
-		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale long running idle runners down to %d", pool.Spec.MinIdleRunners))
-		if err := poolUtil.AlignIdleRunners(ctx, pool, longRunningIdleRunners, instanceClient); err != nil {
-			return ctrl.Result{}, err
-		}
+	// update pool idle runners count in status
+	pool.Status.LongRunningIdleRunners = uint(longRunningIdleRunnersCount)
+	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	err = annotations.SetLastSyncTime(pool, r.Client)
@@ -254,12 +266,16 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	if pool.Status.LongRunningIdleRunners > pool.Spec.MinIdleRunners {
 		log.Info("Scaling pool", "pool", pool.Name)
 		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
-		if err := poolUtil.AlignIdleRunners(ctx, pool, idleRunners, instanceClient); err != nil {
-			return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
+
+		for _, runner := range idleRunners {
+			if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
+				log.Error(err, "unable to delete runner", "runner", runner.Name)
+			}
 		}
 	}
 
 	// if the pool still contains runners, we need
+	//nolint:godox // TODO mario: drop this condition
 	if pool.Status.Runners != 0 {
 		log.Info("scaling pool down before deleting")
 		event.Info(r.Recorder, pool, fmt.Sprintf("pool still contains %d runners. Reconcile again", pool.Status.Runners))

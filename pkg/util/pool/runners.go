@@ -15,19 +15,6 @@ import (
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 )
 
-func GetIdleRunners(ctx context.Context, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) ([]params.Instance, error) {
-	log := log.FromContext(ctx)
-	log.Info("discover idle runners", "pool", pool.Name)
-
-	runners, err := instanceClient.ListPoolInstances(
-		instances.NewListPoolInstancesParams().WithPoolID(pool.Status.ID))
-	if err != nil {
-		return nil, err
-	}
-
-	return ExtractIdleRunners(ctx, runners.GetPayload()), nil
-}
-
 func GetAllRunners(ctx context.Context, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) ([]params.Instance, error) {
 	log := log.FromContext(ctx)
 	log.Info("discover idle runners", "pool", pool.Name)
@@ -57,7 +44,6 @@ func ExtractIdleRunners(ctx context.Context, instances []params.Instance) []para
 		default:
 			log.V(1).Info("Runner is not idle", "runner", runner.Name, "state", runner.Status)
 		}
-
 	}
 
 	return idleRunners
@@ -150,7 +136,6 @@ func AlignIdleRunners(ctx context.Context, pool *garmoperatorv1alpha1.Pool, idle
 // AlignIdleRunners scales down the pool to the desired state
 // of minIdleRunners. It will delete runners in a deletable state
 func ExtractDownscalableRunners(minIdleRunners int, idleRunners []params.Instance) []params.Instance {
-
 	deletableRunners := []params.Instance{}
 
 	// calculate how many runners need to be deleted
@@ -168,7 +153,6 @@ func ExtractDownscalableRunners(minIdleRunners int, idleRunners []params.Instanc
 			break
 		}
 		deletableRunners = append(deletableRunners, runner)
-
 	}
 	return deletableRunners
 }

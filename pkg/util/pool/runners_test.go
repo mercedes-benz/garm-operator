@@ -265,7 +265,6 @@ func TestExtractDownscalableRunners(t *testing.T) {
 			args: args{
 				minIdleRunners: 0,
 				idleRunners: []params.Instance{
-
 					{
 						Name: "runner1",
 					},
@@ -294,7 +293,6 @@ func TestExtractDownscalableRunners(t *testing.T) {
 			args: args{
 				minIdleRunners: 2,
 				idleRunners: []params.Instance{
-
 					{
 						Name: "runner1",
 					},
