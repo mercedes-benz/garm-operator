@@ -47,7 +47,6 @@ type PoolSpec struct {
 type PoolStatus struct {
 	ID                     string `json:"id"`
 	LongRunningIdleRunners uint   `json:"longRunningIdleRunners"`
-	Runners                uint   `json:"runners"`
 	Selector               string `json:"selector"`
 
 	LastSyncError string `json:"lastSyncError,omitempty"`

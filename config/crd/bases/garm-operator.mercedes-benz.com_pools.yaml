@@ -153,14 +153,11 @@ spec:
                 type: string
               longRunningIdleRunners:
                 type: integer
-              runners:
-                type: integer
               selector:
                 type: string
             required:
             - id
             - longRunningIdleRunners
-            - runners
             - selector
             type: object
         type: object

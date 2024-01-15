@@ -274,14 +274,6 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		}
 	}
 
-	// if the pool still contains runners, we need
-	//nolint:godox // TODO mario: drop this condition
-	if pool.Status.Runners != 0 {
-		log.Info("scaling pool down before deleting")
-		event.Info(r.Recorder, pool, fmt.Sprintf("pool still contains %d runners. Reconcile again", pool.Status.Runners))
-		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
-	}
-
 	err = garmClient.DeletePool(
 		pools.NewDeletePoolParams().
 			WithPoolID(pool.Status.ID),

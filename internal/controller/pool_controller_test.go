@@ -1589,7 +1589,6 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 				Status: garmoperatorv1alpha1.PoolStatus{
 					ID:                     poolID,
 					LastSyncError:          "",
-					Runners:                0,
 					LongRunningIdleRunners: 0,
 				},
 			},
