@@ -159,7 +159,8 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		return r.handleUpdateError(ctx, pool, err)
 	}
 
-	longRunningIdleRunners := poolUtil.ExtractOldIdleRunners(config.Config.Operator.MinIdleRunnersAge, runners)
+	longRunningIdleRunners := poolUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, runners)
+	longRunningIdleRunnersCount := len(longRunningIdleRunners)
 
 	if !poolNeedsUpdate {
 		log.Info("pool CR differs from pool on garm side. Trigger a garm pool update")
@@ -170,8 +171,6 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		}
 	}
 
-	longRunningIdleRunnersCount := len(longRunningIdleRunners)
-
 	switch {
 	// scale to zero
 	// when scale to zero is desired, we immediately scale down to zero by deleting all idle runners
@@ -179,7 +178,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		log.Info("Scaling pool", "pool", pool.Name)
 		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
 
-		runners = poolUtil.ExtractDeletableRunners(ctx, runners)
+		runners = poolUtil.DeletableRunners(ctx, runners)
 		for _, runner := range runners {
 			if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
 				log.Error(err, "unable to delete runner", "runner", runner.Name)
@@ -192,7 +191,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		log.Info("Scaling pool", "pool", pool.Name)
 		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale long running idle runners down to %d", pool.Spec.MinIdleRunners))
 
-		runners := poolUtil.ExtractDeletableRunners(ctx, longRunningIdleRunners)
+		runners := poolUtil.DeletableRunners(ctx, longRunningIdleRunners)
 		for _, runner := range runners {
 			if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
 				log.Error(err, "unable to delete runner", "runner", runner.Name)
@@ -244,28 +243,26 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		return r.handleUpdateError(ctx, pool, err)
 	}
 
-	// get current idle runners
+	// get all runners
 	runners, err := poolUtil.GetAllRunners(ctx, pool, instanceClient)
 	if err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 	}
 
-	idleRunners := poolUtil.ExtractIdleRunners(ctx, runners)
+	// get a list of all idle runners to trigger deletion
+	idleRunners := poolUtil.IdleRunners(ctx, runners)
 	if err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 	}
 
 	// set current idle runners count in status
 	pool.Status.LongRunningIdleRunners = uint(len(idleRunners))
-	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
-		return r.handleUpdateError(ctx, pool, err)
-	}
 
 	// scale pool down only needed if spec is smaller than current min idle runners
 	// doesn't catch the case where minIdleRunners is increased and to many idle runners exist
 	if pool.Status.LongRunningIdleRunners > pool.Spec.MinIdleRunners {
 		log.Info("Scaling pool", "pool", pool.Name)
-		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
+		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d before deleting", pool.Spec.MinIdleRunners))
 
 		for _, runner := range idleRunners {
 			if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
@@ -274,11 +271,8 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		}
 	}
 
-	err = garmClient.DeletePool(
-		pools.NewDeletePoolParams().
-			WithPoolID(pool.Status.ID),
-	)
-	if err != nil {
+	// delete pool in garm
+	if err = garmClient.DeletePool(pools.NewDeletePoolParams().WithPoolID(pool.Status.ID)); err != nil {
 		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err))
 	}
 
@@ -405,7 +399,8 @@ func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperato
 		tmpGarmPool.RepoName = gitHubScopeRef.GetName()
 	}
 
-	idleInstances := poolUtil.ExtractIdleRunners(ctx, garmPool.Payload.Instances)
+	// we are only interested in IdleRunners
+	idleInstances := poolUtil.IdleRunners(ctx, garmPool.Payload.Instances)
 
 	// empty instances for comparison
 	garmPool.Payload.Instances = nil

@@ -87,8 +87,8 @@ func TestExtractOldIdleRunners(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ExtractOldIdleRunners(tt.args.minRunnerAge, tt.args.instances); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ExtractOldIdleRunners() = %v, want %v", got, tt.want)
+			if got := OldIdleRunners(tt.args.minRunnerAge, tt.args.instances); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("OldIdleRunners() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -164,8 +164,8 @@ func TestExtractIdleRunners(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ExtractIdleRunners(tt.args.ctx, tt.args.instances); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ExtractIdleRunners() = %v, want %v", got, tt.want)
+			if got := IdleRunners(tt.args.ctx, tt.args.instances); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("IdleRunners() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -243,8 +243,8 @@ func TestExtractDeletableRunners(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ExtractDeletableRunners(tt.args.ctx, tt.args.instances); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ExtractDeletableRunners() = %v, want %v", got, tt.want)
+			if got := DeletableRunners(tt.args.ctx, tt.args.instances); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("DeletableRunners() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -347,8 +347,8 @@ func TestExtractDownscalableRunners(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ExtractDownscalableRunners(tt.args.minIdleRunners, tt.args.idleRunners); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ExtractDownscalableRunners() = %v, want %v", got, tt.want)
+			if got := AlignIdleRunners(tt.args.minIdleRunners, tt.args.idleRunners); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AlignIdleRunners() = %v, want %v", got, tt.want)
 			}
 		})
 	}
