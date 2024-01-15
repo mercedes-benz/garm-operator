@@ -214,7 +214,7 @@ func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan ch
 			log.Info("Closing event channel for runners...")
 			close(eventChan)
 			return
-		case _ = <-ticker.C:
+		case <-ticker.C:
 			log.Info("Polling Runners...")
 			instanceClient := garmClient.NewInstanceClient()
 
