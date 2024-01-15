@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
-
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/params"
 	"github.com/life4/genesis/slices"
@@ -32,6 +30,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
+	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
 // RunnerReconciler reconciles a Runner object

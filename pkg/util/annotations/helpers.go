@@ -6,9 +6,6 @@ import (
 	"context"
 	"time"
 
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -17,11 +14,11 @@ import (
 
 // IsPaused returns true if the object has the `paused` annotation.
 func IsPaused(o metav1.Object) bool {
-	return hasAnnotation(o, key.PausedAnnotation)
+	return HasAnnotation(o, key.PausedAnnotation)
 }
 
-// hasAnnotation returns true if the object has the specified annotation.
-func hasAnnotation(o metav1.Object, annotation string) bool {
+// HasAnnotation returns true if the object has the specified annotation.
+func HasAnnotation(o metav1.Object, annotation string) bool {
 	annotations := o.GetAnnotations()
 	if annotations == nil {
 		return false
