@@ -1,0 +1,329 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/component: metrics
+  name: kube-state-metrics-config
+  namespace: system
+data:
+  config.yaml: |
+    kind: CustomResourceStateMetrics
+    spec:
+      resources:
+        - commonLabels:
+            crd_type: enterprise
+          groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: Enterprise
+            version: v1alpha1
+          labelsFromPath:
+            name:
+              - metadata
+              - name
+          metricNamePrefix: garm_operator
+          metrics:
+            - each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+              help: Unix creation timestamp.
+              name: enterprise_created
+            - each:
+                gauge:
+                  nilIsZero: true
+                  path:
+                    - status
+                    - poolManagerIsRunning
+                type: Gauge
+              help: Whether the enterprises poolManager is running.
+              name: enterprise_pool_manager_running
+            - each:
+                info:
+                  labelsFromPath:
+                    credentialsName:
+                      - spec
+                      - credentialsName
+                    id:
+                      - status
+                      - id
+                    webhookSecretRefKey:
+                      - spec
+                      - webhookSecretRef
+                      - key
+                    webhookSecretRefName:
+                      - spec
+                      - webhookSecretRef
+                      - name
+                type: Info
+              help: Information about an enterprise.
+              name: enterprise_info
+            - each:
+                info:
+                  labelsFromPath:
+                    paused_value: []
+                  path:
+                    - metadata
+                    - annotations
+                    - garm-operator.mercedes-benz.com/paused
+                type: Info
+              help: Whether the enterprise reconciliation is paused.
+              name: enterprise_annotation_paused_info
+          namespace:
+            - metadata
+            - namespace
+        - commonLabels:
+            crd_type: organization
+          groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: Organization
+            version: v1alpha1
+          labelsFromPath:
+            name:
+              - metadata
+              - name
+          metricNamePrefix: garm_operator
+          metrics:
+            - each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+              help: Unix creation timestamp.
+              name: org_created
+            - each:
+                gauge:
+                  nilIsZero: true
+                  path:
+                    - status
+                    - poolManagerIsRunning
+                type: Gauge
+              help: Whether the orgs poolManager is running.
+              name: org_pool_manager_running
+            - each:
+                info:
+                  labelsFromPath:
+                    credentialsName:
+                      - spec
+                      - credentialsName
+                    id:
+                      - status
+                      - id
+                    webhookSecretRefKey:
+                      - spec
+                      - webhookSecretRef
+                      - key
+                    webhookSecretRefName:
+                      - spec
+                      - webhookSecretRef
+                      - name
+                type: Info
+              help: Information about an enterprise.
+              name: org_info
+            - each:
+                info:
+                  labelsFromPath:
+                    paused_value: []
+                  path:
+                    - metadata
+                    - annotations
+                    - garm-operator.mercedes-benz.com/paused
+                type: Info
+              help: Whether the org reconciliation is paused.
+              name: org_annotation_paused_info
+          namespace:
+            - metadata
+            - namespace
+        - commonLabels:
+            crd_type: repository
+          groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: Repository
+            version: v1alpha1
+          labelsFromPath:
+            name:
+              - metadata
+              - name
+          metricNamePrefix: garm_operator
+          metrics:
+            - each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+              help: Unix creation timestamp.
+              name: repo_created
+            - each:
+                gauge:
+                  nilIsZero: true
+                  path:
+                    - status
+                    - poolManagerIsRunning
+                type: Gauge
+              help: Whether the repositories poolManager is running.
+              name: repo_pool_manager_running
+            - each:
+                info:
+                  labelsFromPath:
+                    credentialsName:
+                      - spec
+                      - credentialsName
+                    id:
+                      - status
+                      - id
+                    owner:
+                      - spec
+                      - owner
+                    webhookSecretRefKey:
+                      - spec
+                      - webhookSecretRef
+                      - key
+                    webhookSecretRefName:
+                      - spec
+                      - webhookSecretRef
+                      - name
+                type: Info
+              help: Information about a repository.
+              name: repo_info
+            - each:
+                info:
+                  labelsFromPath:
+                    paused_value: []
+                  path:
+                    - metadata
+                    - annotations
+                    - garm-operator.mercedes-benz.com/paused
+                type: Info
+              help: Whether the repo reconciliation is paused.
+              name: repo_annotation_paused_info
+          namespace:
+            - metadata
+            - namespace
+        - commonLabels:
+            crd_type: pool
+          groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: Pool
+            version: v1alpha1
+          labelsFromPath:
+            name:
+              - metadata
+              - name
+          metricNamePrefix: garm_operator
+          metrics:
+            - each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+              help: Unix creation timestamp.
+              name: pool_created
+            - each:
+                gauge:
+                  path:
+                    - status
+                    - creationTimestamp
+                type: Gauge
+              help: Unix creation timestamp.
+              name: pool_min_idle_runner
+            - each:
+                info:
+                  labelsFromPath:
+                    enabled:
+                      - spec
+                      - enabled
+                    githubRunnerGroup:
+                      - spec
+                      - githubRunnerGroup
+                    id:
+                      - status
+                      - id
+                    imageName:
+                      - spec
+                      - imageName
+                    maxRunners:
+                      - spec
+                      - maxRunners
+                    minIdleRunners:
+                      - spec
+                      - minIdleRunners
+                    osArch:
+                      - spec
+                      - osArch
+                    osType:
+                      - spec
+                      - osType
+                    providerName:
+                      - spec
+                      - providerName
+                    runnerBootstrapTimeout:
+                      - spec
+                      - runnerBootstrapTimeout
+                    runnerPrefix:
+                      - spec
+                      - runnerPrefix
+                    scopeKind:
+                      - spec
+                      - githubScopeRef
+                      - kind
+                    scopeName:
+                      - spec
+                      - githubScopeRef
+                      - name
+                    tags:
+                      - spec
+                      - tags
+                type: Info
+              help: Information about a pool.
+              name: pool_info
+            - each:
+                info:
+                  labelsFromPath:
+                    paused_value: []
+                  path:
+                    - metadata
+                    - annotations
+                    - garm-operator.mercedes-benz.com/paused
+                type: Info
+              help: Whether the pool reconciliation is paused.
+              name: pool_annotation_paused_info
+          namespace:
+            - metadata
+            - namespace
+        - commonLabels:
+            crd_type: image
+          groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: Image
+            version: v1alpha1
+          labelsFromPath:
+            name:
+              - metadata
+              - name
+          metricNamePrefix: garm_operator
+          metrics:
+            - each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+              help: Unix creation timestamp.
+              name: image_created
+            - each:
+                info:
+                  labelsFromPath:
+                    tag:
+                      - spec
+                      - tag
+                type: Info
+              help: Information about an image.
+              name: image_info
+          namespace:
+            - metadata
+            - namespace
