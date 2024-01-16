@@ -99,16 +99,16 @@ garm:
   init: false
   email: ""
 operator:
-  metrics_bind_address: :8080
-  health_probe_bind_address: :8081
-  leader_election: false
-  sync_period: 5m0s
-  watch_namespace: garm-operator-system
-  enterprise_concurrency: 1
-  organization_concurrency: 3
-  pool_concurrency: 10
-  repository_concurrency: 5
-  runner_concurrency: 20
+  metricsBindAddress: :8080
+  healthProbeBindAddress: :8081
+  leaderElection: false
+  syncPeriod: 5m0s
+  watchNamespace: garm-operator-system
+  enterpriseConcurrency: 1
+  organizationConcurrency: 3
+  poolConcurrency: 10
+  repositoryConcurrency: 5
+  runnerConcurrency: 20
 ```
 
 ## Config File (yaml)
@@ -125,16 +125,16 @@ garm:
   email: ""
 
 operator:
-  metrics_bind_address: ":7000"
-  health_probe_bind_address: ":7001"
-  leader_election: true
-  sync_period: "10m"
-  watch_namespace: "garm-operator-namespace"
-  enterprise_concurrency: 1
-  organization_concurrency: 3
-  pool_concurrency: 10
-  repository_concurrency: 5
-  runner_concurrency: 20
+  metricsBindAddress: ":7000"
+  healthProbeBindAddress: ":7001"
+  leaderElection: true
+  syncPeriod: "10m"
+  watchNamespace: "garm-operator-namespace"
+  enterpriseConcurrency: 1
+  organizationConcurrency: 3
+  poolConcurrency: 10
+  repositoryConcurrency: 5
+  runnerConcurrency: 20
 ```
 
 ## Configuration Default Values
