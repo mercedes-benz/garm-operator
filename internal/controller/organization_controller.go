@@ -58,13 +58,6 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 
-	annotations.SetLastSyncTime(organization)
-	err = r.Update(ctx, organization)
-	if err != nil {
-		log.Error(err, "can not set annotation")
-		return ctrl.Result{}, err
-	}
-
 	organizationClient := garmClient.NewOrganizationClient()
 
 	// Handle deleted organizations
@@ -116,6 +109,11 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	organization.Status.PoolManagerIsRunning = garmOrganization.PoolManagerStatus.IsRunning
 
 	if err := r.Status().Update(ctx, organization); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err = annotations.SetLastSyncTime(organization, r.Client); err != nil {
+		log.Error(err, "can not set annotation")
 		return ctrl.Result{}, err
 	}
 

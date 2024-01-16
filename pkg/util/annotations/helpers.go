@@ -3,20 +3,22 @@
 package annotations
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 )
 
 // IsPaused returns true if the object has the `paused` annotation.
 func IsPaused(o metav1.Object) bool {
-	return hasAnnotation(o, key.PausedAnnotation)
+	return HasAnnotation(o, key.PausedAnnotation)
 }
 
-// hasAnnotation returns true if the object has the specified annotation.
-func hasAnnotation(o metav1.Object, annotation string) bool {
+// HasAnnotation returns true if the object has the specified annotation.
+func HasAnnotation(o metav1.Object, annotation string) bool {
 	annotations := o.GetAnnotations()
 	if annotations == nil {
 		return false
@@ -25,10 +27,11 @@ func hasAnnotation(o metav1.Object, annotation string) bool {
 	return ok
 }
 
-func SetLastSyncTime(o metav1.Object) {
+func SetLastSyncTime(o client.Object, client client.Client) error {
 	now := time.Now().UTC()
 	newAnnotations := appendAnnotations(o, key.LastSyncTimeAnnotation, now.Format(time.RFC3339))
 	o.SetAnnotations(newAnnotations)
+	return client.Update(context.Background(), o)
 }
 
 func appendAnnotations(o metav1.Object, kayValuePair ...string) map[string]string {

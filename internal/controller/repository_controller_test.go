@@ -9,6 +9,7 @@ import (
 
 	"github.com/cloudbase/garm/client/repositories"
 	"github.com/cloudbase/garm/params"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +22,7 @@ import (
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
+	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
 func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
@@ -557,6 +559,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				t.Errorf("RepositoryReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
+			// test last-sync-time
+			assert.Equal(t, annotations.HasAnnotation(repository, key.LastSyncTimeAnnotation), true)
+
+			// clear out annotations to avoid comparison errors
+			repository.ObjectMeta.Annotations = nil
 
 			// empty resource version to avoid comparison errors
 			repository.ObjectMeta.ResourceVersion = ""

@@ -12,6 +12,7 @@ import (
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/client/pools"
 	"github.com/cloudbase/garm/params"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,6 +26,7 @@ import (
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
+	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
 const namespaceName = "test-namespace"
@@ -678,6 +680,12 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				t.Errorf("PoolReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
+			// test last-sync-time
+			assert.Equal(t, annotations.HasAnnotation(pool, key.LastSyncTimeAnnotation), true)
+
+			// clear out annotations to avoid comparison errors
+			pool.ObjectMeta.Annotations = nil
 
 			// empty resource version to avoid comparison errors
 			pool.ObjectMeta.ResourceVersion = ""
