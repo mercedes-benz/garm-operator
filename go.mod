@@ -5,7 +5,7 @@ go 1.21.5
 
 require (
 	github.com/cloudbase/garm v0.1.3
-	github.com/cloudbase/garm-provider-common v0.1.0
+	github.com/cloudbase/garm-provider-common v0.1.1
 	github.com/go-openapi/runtime v0.26.2
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
