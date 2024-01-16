@@ -341,10 +341,15 @@ func (r *RunnerReconciler) fetchRunnerInstancesByNamespacedPools(instanceClient 
 }
 
 func getRunnerDiff(runnerCRs, garmRunners []string) []string {
+	cache := make(map[string]struct{})
 	var diff []string
 
+	for _, runner := range garmRunners {
+		cache[runner] = struct{}{}
+	}
+
 	for _, runnerCR := range runnerCRs {
-		if !slices.Contains(garmRunners, runnerCR) {
+		if _, found := cache[runnerCR]; !found {
 			diff = append(diff, runnerCR)
 		}
 	}
