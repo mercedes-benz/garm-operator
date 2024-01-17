@@ -116,8 +116,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	// get image cr object by name
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
-		r.handleUpdateError(ctx, pool, err)
-		return ctrl.Result{Requeue: true}, nil
+		return r.handleUpdateError(ctx, pool, err)
 	}
 
 	// check if there is already a pool with the same spec on garm side
@@ -149,8 +148,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
-		r.handleUpdateError(ctx, pool, err)
-		return ctrl.Result{Requeue: true}, nil
+		return r.handleUpdateError(ctx, pool, err)
 	}
 
 	poolNeedsUpdate, runners, err := r.comparePoolSpecs(ctx, pool, image, garmClient)

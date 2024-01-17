@@ -47,10 +47,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		// a list of objects to initialize the fake client with
 		// this can be used to define other existing objects that are referenced by the object to reconcile
 		// e.g. images or other pools ..
-		runtimeObjects    []runtime.Object
-		expectGarmRequest func(m *mock.MockPoolClientMockRecorder)
-		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Pool
+		runtimeObjects               []runtime.Object
+		expectGarmRequest            func(m *mock.MockPoolClientMockRecorder)
+		wantErr                      bool
+		expectLastSyncTimeAnnotation bool
+		expectedObject               *garmoperatorv1alpha1.Pool
 	}{
 		{
 			name: "pool does not exist in garm - create",
@@ -163,6 +164,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
+			expectLastSyncTimeAnnotation: true,
 			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
 				m.ListAllPools(pools.NewListPoolsParams()).Return(&pools.ListPoolsOK{Payload: params.Pools{}}, nil)
 
@@ -344,6 +346,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
+			expectLastSyncTimeAnnotation: true,
 			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
 				m.GetPool(pools.NewGetPoolParams().WithPoolID(outdatedPoolID)).Return(&pools.GetPoolOK{Payload: params.Pool{}}, nil)
 
@@ -503,6 +506,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
+			expectLastSyncTimeAnnotation: true,
 			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
 				m.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
 					RunnerPrefix: params.RunnerPrefix{
@@ -646,6 +650,270 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				}}, nil)
 			},
 		},
+		{
+			name: "pool does not exist in garm - error no image cr found",
+			object: &garmoperatorv1alpha1.Pool{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pool",
+					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-enterprise-pool",
+					Namespace: namespaceName,
+				},
+				Spec: garmoperatorv1alpha1.PoolSpec{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
+						Name:     enterpriseName,
+					},
+					ProviderName:           "kubernetes_external",
+					MaxRunners:             5,
+					MinIdleRunners:         3,
+					ImageName:              "ubuntu-image",
+					Flavor:                 "medium",
+					OSType:                 "linux",
+					OSArch:                 "arm64",
+					Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+					Enabled:                true,
+					RunnerBootstrapTimeout: 20,
+					ExtraSpecs:             "",
+					GitHubRunnerGroup:      "",
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Pool{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pool",
+					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-enterprise-pool",
+					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.PoolSpec{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
+						Name:     enterpriseName,
+					},
+					ProviderName:           "kubernetes_external",
+					MaxRunners:             5,
+					MinIdleRunners:         3,
+					ImageName:              "ubuntu-image",
+					Flavor:                 "medium",
+					OSType:                 "linux",
+					OSArch:                 "arm64",
+					Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+					Enabled:                true,
+					RunnerBootstrapTimeout: 20,
+					ExtraSpecs:             "",
+					GitHubRunnerGroup:      "",
+				},
+				Status: garmoperatorv1alpha1.PoolStatus{
+					ID:            "",
+					IdleRunners:   0,
+					Runners:       0,
+					Selector:      "",
+					LastSyncError: "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceName,
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("supersecretvalue"),
+					},
+				},
+				&garmoperatorv1alpha1.Enterprise{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Enterprise",
+						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      enterpriseName,
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.EnterpriseSpec{
+						CredentialsName: "foobar",
+						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "my-webhook-secret",
+							Key:  "webhookSecret",
+						},
+					},
+					Status: garmoperatorv1alpha1.EnterpriseStatus{
+						ID:                       enterpriseID,
+						PoolManagerIsRunning:     false,
+						PoolManagerFailureReason: "no resources available",
+					},
+				},
+			},
+			wantErr:                      true,
+			expectLastSyncTimeAnnotation: false,
+			expectGarmRequest:            func(m *mock.MockPoolClientMockRecorder) {},
+		},
+		{
+			name: "pool.Status has matching id in garm database, pool.Specs changed to not existent image cr ref - error no image cr found",
+			object: &garmoperatorv1alpha1.Pool{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pool",
+					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-enterprise-pool",
+					Namespace: namespaceName,
+				},
+				Spec: garmoperatorv1alpha1.PoolSpec{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
+						Name:     enterpriseName,
+					},
+					ProviderName:           "kubernetes_external",
+					MaxRunners:             1,
+					MinIdleRunners:         0,
+					ImageName:              "ubuntu-image-not-existent",
+					Flavor:                 "medium",
+					OSType:                 "linux",
+					OSArch:                 "arm64",
+					Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+					Enabled:                true,
+					RunnerBootstrapTimeout: 20,
+					ExtraSpecs:             "",
+					GitHubRunnerGroup:      "",
+				},
+				Status: garmoperatorv1alpha1.PoolStatus{
+					ID:            poolID,
+					LastSyncError: "",
+				},
+			},
+			expectedObject: &garmoperatorv1alpha1.Pool{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pool",
+					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-enterprise-pool",
+					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.PoolSpec{
+					GitHubScopeRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
+						Name:     enterpriseName,
+					},
+					ProviderName:           "kubernetes_external",
+					MaxRunners:             1,
+					MinIdleRunners:         0,
+					ImageName:              "ubuntu-image-not-existent",
+					Flavor:                 "medium",
+					OSType:                 "linux",
+					OSArch:                 "arm64",
+					Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+					Enabled:                true,
+					RunnerBootstrapTimeout: 20,
+					ExtraSpecs:             "",
+					GitHubRunnerGroup:      "",
+				},
+				Status: garmoperatorv1alpha1.PoolStatus{
+					ID:            poolID,
+					LastSyncError: "images.garm-operator.mercedes-benz.com \"ubuntu-image-not-existent\" not found",
+				},
+			},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: namespaceName,
+						Name:      "my-webhook-secret",
+					},
+					Data: map[string][]byte{
+						"webhookSecret": []byte("supersecretvalue"),
+					},
+				},
+				&garmoperatorv1alpha1.Image{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "ubuntu-image",
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.ImageSpec{
+						Tag: "linux-ubuntu-22.04-arm64",
+					},
+				},
+				&garmoperatorv1alpha1.Enterprise{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Enterprise",
+						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      enterpriseName,
+						Namespace: namespaceName,
+					},
+					Spec: garmoperatorv1alpha1.EnterpriseSpec{
+						CredentialsName: "foobar",
+						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "my-webhook-secret",
+							Key:  "webhookSecret",
+						},
+					},
+					Status: garmoperatorv1alpha1.EnterpriseStatus{
+						ID:                       enterpriseID,
+						PoolManagerIsRunning:     false,
+						PoolManagerFailureReason: "no resources available",
+					},
+				},
+			},
+			expectLastSyncTimeAnnotation: false,
+			wantErr:                      true,
+			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
+				m.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
+					RunnerPrefix: params.RunnerPrefix{
+						Prefix: "",
+					},
+					ID:             poolID,
+					ProviderName:   "kubernetes_external",
+					MaxRunners:     5,
+					MinIdleRunners: 3,
+					Image:          "linux-ubuntu-22.04-arm64",
+					Flavor:         "medium",
+					OSType:         "linux",
+					OSArch:         "arm64",
+					Tags: []params.Tag{
+						{
+							ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6da",
+							Name: "kubernetes",
+						},
+						{
+							ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6db",
+							Name: "linux",
+						},
+						{
+							ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6dc",
+							Name: "arm64",
+						},
+						{
+							ID:   "b3ea9882-a25c-4eb1-94ba-6c70b9abb6dd",
+							Name: "ubuntu",
+						},
+					},
+					Enabled:        true,
+					Instances:      []params.Instance{},
+					RepoID:         "",
+					RepoName:       "",
+					OrgID:          "",
+					OrgName:        "",
+					EnterpriseID:   enterpriseID,
+					EnterpriseName: enterpriseName,
+				}}, nil)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -682,7 +950,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			}
 
 			// test last-sync-time
-			assert.Equal(t, annotations.HasAnnotation(pool, key.LastSyncTimeAnnotation), true)
+			assert.Equal(t, annotations.HasAnnotation(pool, key.LastSyncTimeAnnotation), tt.expectLastSyncTimeAnnotation)
 
 			// clear out annotations to avoid comparison errors
 			pool.ObjectMeta.Annotations = nil
