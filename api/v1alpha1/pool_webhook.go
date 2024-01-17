@@ -112,19 +112,6 @@ func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
-func validateImageName(ctx context.Context, r *Pool) *field.Error {
-	image := Image{}
-	err := c.Get(ctx, client.ObjectKey{Name: r.Spec.ImageName, Namespace: r.Namespace}, &image)
-	if err != nil {
-		return field.Invalid(
-			field.NewPath("spec").Child("imageName"),
-			r.Spec.ImageName,
-			err.Error(),
-		)
-	}
-	return nil
-}
-
 func (r *Pool) validateProviderName(old *Pool) *field.Error {
 	poollog.Info("validate spec.providerName", "spec.providerName", r.Spec.ProviderName)
 	fieldPath := field.NewPath("spec").Child("providerName")

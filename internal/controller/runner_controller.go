@@ -149,7 +149,7 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 		return ctrl.Result{}, nil
 	}
 
-	if r.runnerSpecsEqual(ctx, *runner, garmRunner) {
+	if r.runnerSpecsEqual(*runner, garmRunner) {
 		return ctrl.Result{}, nil
 	}
 
@@ -345,7 +345,7 @@ func (r *RunnerReconciler) fetchRunnerInstancesByNamespacedPools(instanceClient 
 	return garmRunnerInstances, nil
 }
 
-func (r *RunnerReconciler) runnerSpecsEqual(ctx context.Context, runner garmoperatorv1alpha1.Runner, garmRunner *params.Instance) bool {
+func (r *RunnerReconciler) runnerSpecsEqual(runner garmoperatorv1alpha1.Runner, garmRunner *params.Instance) bool {
 	runner.Status.PoolID = ""
 	tmpRunnerStatus := garmoperatorv1alpha1.RunnerStatus{
 		ID:                garmRunner.ID,

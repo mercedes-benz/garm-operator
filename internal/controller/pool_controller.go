@@ -222,13 +222,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 		return r.handleUpdateError(ctx, pool, err)
 	}
 
-	image, err := r.getImage(ctx, pool)
-	if err != nil {
-		log.Error(err, "error getting image")
-		return r.handleUpdateError(ctx, pool, err)
-	}
-
-	if err = poolUtil.UpdatePool(ctx, garmClient, pool, image); err != nil {
+	if err := poolUtil.UpdatePool(ctx, garmClient, pool, nil); err != nil {
 		log.Error(err, "error updating pool")
 		return r.handleUpdateError(ctx, pool, err)
 	}
