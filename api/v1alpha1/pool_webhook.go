@@ -41,15 +41,6 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	poollog.Info("validate create", "name", r.Name)
 	ctx := context.TODO()
 
-	err := validateImageName(ctx, r)
-	if err != nil {
-		return nil, apierrors.NewInvalid(
-			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-			r.Name,
-			field.ErrorList{err},
-		)
-	}
-
 	if err := r.validateExtraSpec(); err != nil {
 		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
 			r.Name,
@@ -94,15 +85,6 @@ func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 
 	// if the object is being deleted, skip validation
 	if r.GetDeletionTimestamp() == nil {
-		err := validateImageName(context.Background(), r)
-		if err != nil {
-			return nil, apierrors.NewInvalid(
-				schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-				r.Name,
-				field.ErrorList{err},
-			)
-		}
-
 		if err := r.validateExtraSpec(); err != nil {
 			return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
 				r.Name,

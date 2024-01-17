@@ -4,6 +4,7 @@ package controller
 
 import (
 	"context"
+	"reflect"
 	"strings"
 	"time"
 
@@ -145,6 +146,10 @@ func (r *RunnerReconciler) ensureFinalizer(ctx context.Context, runner *garmoper
 
 func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmoperatorv1alpha1.Runner, garmRunner *params.Instance) (ctrl.Result, error) {
 	if garmRunner == nil {
+		return ctrl.Result{}, nil
+	}
+
+	if r.runnerSpecsEqual(ctx, *runner, garmRunner) {
 		return ctrl.Result{}, nil
 	}
 
@@ -338,6 +343,28 @@ func (r *RunnerReconciler) fetchRunnerInstancesByNamespacedPools(instanceClient 
 		garmRunnerInstances = append(garmRunnerInstances, poolRunners.Payload...)
 	}
 	return garmRunnerInstances, nil
+}
+
+func (r *RunnerReconciler) runnerSpecsEqual(ctx context.Context, runner garmoperatorv1alpha1.Runner, garmRunner *params.Instance) bool {
+	runner.Status.PoolID = ""
+	tmpRunnerStatus := garmoperatorv1alpha1.RunnerStatus{
+		ID:                garmRunner.ID,
+		ProviderID:        garmRunner.ProviderID,
+		AgentID:           garmRunner.AgentID,
+		Name:              garmRunner.Name,
+		OSType:            garmRunner.OSType,
+		OSName:            garmRunner.OSName,
+		OSVersion:         garmRunner.OSVersion,
+		OSArch:            garmRunner.OSArch,
+		Addresses:         garmRunner.Addresses,
+		Status:            garmRunner.Status,
+		InstanceStatus:    garmRunner.RunnerStatus,
+		ProviderFault:     string(garmRunner.ProviderFault),
+		GitHubRunnerGroup: garmRunner.GitHubRunnerGroup,
+		PoolID:            "",
+	}
+
+	return reflect.DeepEqual(runner.Status, tmpRunnerStatus)
 }
 
 func getRunnerDiff(runnerCRs, garmRunners []string) []string {

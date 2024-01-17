@@ -116,7 +116,8 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	// get image cr object by name
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
-		return r.handleUpdateError(ctx, pool, err)
+		r.handleUpdateError(ctx, pool, err)
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	// check if there is already a pool with the same spec on garm side
@@ -146,7 +147,13 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		WithName("reconcileUpdate")
 	log.Info("pool on garm side found", "id", pool.Status.ID, "name", pool.Name)
 
-	poolNeedsUpdate, runners, err := r.comparePoolSpecs(ctx, pool, garmClient)
+	image, err := r.getImage(ctx, pool)
+	if err != nil {
+		r.handleUpdateError(ctx, pool, err)
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	poolNeedsUpdate, runners, err := r.comparePoolSpecs(ctx, pool, image, garmClient)
 	if err != nil {
 		log.Error(err, "error comparing pool specs")
 		return r.handleUpdateError(ctx, pool, err)
@@ -159,12 +166,6 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 
 	if !poolNeedsUpdate {
 		log.Info("pool CR differs from pool on garm side. Trigger a garm pool update")
-
-		image, err := r.getImage(ctx, pool)
-		if err != nil {
-			log.Error(err, "error getting image")
-			return r.handleUpdateError(ctx, pool, err)
-		}
 
 		if err = poolUtil.UpdatePool(ctx, garmClient, pool, image); err != nil {
 			log.Error(err, "error updating pool")
@@ -336,15 +337,9 @@ func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperator
 	return nil
 }
 
-func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1alpha1.Pool, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {
+func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {
 	log := log.FromContext(ctx).
 		WithName("comparePoolSpecs")
-
-	image, err := r.getImage(ctx, pool)
-	if err != nil {
-		log.Error(err, "error getting image")
-		return false, []params.Instance{}, err
-	}
 
 	gitHubScopeRef, err := r.fetchGitHubScopeCRD(ctx, pool)
 	if err != nil {
