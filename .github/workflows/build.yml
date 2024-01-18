@@ -31,3 +31,11 @@ jobs:
       
       - name: make test
         run: make test
+
+      - name: make sbom
+        run: make sbom
+
+      - uses: actions/upload-artifact@v3
+        with:
+         name: sbom 
+         path: tmp/garm-operator.bom.spdx
