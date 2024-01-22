@@ -8,6 +8,7 @@ require (
 	github.com/cloudbase/garm-provider-common v0.1.1
 	github.com/go-openapi/runtime v0.26.2
 	github.com/go-playground/validator/v10 v10.17.0
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/env v0.1.0

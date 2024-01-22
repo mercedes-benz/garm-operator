@@ -12,9 +12,20 @@ const (
 	metricControllerValue = "garm_operator"
 	metricNamespace       = "garm_operator"
 	garmAPI               = "api_requests"
+	garmInfo              = "info"
 )
 
 var (
+	GarmJwtExpiresAt = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: metricNamespace,
+		Subsystem: garmInfo,
+		Name:      "jwt_expires_at",
+		Help:      "Expiry date of obtained garm-server JWT",
+		ConstLabels: prometheus.Labels{
+			metricControllerLabel: metricControllerValue,
+		},
+	})
+
 	TotalGarmCalls = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metricNamespace,
@@ -39,6 +50,7 @@ var (
 )
 
 func init() {
+	metrics.Registry.MustRegister(GarmJwtExpiresAt)
 	metrics.Registry.MustRegister(TotalGarmCalls)
 	metrics.Registry.MustRegister(GarmCallErrors)
 }
