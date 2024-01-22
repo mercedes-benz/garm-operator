@@ -722,7 +722,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
 					ID:                     poolID,
-					LongRunningIdleRunners: 0,
+					LongRunningIdleRunners: 2,
 					LastSyncError:          "",
 				},
 			},
@@ -1018,8 +1018,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					EnterpriseName: enterpriseName,
 				}}, nil)
 
-				instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName("kube-runner-2")).Return(nil)
-				instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName("kube-runner-3")).Return(nil)
 				instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName("kube-runner-4")).Return(nil)
 			},
 		},

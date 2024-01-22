@@ -44,6 +44,7 @@ OPERATOR_METRICS_BIND_ADDRESS
 OPERATOR_HEALTH_PROBE_BIND_ADDRESS
 OPERATOR_LEADER_ELECTION
 OPERATOR_SYNC_PERIOD
+OPERATOR_MIN_IDLE_RUNNERS_AGE
 OPERATOR_WATCH_NAMESPACE
 
 OPERATOR_ENTERPRISE_CONCURRENCY
@@ -68,6 +69,7 @@ The following flags will be parsed and can be found in the [flags package](../..
 --operator-health-probe-bind-address
 --operator-leader-election
 --operator-sync-period
+--operator-min-idle-runners-age
 --operator-watch-namespace
 
 --operator-enterprise-concurrency
@@ -103,6 +105,7 @@ operator:
   healthProbeBindAddress: :8081
   leaderElection: false
   syncPeriod: 5m0s
+  minIdleRunnersAge: 5m0s
   watchNamespace: garm-operator-system
   enterpriseConcurrency: 1
   organizationConcurrency: 3
@@ -129,6 +132,7 @@ operator:
   healthProbeBindAddress: ":7001"
   leaderElection: true
   syncPeriod: "10m"
+  minIdleRunnersAge: "5m"
   watchNamespace: "garm-operator-namespace"
   enterpriseConcurrency: 1
   organizationConcurrency: 3
