@@ -45,11 +45,7 @@ type RunnerReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=runners/finalizers,verbs=update
 
 func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-	log.Info("Reconciling runners...", "Request", req)
-
 	instanceClient := garmClient.NewInstanceClient()
-
 	return r.reconcile(ctx, req, instanceClient)
 }
 
@@ -76,9 +72,16 @@ func (r *RunnerReconciler) reconcile(ctx context.Context, req ctrl.Request, inst
 }
 
 func (r *RunnerReconciler) handleCreateRunnerCR(ctx context.Context, req ctrl.Request, fetchErr error, garmRunner *params.Instance) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
 	if apierrors.IsNotFound(fetchErr) && garmRunner != nil {
 		return r.createRunnerCR(ctx, garmRunner, req.Namespace)
 	}
+
+	if apierrors.IsNotFound(fetchErr) {
+		log.Info("object was not found")
+		return ctrl.Result{}, nil
+	}
+
 	return ctrl.Result{}, fetchErr
 }
 
@@ -213,9 +216,7 @@ func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan ch
 			close(eventChan)
 			return
 		case <-ticker.C:
-			log.Info("Polling Runners...")
 			instanceClient := garmClient.NewInstanceClient()
-
 			err := r.EnqueueRunnerInstances(ctx, instanceClient, eventChan)
 			if err != nil {
 				log.Error(err, "Failed polling runner instances")
@@ -341,10 +342,15 @@ func (r *RunnerReconciler) fetchRunnerInstancesByNamespacedPools(instanceClient 
 }
 
 func getRunnerDiff(runnerCRs, garmRunners []string) []string {
+	cache := make(map[string]struct{})
 	var diff []string
 
+	for _, runner := range garmRunners {
+		cache[runner] = struct{}{}
+	}
+
 	for _, runnerCR := range runnerCRs {
-		if !slices.Contains(garmRunners, runnerCR) {
+		if _, found := cache[runnerCR]; !found {
 			diff = append(diff, runnerCR)
 		}
 	}

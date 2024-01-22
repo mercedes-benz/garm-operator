@@ -187,25 +187,27 @@ func run() error {
 		return fmt.Errorf("unable to create controller Repository: %w", err)
 	}
 
-	eventChan := make(chan event.GenericEvent)
-	runnerReconciler := &garmcontroller.RunnerReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}
+	if config.Config.Operator.RunnerReconciliation {
+		eventChan := make(chan event.GenericEvent)
+		runnerReconciler := &garmcontroller.RunnerReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+		}
 
-	// setup controller so it can reconcile if events from eventChan are queued
-	if err = runnerReconciler.SetupWithManager(mgr, eventChan,
-		controller.Options{
-			MaxConcurrentReconciles: config.Config.Operator.RunnerConcurrency,
-		},
-	); err != nil {
-		return fmt.Errorf("unable to create controller Runner: %w", err)
-	}
+		// setup controller so it can reconcile if events from eventChan are queued
+		if err = runnerReconciler.SetupWithManager(mgr, eventChan,
+			controller.Options{
+				MaxConcurrentReconciles: config.Config.Operator.RunnerConcurrency,
+			},
+		); err != nil {
+			return fmt.Errorf("unable to create controller Runner: %w", err)
+		}
 
-	// fetch runner instances periodically and enqueue reconcile events for runner ctrl if external system has changed
-	ctx, cancel := context.WithCancel(ctx)
-	go runnerReconciler.PollRunnerInstances(ctx, eventChan)
-	defer cancel()
+		// fetch runner instances periodically and enqueue reconcile events for runner ctrl if external system has changed
+		ctx, cancel := context.WithCancel(ctx)
+		go runnerReconciler.PollRunnerInstances(ctx, eventChan)
+		defer cancel()
+	}
 
 	//+kubebuilder:scaffold:builder
 
