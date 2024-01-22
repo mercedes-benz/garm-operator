@@ -61,6 +61,7 @@ release:
     - glob: tmp/garm_operator_all.yaml
     - glob: tmp/garm_operator_crds.yaml
     - glob: tmp/garm_operator.yaml
+    - glob: tmp/garm-operator.bom.spdx
     # - glob: tmp/3RD_PARTY_LICENSES.txt
     # - glob: tmp/BlackDuck_RiskReport.pdf
   header: |

@@ -33,6 +33,8 @@ func InitiateFlags() *pflag.FlagSet {
 	f.Int("operator-organization-concurrency", defaults.DefaultOrganizationConcurrency, "Specifies the maximum number of concurrent organizations that can be reconciled simultaneously")
 	f.Int("operator-pool-concurrency", defaults.DefaultPoolConcurrency, "Specifies the maximum number of concurrent pools that can be reconciled simultaneously")
 
+	f.Bool("operator-runner-reconciliation", defaults.DefaultRunnerReconciliation, "Specifies if runner reconciliation should be enabled")
+
 	f.String("garm-server", "", "The address of the GARM server")
 	f.String("garm-username", "", "The username for the GARM server")
 	f.String("garm-password", "", "The password for the GARM server")

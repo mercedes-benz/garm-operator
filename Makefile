@@ -127,6 +127,16 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
+##@ SBOM
+
+.PHONY: sbom
+sbom: kbom sbom-generate
+
+.PHONY: sbom-generate
+sbom-generate: kbom ## Generate SBOM
+	mkdir -p tmp
+	$(KBOM) generate --output tmp/garm-operator.bom.spdx --format json .
+
 ##@ Release
 
 .PHONY: release
@@ -160,6 +170,7 @@ MDTOC ?= $(LOCALBIN)/mdtoc
 SLICE ?= $(LOCALBIN)/kubectl-slice
 NANCY ?= $(LOCALBIN)/nancy
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
+KBOM ?= $(LOCALBIN)/bom
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
@@ -170,6 +181,7 @@ GORELEASER_VERSION ?= v1.21.0
 MDTOC_VERSION ?= v1.1.0
 SLICE_VERSION ?= v1.2.6
 NANCY_VERSION ?= v1.0.42
+KBOM_VERSION ?= v0.5.1
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -232,6 +244,12 @@ govulncheck: $(GOVULNCHECK) ## Download govulncheck locally if necessary. If wro
 $(GOVULNCHECK): $(LOCALBIN)
 	test -s $(LOCALBIN)/govulncheck || \
 	GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@latest
+
+.PHONY: kbom
+kbom: $(KBOM) ## Download nancy locally if necessary. If wrong version is installed, it will be overwritten.
+$(KBOM): $(LOCALBIN)
+	test -s $(LOCALBIN)/bom && $(LOCALBIN)/bom version | grep -q $(KBOM_VERSION) || \
+	GOBIN=$(LOCALBIN) go install sigs.k8s.io/bom/cmd/bom@$(KBOM_VERSION)
 
 ##@ Lint / Verify
 .PHONY: lint
