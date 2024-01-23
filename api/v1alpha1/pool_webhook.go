@@ -41,15 +41,6 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	poollog.Info("validate create", "name", r.Name)
 	ctx := context.TODO()
 
-	err := validateImageName(ctx, r)
-	if err != nil {
-		return nil, apierrors.NewInvalid(
-			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-			r.Name,
-			field.ErrorList{err},
-		)
-	}
-
 	if err := r.validateExtraSpec(); err != nil {
 		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
 			r.Name,
@@ -94,15 +85,6 @@ func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 
 	// if the object is being deleted, skip validation
 	if r.GetDeletionTimestamp() == nil {
-		err := validateImageName(context.Background(), r)
-		if err != nil {
-			return nil, apierrors.NewInvalid(
-				schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-				r.Name,
-				field.ErrorList{err},
-			)
-		}
-
 		if err := r.validateExtraSpec(); err != nil {
 			return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
 				r.Name,
@@ -128,19 +110,6 @@ func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	}
 
 	return nil, nil
-}
-
-func validateImageName(ctx context.Context, r *Pool) *field.Error {
-	image := Image{}
-	err := c.Get(ctx, client.ObjectKey{Name: r.Spec.ImageName, Namespace: r.Namespace}, &image)
-	if err != nil {
-		return field.Invalid(
-			field.NewPath("spec").Child("imageName"),
-			r.Spec.ImageName,
-			err.Error(),
-		)
-	}
-	return nil
 }
 
 func (r *Pool) validateProviderName(old *Pool) *field.Error {

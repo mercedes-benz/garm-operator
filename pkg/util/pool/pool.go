@@ -80,7 +80,6 @@ func UpdatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 		},
 		MaxRunners:             &pool.Spec.MaxRunners,
 		MinIdleRunners:         &pool.Spec.MinIdleRunners,
-		Image:                  image.Spec.Tag,
 		Flavor:                 pool.Spec.Flavor,
 		OSType:                 pool.Spec.OSType,
 		OSArch:                 pool.Spec.OSArch,
@@ -90,6 +89,10 @@ func UpdatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 		ExtraSpecs:             json.RawMessage([]byte(pool.Spec.ExtraSpecs)),
 		GitHubRunnerGroup:      &pool.Spec.GitHubRunnerGroup,
 	}
+	if image != nil {
+		poolParams.Image = image.Spec.Tag
+	}
+
 	_, err := garmClient.UpdatePool(pools.NewUpdatePoolParams().WithPoolID(pool.Status.ID).WithBody(poolParams))
 	if err != nil {
 		return err
