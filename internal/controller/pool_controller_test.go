@@ -689,6 +689,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					LastSyncError:          "",
 				},
 			},
+			expectLastSyncTimeAnnotation: true,
 			expectedObject: &garmoperatorv1alpha1.Pool{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Pool",
@@ -1084,11 +1085,10 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            "",
-					IdleRunners:   0,
-					Runners:       0,
-					Selector:      "",
-					LastSyncError: "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
+					ID:                     "",
+					LongRunningIdleRunners: 0,
+					Selector:               "",
+					LastSyncError:          "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -1126,7 +1126,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			},
 			wantErr:                      true,
 			expectLastSyncTimeAnnotation: false,
-			expectGarmRequest:            func(m *mock.MockPoolClientMockRecorder) {},
+			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
+			},
 		},
 		{
 			name: "pool.Status has matching id in garm database, pool.Specs changed to not existent image cr ref - error no image cr found",
@@ -1243,8 +1244,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			},
 			expectLastSyncTimeAnnotation: false,
 			wantErr:                      true,
-			expectGarmRequest: func(m *mock.MockPoolClientMockRecorder) {
-				m.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
+			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
+				poolClient.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
 					RunnerPrefix: params.RunnerPrefix{
 						Prefix: "",
 					},
