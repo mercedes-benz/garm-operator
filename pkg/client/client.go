@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	garm "github.com/cloudbase/garm/client"
 	apiClientFirstRun "github.com/cloudbase/garm/client/first_run"
@@ -15,6 +16,7 @@ import (
 	"github.com/cloudbase/garm/params"
 	"github.com/go-openapi/runtime"
 	openapiRuntimeClient "github.com/go-openapi/runtime/client"
+	"github.com/golang-jwt/jwt/v4"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
@@ -135,6 +137,7 @@ func newGarmClient(garmParams GarmScopeParams) (*garm.GarmAPI, runtime.ClientAut
 	}
 
 	// update token from login response
+	extractJWTTokenExp(context.TODO(), resp.Payload.Token)
 	authToken = openapiRuntimeClient.BearerToken(resp.Payload.Token)
 
 	return apiCli, authToken, nil
@@ -209,4 +212,23 @@ func EnsureAuth[T interface{}](f Func[T]) (T, error) {
 		result, err = f()
 	}
 	return result, err
+}
+
+func extractJWTTokenExp(ctx context.Context, tokenString string) {
+	log := log.FromContext(ctx)
+
+	log.Info("Extracting expiry date of jwt")
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
+	if err != nil {
+		log.Error(err, "failed parsing jwt")
+		return
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		if exp, ok := claims["exp"].(float64); ok {
+			expTime := time.Unix(int64(exp), 0)
+			log.Info(fmt.Sprintf("new token expires on " + expTime.Format(time.UnixDate)))
+			metrics.GarmJwtExpiresAt.Set(exp)
+		}
+	}
 }
