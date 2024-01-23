@@ -209,9 +209,11 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 	}
 
 	// update pool idle runners count in status
-	pool.Status.LongRunningIdleRunners = uint(longRunningIdleRunnersCount)
-	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
-		return ctrl.Result{}, err
+	if pool.Status.LongRunningIdleRunners != uint(longRunningIdleRunnersCount) {
+		pool.Status.LongRunningIdleRunners = uint(longRunningIdleRunnersCount)
+		if err := r.updatePoolCRStatus(ctx, pool); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	err = annotations.SetLastSyncTime(pool, r.Client)
