@@ -258,19 +258,19 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	}
 
 	// get a list of all idle runners to trigger deletion
-	idleRunners := poolUtil.IdleRunners(ctx, runners)
+	deletableRunners := poolUtil.DeletableRunners(ctx, runners)
 	if err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 	}
 
 	// set current idle runners count in status
-	pool.Status.LongRunningIdleRunners = uint(len(idleRunners))
+	pool.Status.LongRunningIdleRunners = uint(len(deletableRunners))
 
 	// scale pool down that all idle runners are deleted
 	log.Info("Scaling pool", "pool", pool.Name)
 	event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d before deleting", pool.Spec.MinIdleRunners))
 
-	for _, runner := range idleRunners {
+	for _, runner := range deletableRunners {
 		if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
 			log.Error(err, "unable to delete runner", "runner", runner.Name)
 		}
