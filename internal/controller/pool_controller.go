@@ -151,7 +151,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		return r.handleUpdateError(ctx, pool, err)
 	}
 
-	poolNeedsUpdate, runners, err := r.comparePoolSpecs(ctx, pool, image, garmClient)
+	poolNeedsUpdate, runners, err := r.comparePoolSpecs(ctx, pool, image.Spec.Tag, garmClient)
 	if err != nil {
 		log.Error(err, "error comparing pool specs")
 		return r.handleUpdateError(ctx, pool, err)
@@ -329,7 +329,7 @@ func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperator
 	return nil
 }
 
-func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {
+func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1alpha1.Pool, imageTag string, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {
 	log := log.FromContext(ctx).
 		WithName("comparePoolSpecs")
 
@@ -366,7 +366,7 @@ func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperato
 		},
 		MaxRunners:             pool.Spec.MaxRunners,
 		MinIdleRunners:         pool.Spec.MinIdleRunners,
-		Image:                  image.Spec.Tag,
+		Image:                  imageTag,
 		Flavor:                 pool.Spec.Flavor,
 		OSType:                 pool.Spec.OSType,
 		OSArch:                 pool.Spec.OSArch,
