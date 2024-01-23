@@ -12,6 +12,7 @@ const (
 	DefaultSyncPeriod             = 5 * time.Minute
 	DefaultWatchNamespace         = ""
 	DefaultSyncRunnersInterval    = 5 * time.Second
+	DefaultMinIdleRunnersAge      = 2 * time.Hour
 
 	// default values for garm configuration
 	DefaultGarmInit  = true

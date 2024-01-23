@@ -48,7 +48,23 @@ Garm will take care of this request and will create the missing runners to fulfi
 Scaling down the number of runners is done by decreasing the `minIdleRunners` field. If we wan't to scale down from `6` to `4`,
 `garm-operator` will make the same API call towards the garm-server where the `minIdleRunners` field is set to `4`.
 
-As garm doesn't remove any idle runners (by design), the `garm-operator` will make another API call towards the garm-server,
+As garm doesn't remove any idle runners (by design), `garm-operator` will take care of this request and scale pool down in a pessimistic manner.
+
+This means, that two configuration parameters are taken into account:
+
+- `minIdleRunners` (on the `pool.spec`): defines the new value for `minIdleRunners`
+- `minIdleRunnersAge` ([configured on the `operator` itself](config/configuration-parsing.md)): defines the age of the idle runners which should be removed
+
+If the `minIdleRunnersAge` is set to `5m` and we scale down from `6` to `4`, `garm-operator` will only delete idle runners which are older than `5m`.
+
+> [!IMPORTANT]
+> The intention behind this approach was to prevent the deletion of to many idle runners as garm itself is responsible for the lifecycle of a runners in a pool.
+
+##### scaling down to zero
+
+If we scale down to zero, `garm-operator` will delete all idle runners, no matter how old they are.
+
+the `garm-operator` will make another API call towards the garm-server,
 where it get the current number of idle runners and will remove the difference between the current number of idle runners and the new `minIdleRunners` value.
 
 ### pause reconciliation
