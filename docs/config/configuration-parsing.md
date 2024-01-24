@@ -52,6 +52,8 @@ OPERATOR_ORGANIZATION_CONCURRENCY
 OPERATOR_POOL_CONCURRENCY
 OPERATOR_REPOSITORY_CONCURRENCY
 OPERATOR_RUNNER_CONCURRENCY
+
+OPERATOR_LOG_VERBOSITY_LEVEL
 ```
 
 ## Flags
@@ -77,6 +79,8 @@ The following flags will be parsed and can be found in the [flags package](../..
 --operator-pool-concurrency
 --operator-repository-concurrency
 --operator-runner-concurrency
+
+--operator-log-verbosity-level
 ```
 
 ### Additional Flags
@@ -112,6 +116,7 @@ operator:
   poolConcurrency: 10
   repositoryConcurrency: 5
   runnerConcurrency: 20
+  logVerbosityLevel: 0
 ```
 
 ## Config File (yaml)
@@ -139,6 +144,7 @@ operator:
   poolConcurrency: 10
   repositoryConcurrency: 5
   runnerConcurrency: 20
+  logVerbosityLevel: 0
 ```
 
 ## Configuration Default Values

@@ -39,6 +39,7 @@ type OperatorConfig struct {
 	OrganizationConcurrency int           `koanf:"organizationConcurrency" validate:"gte=1" yaml:"organizationConcurrency"`
 	PoolConcurrency         int           `koanf:"poolConcurrency" validate:"gte=1" yaml:"poolConcurrency"`
 	RunnerReconciliation    bool          `koanf:"runnerReconciliation" yaml:"runnerReconciliation"`
+	LogVerbosityLevel       int           `koanf:"logVerbosityLevel" validate:"gte=0,lte=5" yaml:"logVerbosityLevel"`
 }
 
 type AppConfig struct {

@@ -36,6 +36,8 @@ func InitiateFlags() *pflag.FlagSet {
 
 	f.Bool("operator-runner-reconciliation", defaults.DefaultRunnerReconciliation, "Specifies if runner reconciliation should be enabled")
 
+	f.Int("operator-log-verbosity-level", defaults.DefaultLogVerbosityLevel, "Specifies the log verbosity level (0-5).")
+
 	f.String("garm-server", "", "The address of the GARM server")
 	f.String("garm-username", "", "The username for the GARM server")
 	f.String("garm-password", "", "The password for the GARM server")

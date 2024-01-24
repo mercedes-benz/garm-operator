@@ -27,4 +27,7 @@ const (
 
 	// default values for controller reconciliation configuration
 	DefaultRunnerReconciliation = false
+
+	// default values for controller logging configuration
+	DefaultLogVerbosityLevel = 0
 )
