@@ -49,7 +49,16 @@ type PoolStatus struct {
 	LongRunningIdleRunners uint   `json:"longRunningIdleRunners"`
 	Selector               string `json:"selector"`
 
-	LastSyncError string `json:"lastSyncError,omitempty"`
+	Conditions    []metav1.Condition `json:"conditions,omitempty"`
+	LastSyncError string             `json:"lastSyncError,omitempty"`
+}
+
+func (p *Pool) SetConditions(conditions []metav1.Condition) {
+	p.Status.Conditions = conditions
+}
+
+func (p *Pool) GetConditions() []metav1.Condition {
+	return p.Status.Conditions
 }
 
 //+kubebuilder:object:root=true

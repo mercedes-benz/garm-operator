@@ -34,6 +34,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 	poolUtil "github.com/mercedes-benz/garm-operator/pkg/util/pool"
 )
 
@@ -118,6 +119,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	// get image cr object by name
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
+		conditions.MarkFalse(pool, garmoperatorv1alpha1.ImageResourceFound, "FetchingImageRef", err.Error())
 		return r.handleUpdateError(ctx, pool, err)
 	}
 
@@ -309,6 +311,7 @@ func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperat
 	event.Error(r.Recorder, pool, err.Error())
 
 	pool.Status.LastSyncError = err.Error()
+	conditions.MarkFalse(pool, garmoperatorv1alpha1.ReadyCondition, "PoolReconcileError", err.Error())
 
 	if updateErr := r.updatePoolCRStatus(ctx, pool); updateErr != nil {
 		return ctrl.Result{}, updateErr
@@ -323,6 +326,9 @@ func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmo
 	pool.Status.ID = garmPool.ID
 	pool.Status.LongRunningIdleRunners = garmPool.MinIdleRunners
 	pool.Status.LastSyncError = ""
+
+	conditions.MarkTrue(pool, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.SuccessfulReconcileReason, "")
+	conditions.MarkTrue(pool, garmoperatorv1alpha1.ImageResourceFound, garmoperatorv1alpha1.FetchingImageRefReason, "Successfully fetched Image CR Ref")
 
 	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
 		return ctrl.Result{}, err
