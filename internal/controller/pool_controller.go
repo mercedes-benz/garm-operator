@@ -119,7 +119,6 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	// get image cr object by name
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
-		conditions.MarkFalse(pool, garmoperatorv1alpha1.ImageResourceFound, "FetchingImageRef", err.Error())
 		return r.handleUpdateError(ctx, pool, err)
 	}
 
@@ -311,7 +310,7 @@ func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperat
 	event.Error(r.Recorder, pool, err.Error())
 
 	pool.Status.LastSyncError = err.Error()
-	conditions.MarkFalse(pool, garmoperatorv1alpha1.ReadyCondition, "PoolReconcileError", err.Error())
+	conditions.MarkFalse(pool, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.PoolReconcileErrorReason, err.Error())
 
 	if updateErr := r.updatePoolCRStatus(ctx, pool); updateErr != nil {
 		return ctrl.Result{}, updateErr
@@ -459,6 +458,7 @@ func (r *PoolReconciler) getImage(ctx context.Context, pool *garmoperatorv1alpha
 	image := &garmoperatorv1alpha1.Image{}
 	if pool.Spec.ImageName != "" {
 		if err := r.Get(ctx, types.NamespacedName{Name: pool.Spec.ImageName, Namespace: pool.Namespace}, image); err != nil {
+			conditions.MarkFalse(pool, garmoperatorv1alpha1.ImageResourceFound, garmoperatorv1alpha1.FetchingImageRefReason, err.Error())
 			return nil, err
 		}
 	}

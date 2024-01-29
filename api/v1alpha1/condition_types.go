@@ -10,4 +10,5 @@ const (
 const (
 	SuccessfulReconcileReason = "SuccessfulReconcile"
 	FetchingImageRefReason    = "FetchingImageRef"
+	PoolReconcileErrorReason  = "PoolReconcileError"
 )
