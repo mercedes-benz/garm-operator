@@ -5,6 +5,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 	"reflect"
 	"strings"
 
@@ -92,6 +93,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 		garmRepository, err = r.createRepository(ctx, client, repository, webhookSecret)
 		if err != nil {
 			event.Error(r.Recorder, repository, err.Error())
+			conditions.MarkFalse(repository, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.ReconcileErrorReason, err.Error())
 			return ctrl.Result{}, err
 		}
 	}
@@ -100,12 +102,15 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	garmRepository, err = r.updateRepository(ctx, client, garmRepository.ID, webhookSecret, repository.Spec.CredentialsName)
 	if err != nil {
 		event.Error(r.Recorder, repository, err.Error())
+		conditions.MarkFalse(repository, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.ReconcileErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
 	// set and update repository status
 	repository.Status.ID = garmRepository.ID
 	repository.Status.PoolManagerFailureReason = garmRepository.PoolManagerStatus.FailureReason
 	repository.Status.PoolManagerIsRunning = garmRepository.PoolManagerStatus.IsRunning
+
+	conditions.MarkTrue(repository, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.SuccessfulReconcileReason, "")
 
 	if err := r.Status().Update(ctx, repository); err != nil {
 		return ctrl.Result{}, err
@@ -196,6 +201,10 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, scope garmCl
 
 	log.Info("starting repository deletion")
 	event.Deleting(r.Recorder, repository, "starting repository deletion")
+	conditions.MarkFalse(repository, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.DeletingReason, "Deleting Repo")
+	if err := r.Status().Update(ctx, repository); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	err := scope.DeleteRepository(
 		repositories.NewDeleteRepoParams().
@@ -204,6 +213,7 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteRepository error: %s", err))
 		event.Error(r.Recorder, repository, err.Error())
+		conditions.MarkFalse(repository, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.ReconcileErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
 

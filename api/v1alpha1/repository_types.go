@@ -17,9 +17,10 @@ type RepositorySpec struct {
 
 // RepositoryStatus defines the observed state of Repository
 type RepositoryStatus struct {
-	ID                       string `json:"id"`
-	PoolManagerIsRunning     bool   `json:"poolManagerIsRunning"`
-	PoolManagerFailureReason string `json:"poolManagerFailureReason,omitempty"`
+	ID                       string             `json:"id"`
+	PoolManagerIsRunning     bool               `json:"poolManagerIsRunning"`
+	PoolManagerFailureReason string             `json:"poolManagerFailureReason,omitempty"`
+	Conditions               []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -37,6 +38,14 @@ type Repository struct {
 
 	Spec   RepositorySpec   `json:"spec,omitempty"`
 	Status RepositoryStatus `json:"status,omitempty"`
+}
+
+func (r *Repository) SetConditions(conditions []metav1.Condition) {
+	r.Status.Conditions = conditions
+}
+
+func (r *Repository) GetConditions() []metav1.Condition {
+	return r.Status.Conditions
 }
 
 func (r *Repository) GetCredentialsName() string {

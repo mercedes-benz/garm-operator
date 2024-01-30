@@ -16,9 +16,10 @@ type OrganizationSpec struct {
 
 // OrganizationStatus defines the observed state of Organization
 type OrganizationStatus struct {
-	ID                       string `json:"id"`
-	PoolManagerIsRunning     bool   `json:"poolManagerIsRunning"`
-	PoolManagerFailureReason string `json:"poolManagerFailureReason,omitempty"`
+	ID                       string             `json:"id"`
+	PoolManagerIsRunning     bool               `json:"poolManagerIsRunning"`
+	PoolManagerFailureReason string             `json:"poolManagerFailureReason,omitempty"`
+	Conditions               []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -36,6 +37,14 @@ type Organization struct {
 
 	Spec   OrganizationSpec   `json:"spec,omitempty"`
 	Status OrganizationStatus `json:"status,omitempty"`
+}
+
+func (o *Organization) SetConditions(conditions []metav1.Condition) {
+	o.Status.Conditions = conditions
+}
+
+func (o *Organization) GetConditions() []metav1.Condition {
+	return o.Status.Conditions
 }
 
 func (o *Organization) GetCredentialsName() string {

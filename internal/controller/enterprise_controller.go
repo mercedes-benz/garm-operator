@@ -5,6 +5,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 	"reflect"
 	"strings"
 
@@ -93,6 +94,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 		garmEnterprise, err = r.createEnterprise(ctx, client, enterprise, webhookSecret)
 		if err != nil {
 			event.Error(r.Recorder, enterprise, err.Error())
+			conditions.MarkFalse(enterprise, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.ReconcileErrorReason, err.Error())
 			return ctrl.Result{}, err
 		}
 	}
@@ -101,6 +103,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	garmEnterprise, err = r.updateEnterprise(ctx, client, garmEnterprise.ID, webhookSecret, enterprise.Spec.CredentialsName)
 	if err != nil {
 		event.Error(r.Recorder, enterprise, err.Error())
+		conditions.MarkFalse(enterprise, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.ReconcileErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -108,6 +111,8 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	enterprise.Status.ID = garmEnterprise.ID
 	enterprise.Status.PoolManagerFailureReason = garmEnterprise.PoolManagerStatus.FailureReason
 	enterprise.Status.PoolManagerIsRunning = garmEnterprise.PoolManagerStatus.IsRunning
+
+	conditions.MarkTrue(enterprise, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.SuccessfulReconcileReason, "")
 
 	if err := r.Status().Update(ctx, enterprise); err != nil {
 		return ctrl.Result{}, err
@@ -197,6 +202,10 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 
 	log.Info("starting enterprise deletion")
 	event.Deleting(r.Recorder, enterprise, "starting enterprise deletion")
+	conditions.MarkFalse(enterprise, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.DeletingReason, "Deleting Enterprise")
+	if err := r.Status().Update(ctx, enterprise); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	err := scope.DeleteEnterprise(
 		enterprises.NewDeleteEnterpriseParams().
@@ -204,6 +213,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmCl
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteEnterprise error: %s", err))
+		conditions.MarkFalse(enterprise, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.ReconcileErrorReason, err.Error())
 		event.Error(r.Recorder, enterprise, err.Error())
 		return ctrl.Result{}, err
 	}

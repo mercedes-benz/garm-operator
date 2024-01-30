@@ -122,7 +122,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					ID:                     poolID,
 					LongRunningIdleRunners: 3,
 					Selector:               "",
-					LastSyncError:          "",
+					//LastSyncError:          "",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -265,8 +265,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            outdatedPoolID,
-					LastSyncError: "",
+					ID: outdatedPoolID,
+					//LastSyncError: "",
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Pool{
@@ -304,7 +304,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					ID:                     poolID,
 					LongRunningIdleRunners: 3,
 					Selector:               "",
-					LastSyncError:          "",
+					//LastSyncError:          "",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -427,8 +427,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					//LastSyncError: "",
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Pool{
@@ -463,8 +463,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					//LastSyncError: "",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -686,7 +686,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Status: garmoperatorv1alpha1.PoolStatus{
 					ID:                     poolID,
 					LongRunningIdleRunners: 3,
-					LastSyncError:          "",
+					//LastSyncError:          "",
 				},
 			},
 			expectLastSyncTimeAnnotation: true,
@@ -724,7 +724,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Status: garmoperatorv1alpha1.PoolStatus{
 					ID:                     poolID,
 					LongRunningIdleRunners: 2,
-					LastSyncError:          "",
+					//LastSyncError:          "",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -1088,7 +1088,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					ID:                     "",
 					LongRunningIdleRunners: 0,
 					Selector:               "",
-					LastSyncError:          "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
+					//LastSyncError:          "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -1160,8 +1160,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					//LastSyncError: "",
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Pool{
@@ -1196,8 +1196,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "images.garm-operator.mercedes-benz.com \"ubuntu-image-not-existent\" not found",
+					ID: poolID,
+					//LastSyncError: "images.garm-operator.mercedes-benz.com \"ubuntu-image-not-existent\" not found",
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -1395,8 +1395,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					//LastSyncError: "",
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Pool{
@@ -1428,8 +1428,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:                     poolID,
-					LastSyncError:          "",
+					ID: poolID,
+					//LastSyncError:          "",
 					LongRunningIdleRunners: 0,
 				},
 			},
@@ -1586,8 +1586,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:                     poolID,
-					LastSyncError:          "",
+					ID: poolID,
+					//LastSyncError:          "",
 					LongRunningIdleRunners: 0,
 				},
 			},
@@ -1620,8 +1620,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					//LastSyncError: "",
 				},
 			},
 			runtimeObjects: []runtime.Object{

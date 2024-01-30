@@ -16,9 +16,10 @@ type EnterpriseSpec struct {
 
 // EnterpriseStatus defines the observed state of Enterprise
 type EnterpriseStatus struct {
-	ID                       string `json:"id"`
-	PoolManagerIsRunning     bool   `json:"poolManagerIsRunning"`
-	PoolManagerFailureReason string `json:"poolManagerFailureReason,omitempty"`
+	ID                       string             `json:"id"`
+	PoolManagerIsRunning     bool               `json:"poolManagerIsRunning"`
+	PoolManagerFailureReason string             `json:"poolManagerFailureReason,omitempty"`
+	Conditions               []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -36,6 +37,14 @@ type Enterprise struct {
 
 	Spec   EnterpriseSpec   `json:"spec,omitempty"`
 	Status EnterpriseStatus `json:"status,omitempty"`
+}
+
+func (e *Enterprise) SetConditions(conditions []metav1.Condition) {
+	e.Status.Conditions = conditions
+}
+
+func (e *Enterprise) GetConditions() []metav1.Condition {
+	return e.Status.Conditions
 }
 
 func (e *Enterprise) GetCredentialsName() string {

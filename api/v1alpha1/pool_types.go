@@ -49,8 +49,7 @@ type PoolStatus struct {
 	LongRunningIdleRunners uint   `json:"longRunningIdleRunners"`
 	Selector               string `json:"selector"`
 
-	Conditions    []metav1.Condition `json:"conditions,omitempty"`
-	LastSyncError string             `json:"lastSyncError,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 func (p *Pool) SetConditions(conditions []metav1.Condition) {

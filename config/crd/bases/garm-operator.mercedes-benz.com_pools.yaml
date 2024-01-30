@@ -217,8 +217,6 @@ spec:
                 type: array
               id:
                 type: string
-              lastSyncError:
-                type: string
               longRunningIdleRunners:
                 type: integer
               selector:
