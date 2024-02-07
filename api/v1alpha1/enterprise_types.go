@@ -4,6 +4,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 // EnterpriseSpec defines the desired state of Enterprise
@@ -16,10 +18,8 @@ type EnterpriseSpec struct {
 
 // EnterpriseStatus defines the observed state of Enterprise
 type EnterpriseStatus struct {
-	ID                       string             `json:"id"`
-	PoolManagerIsRunning     bool               `json:"poolManagerIsRunning"`
-	PoolManagerFailureReason string             `json:"poolManagerFailureReason,omitempty"`
-	Conditions               []metav1.Condition `json:"conditions,omitempty"`
+	ID         string             `json:"id"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -60,11 +60,25 @@ func (e *Enterprise) GetName() string {
 }
 
 func (e *Enterprise) GetPoolManagerIsRunning() bool {
-	return e.Status.PoolManagerIsRunning
+	condition := conditions.Get(e, conditions.PoolManager)
+	if condition == nil {
+		return false
+	}
+
+	return condition.Status == TrueAsString
 }
 
 func (e *Enterprise) GetPoolManagerFailureReason() string {
-	return e.Status.PoolManagerFailureReason
+	condition := conditions.Get(e, conditions.PoolManager)
+	if condition == nil {
+		return ""
+	}
+
+	if condition.Reason == string(conditions.PoolManagerFailureReason) {
+		return condition.Message
+	}
+
+	return ""
 }
 
 func (e *Enterprise) GetKind() string {

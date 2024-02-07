@@ -5,7 +5,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 	"reflect"
 	"strings"
 
@@ -26,6 +25,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"github.com/mercedes-benz/garm-operator/pkg/secret"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 // OrganizationReconciler reconciles a Organization object
@@ -80,11 +80,24 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &organization.Spec.WebhookSecretRef, organization.Namespace)
 	if err != nil {
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(organization, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		if err := r.Status().Update(ctx, organization); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
+	}
+	conditions.MarkTrue(organization, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+	if err := r.Status().Update(ctx, organization); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	garmOrganization, err := r.getExistingGarmOrg(ctx, client, organization)
 	if err != nil {
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		if err := r.Status().Update(ctx, organization); err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -93,7 +106,10 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 		garmOrganization, err = r.createOrganization(ctx, client, organization, webhookSecret)
 		if err != nil {
 			event.Error(r.Recorder, organization, err.Error())
-			conditions.MarkFalse(organization, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.ReconcileErrorReason, err.Error())
+			conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+			if err := r.Status().Update(ctx, organization); err != nil {
+				return ctrl.Result{}, err
+			}
 			return ctrl.Result{}, err
 		}
 	}
@@ -102,16 +118,22 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	garmOrganization, err = r.updateOrganization(ctx, client, garmOrganization.ID, webhookSecret, organization.Spec.CredentialsName)
 	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
-		conditions.MarkFalse(organization, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		if err := r.Status().Update(ctx, organization); err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, err
 	}
 
 	// set and update organization status
 	organization.Status.ID = garmOrganization.ID
-	organization.Status.PoolManagerFailureReason = garmOrganization.PoolManagerStatus.FailureReason
-	organization.Status.PoolManagerIsRunning = garmOrganization.PoolManagerStatus.IsRunning
+	if !garmOrganization.PoolManagerStatus.IsRunning {
+		conditions.MarkFalse(organization, conditions.PoolManager, conditions.PoolManagerFailureReason, garmOrganization.PoolManagerStatus.FailureReason)
+	} else {
+		conditions.MarkTrue(organization, conditions.PoolManager, conditions.PoolManagerRunningReason, garmOrganization.PoolManagerStatus.FailureReason)
+	}
 
-	conditions.MarkTrue(organization, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.SuccessfulReconcileReason, "")
+	conditions.MarkTrue(organization, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
 
 	if err := r.Status().Update(ctx, organization); err != nil {
 		return ctrl.Result{}, err
@@ -201,7 +223,7 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garm
 
 	log.Info("starting organization deletion")
 	event.Deleting(r.Recorder, organization, "starting organization deletion")
-	conditions.MarkFalse(organization, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.DeletingReason, "Deleting Org")
+	conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.DeletingReason, "Deleting Org")
 	if err := r.Status().Update(ctx, organization); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -213,7 +235,10 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garm
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteOrganization error: %s", err))
 		event.Error(r.Recorder, organization, err.Error())
-		conditions.MarkFalse(organization, garmoperatorv1alpha1.ReadyCondition, garmoperatorv1alpha1.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		if err := r.Status().Update(ctx, organization); err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, err
 	}
 

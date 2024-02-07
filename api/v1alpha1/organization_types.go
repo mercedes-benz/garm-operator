@@ -4,6 +4,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 // OrganizationSpec defines the desired state of Organization
@@ -16,10 +18,8 @@ type OrganizationSpec struct {
 
 // OrganizationStatus defines the observed state of Organization
 type OrganizationStatus struct {
-	ID                       string             `json:"id"`
-	PoolManagerIsRunning     bool               `json:"poolManagerIsRunning"`
-	PoolManagerFailureReason string             `json:"poolManagerFailureReason,omitempty"`
-	Conditions               []metav1.Condition `json:"conditions,omitempty"`
+	ID         string             `json:"id"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -60,11 +60,25 @@ func (o *Organization) GetName() string {
 }
 
 func (o *Organization) GetPoolManagerIsRunning() bool {
-	return o.Status.PoolManagerIsRunning
+	condition := conditions.Get(o, conditions.PoolManager)
+	if condition == nil {
+		return false
+	}
+
+	return condition.Status == TrueAsString
 }
 
 func (o *Organization) GetPoolManagerFailureReason() string {
-	return o.Status.PoolManagerFailureReason
+	condition := conditions.Get(o, conditions.PoolManager)
+	if condition == nil {
+		return ""
+	}
+
+	if condition.Reason == string(conditions.PoolManagerFailureReason) {
+		return condition.Message
+	}
+
+	return ""
 }
 
 func (o *Organization) GetKind() string {

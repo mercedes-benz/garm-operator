@@ -39,3 +39,8 @@ type SecretRef struct {
 	// Key is the key in the secret's data map for this value
 	Key string `json:"key"`
 }
+
+const (
+	TrueAsString  = "True"
+	FalseAsString = "False"
+)

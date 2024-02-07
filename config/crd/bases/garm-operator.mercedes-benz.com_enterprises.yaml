@@ -150,13 +150,8 @@ spec:
                 type: array
               id:
                 type: string
-              poolManagerFailureReason:
-                type: string
-              poolManagerIsRunning:
-                type: boolean
             required:
             - id
-            - poolManagerIsRunning
             type: object
         type: object
     served: true
