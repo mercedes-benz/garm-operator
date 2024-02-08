@@ -47,8 +47,6 @@ func main() {
 }
 
 func run() error {
-	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
-
 	// initiate flags
 	f := flags.InitiateFlags()
 
@@ -72,6 +70,8 @@ func run() error {
 		fmt.Printf("generated Config as yaml:\n%s\n", yamlConfig)
 		return nil
 	}
+
+	ctrl.SetLogger(textlogger.NewLogger((textlogger.NewConfig(textlogger.Verbosity(config.Config.Operator.LogVerbosityLevel)))))
 
 	var watchNamespaces map[string]cache.Config
 	if config.Config.Operator.WatchNamespace != "" {
