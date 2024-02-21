@@ -59,7 +59,7 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 	}
 
 	poolList.FilterByFields(
-		MatchesFlavour(r.Spec.Flavor),
+		MatchesFlavor(r.Spec.Flavor),
 		MatchesImage(r.Spec.ImageName),
 		MatchesProvider(r.Spec.ProviderName),
 		MatchesGitHubScope(r.Spec.GitHubScopeRef.Name, r.Spec.GitHubScopeRef.Kind),

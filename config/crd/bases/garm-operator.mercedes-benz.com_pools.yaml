@@ -31,7 +31,7 @@ spec:
       priority: 1
       type: string
     - jsonPath: .spec.flavor
-      name: Flavour
+      name: Flavor
       priority: 1
       type: string
     - jsonPath: .spec.providerName

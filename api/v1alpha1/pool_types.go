@@ -68,7 +68,7 @@ func (p *Pool) GetConditions() []metav1.Condition {
 //+kubebuilder:printcolumn:name="MinIdleRunners",type=string,JSONPath=`.spec.minIdleRunners`
 //+kubebuilder:printcolumn:name="MaxRunners",type=string,JSONPath=`.spec.maxRunners`
 //+kubebuilder:printcolumn:name="ImageName",type=string,JSONPath=`.spec.imageName`,priority=1
-//+kubebuilder:printcolumn:name="Flavour",type=string,JSONPath=`.spec.flavor`,priority=1
+//+kubebuilder:printcolumn:name="Flavor",type=string,JSONPath=`.spec.flavor`,priority=1
 //+kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.providerName`,priority=1
 //+kubebuilder:printcolumn:name="ScopeType",type=string,JSONPath=`.spec.githubScopeRef.kind`,priority=1
 //+kubebuilder:printcolumn:name="ScopeName",type=string,JSONPath=`.spec.githubScopeRef.name`,priority=1
@@ -107,9 +107,9 @@ func MatchesImage(image string) Predicate {
 	}
 }
 
-func MatchesFlavour(flavour string) Predicate {
+func MatchesFlavor(flavor string) Predicate {
 	return func(p Pool) bool {
-		return p.Spec.Flavor == flavour
+		return p.Spec.Flavor == flavor
 	}
 }
 
