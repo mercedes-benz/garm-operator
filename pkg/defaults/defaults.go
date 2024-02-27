@@ -21,10 +21,13 @@ const (
 	// default values for controller concurrency configuration
 	DefaultRunnerConcurrency       = 50
 	DefaultRepositoryConcurrency   = 10
-	DefaultEnterpriseConcurrency   = 1
 	DefaultOrganizationConcurrency = 5
+	DefaultEnterpriseConcurrency   = 1
 	DefaultPoolConcurrency         = 10
 
 	// default values for controller reconciliation configuration
 	DefaultRunnerReconciliation = false
+
+	// default values for controller logging configuration
+	DefaultLogVerbosityLevel = 0
 )
