@@ -48,6 +48,9 @@ jobs:
       #     BLACKDUCK_PROJECT_NAME: ${{ secrets.BLACKDUCK_PROJECT_NAME }}
       #     BLACKDUCK_TOKEN: ${{ secrets.BLACKDUCK_TOKEN }}
 
+      - name: SBOM
+        run: make sbom
+
       - name: release
         run: make release
         env:

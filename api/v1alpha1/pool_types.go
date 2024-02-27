@@ -45,10 +45,9 @@ type PoolSpec struct {
 
 // PoolStatus defines the observed state of Pool
 type PoolStatus struct {
-	ID          string `json:"id"`
-	IdleRunners uint   `json:"idleRunners"`
-	Runners     uint   `json:"runners"`
-	Selector    string `json:"selector"`
+	ID                     string `json:"id"`
+	LongRunningIdleRunners uint   `json:"longRunningIdleRunners"`
+	Selector               string `json:"selector"`
 
 	LastSyncError string `json:"lastSyncError,omitempty"`
 }

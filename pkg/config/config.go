@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/iancoleman/strcase"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
@@ -17,25 +18,28 @@ import (
 )
 
 type GarmConfig struct {
-	Server   string `koanf:"server" validate:"required,url"`
-	Username string `koanf:"username" validate:"required"`
-	Password string `koanf:"password" validate:"required"`
-	Init     bool   `koanf:"init"`
-	Email    string `koanf:"email" validate:"required_if=Init true"`
+	Server   string `koanf:"server" validate:"required,url" yaml:"server"`
+	Username string `koanf:"username" validate:"required" yaml:"username"`
+	Password string `koanf:"password" validate:"required" yaml:"password"`
+	Init     bool   `koanf:"init" yaml:"init"`
+	Email    string `koanf:"email" validate:"required_if=Init true" yaml:"email"`
 }
 
 type OperatorConfig struct {
-	MetricsBindAddress      string        `koanf:"metrics_bind_address" validate:"required,hostname_port"`
-	HealthProbeBindAddress  string        `koanf:"health_probe_bind_address" validate:"required,hostname_port"`
-	LeaderElection          bool          `koanf:"leader_election"`
-	SyncPeriod              time.Duration `koanf:"sync_period" validate:"required"`
-	WatchNamespace          string        `koanf:"watch_namespace"`
-	SyncRunnersInterval     time.Duration `koanf:"sync_runners_interval" validate:"gte=5s,lte=5m"`
-	RunnerConcurrency       int           `koanf:"runner_concurrency" validate:"gte=1"`
-	RepositoryConcurrency   int           `koanf:"repository_concurrency" validate:"gte=1"`
-	EnterpriseConcurrency   int           `koanf:"enterprise_concurrency" validate:"gte=1"`
-	OrganizationConcurrency int           `koanf:"organization_concurrency" validate:"gte=1"`
-	PoolConcurrency         int           `koanf:"pool_concurrency" validate:"gte=1"`
+	MetricsBindAddress      string        `koanf:"metricsBindAddress" validate:"required,hostname_port" yaml:"metricsBindAddress"`
+	HealthProbeBindAddress  string        `koanf:"healthProbeBindAddress" validate:"required,hostname_port" yaml:"healthProbeBindAddress"`
+	LeaderElection          bool          `koanf:"leaderElection" yaml:"leaderElection"`
+	SyncPeriod              time.Duration `koanf:"syncPeriod" validate:"required" yaml:"syncPeriod"`
+	WatchNamespace          string        `koanf:"watchNamespace" yaml:"watchNamespace"`
+	SyncRunnersInterval     time.Duration `koanf:"syncRunnersInterval" validate:"gte=5s,lte=5m" yaml:"syncRunnersInterval"`
+	MinIdleRunnersAge       time.Duration `koanf:"minIdleRunnersAge" yaml:"minIdleRunnersAge"`
+	RunnerConcurrency       int           `koanf:"runnerConcurrency" validate:"gte=1" yaml:"runnerConcurrency"`
+	RepositoryConcurrency   int           `koanf:"repositoryConcurrency" validate:"gte=1" yaml:"repositoryConcurrency"`
+	OrganizationConcurrency int           `koanf:"organizationConcurrency" validate:"gte=1" yaml:"organizationConcurrency"`
+	EnterpriseConcurrency   int           `koanf:"enterpriseConcurrency" validate:"gte=1" yaml:"enterpriseConcurrency"`
+	PoolConcurrency         int           `koanf:"poolConcurrency" validate:"gte=1" yaml:"poolConcurrency"`
+	RunnerReconciliation    bool          `koanf:"runnerReconciliation" yaml:"runnerReconciliation"`
+	LogVerbosityLevel       int           `koanf:"logVerbosityLevel" validate:"gte=0,lte=5" yaml:"logVerbosityLevel"`
 }
 
 type AppConfig struct {
@@ -51,28 +55,52 @@ func GenerateConfig(f *pflag.FlagSet, configFile string) error {
 
 	// load config from envs with prefix OPERATOR_
 	k.Load(env.Provider("OPERATOR_", ".", func(s string) string {
-		// Transform env e.g. from OPERATOR_SYNC_PERIOD to operator.syncperiod
-		key := strings.Replace(strings.ToLower(s), "_", ".", 1)
-		return key
+		// Transform env e.g. from OPERATOR_SYNC_PERIOD to operator.syncPeriod (camel case)
+		key := strings.SplitN(s, "_", 2)
+
+		for i := range key {
+			key[i] = strcase.ToLowerCamel(key[i])
+		}
+
+		res := strings.Join(key, ".")
+
+		return res
 	}), nil)
 
 	// load config from envs with prefix GARM_
 	k.Load(env.Provider("GARM_", ".", func(s string) string {
-		return strings.Replace(strings.ToLower(s), "_", ".", 1)
+		// Transform env e.g. from GARM_SERVER to garm.server (camel case)
+		key := strings.SplitN(s, "_", 2)
+
+		for i := range key {
+			key[i] = strcase.ToLowerCamel(key[i])
+		}
+
+		res := strings.Join(key, ".")
+
+		return res
 	}), nil)
 
 	// load config from flags
 	if f != nil {
 		k.Load(posflag.ProviderWithFlag(f, ".", k, func(pf *pflag.Flag) (string, interface{}) {
-			// Transform flag e.g. from operator-sync-period to operator.syncperiod
-			key := strings.Replace(pf.Name, "-", ".", 1)
-			key2 := strings.ReplaceAll(key, "-", "_")
+			// Transform flag e.g. from operator-sync-period to operator.syncPeriod (camel case)
+			key := strings.SplitN(pf.Name, "-", 2)
 
-			// Use FlagVal() and then transform the value, or don't use it at all
-			// and add custom logic to parse the value.
 			val := posflag.FlagVal(f, pf)
 
-			return key2, val
+			// Check array length to prevent failing if flag consists only of a single string (e.g. config flag)
+			if len(key) == 2 {
+				for i := range key {
+					key[i] = strcase.ToLowerCamel(key[i])
+				}
+				res := strings.Join(key, ".")
+				return res, val
+			}
+
+			res := key[0]
+
+			return res, val
 		}), nil)
 	}
 
