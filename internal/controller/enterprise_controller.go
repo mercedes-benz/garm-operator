@@ -89,12 +89,10 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 		return ctrl.Result{}, err
 	}
 	conditions.MarkTrue(enterprise, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
-	if err := r.Status().Update(ctx, enterprise); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	garmEnterprise, err := r.getExistingGarmEnterprise(ctx, client, enterprise)
 	if err != nil {
+		event.Error(r.Recorder, enterprise, err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
 		if err := r.Status().Update(ctx, enterprise); err != nil {
 			return ctrl.Result{}, err
@@ -128,10 +126,9 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	// set and update enterprise status
 	enterprise.Status.ID = garmEnterprise.ID
+	conditions.MarkTrue(enterprise, conditions.PoolManager, conditions.PoolManagerRunningReason, garmEnterprise.PoolManagerStatus.FailureReason)
 	if !garmEnterprise.PoolManagerStatus.IsRunning {
 		conditions.MarkFalse(enterprise, conditions.PoolManager, conditions.PoolManagerFailureReason, garmEnterprise.PoolManagerStatus.FailureReason)
-	} else {
-		conditions.MarkTrue(enterprise, conditions.PoolManager, conditions.PoolManagerRunningReason, garmEnterprise.PoolManagerStatus.FailureReason)
 	}
 
 	conditions.MarkTrue(enterprise, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
@@ -145,7 +142,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	}
 
 	log.Info("reconciling enterprise successfully done")
-
 	return ctrl.Result{}, nil
 }
 

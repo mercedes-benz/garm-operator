@@ -88,12 +88,10 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 		return ctrl.Result{}, err
 	}
 	conditions.MarkTrue(repository, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
-	if err := r.Status().Update(ctx, repository); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	garmRepository, err := r.getExistingGarmRepo(ctx, client, repository)
 	if err != nil {
+		event.Error(r.Recorder, repository, err.Error())
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
 		if err := r.Status().Update(ctx, repository); err != nil {
 			return ctrl.Result{}, err
@@ -124,12 +122,12 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 		}
 		return ctrl.Result{}, err
 	}
+
 	// set and update repository status
 	repository.Status.ID = garmRepository.ID
+	conditions.MarkTrue(repository, conditions.PoolManager, conditions.PoolManagerRunningReason, garmRepository.PoolManagerStatus.FailureReason)
 	if !garmRepository.PoolManagerStatus.IsRunning {
 		conditions.MarkFalse(repository, conditions.PoolManager, conditions.PoolManagerFailureReason, garmRepository.PoolManagerStatus.FailureReason)
-	} else {
-		conditions.MarkTrue(repository, conditions.PoolManager, conditions.PoolManagerRunningReason, garmRepository.PoolManagerStatus.FailureReason)
 	}
 
 	conditions.MarkTrue(repository, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")

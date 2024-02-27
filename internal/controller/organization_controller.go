@@ -88,12 +88,10 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 		return ctrl.Result{}, err
 	}
 	conditions.MarkTrue(organization, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
-	if err := r.Status().Update(ctx, organization); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	garmOrganization, err := r.getExistingGarmOrg(ctx, client, organization)
 	if err != nil {
+		event.Error(r.Recorder, organization, err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
 		if err := r.Status().Update(ctx, organization); err != nil {
 			return ctrl.Result{}, err
@@ -127,14 +125,12 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 
 	// set and update organization status
 	organization.Status.ID = garmOrganization.ID
+	conditions.MarkTrue(organization, conditions.PoolManager, conditions.PoolManagerRunningReason, garmOrganization.PoolManagerStatus.FailureReason)
 	if !garmOrganization.PoolManagerStatus.IsRunning {
 		conditions.MarkFalse(organization, conditions.PoolManager, conditions.PoolManagerFailureReason, garmOrganization.PoolManagerStatus.FailureReason)
-	} else {
-		conditions.MarkTrue(organization, conditions.PoolManager, conditions.PoolManagerRunningReason, garmOrganization.PoolManagerStatus.FailureReason)
 	}
 
 	conditions.MarkTrue(organization, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
-
 	if err := r.Status().Update(ctx, organization); err != nil {
 		return ctrl.Result{}, err
 	}
