@@ -11,6 +11,9 @@ data:
     kind: CustomResourceStateMetrics
     spec:
       resources:
+        ##################
+        #   ENTERPRISE   #
+        #################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Enterprise"
@@ -30,15 +33,7 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-            
-            - name: enterprise_pool_manager_running
-              help: Whether the enterprises poolManager is running.
-              each:
-                gauge:
-                  nilIsZero: true
-                  path: [ status, poolManagerIsRunning ]
-                type: Gauge
-            
+
             - name: enterprise_info
               help: Information about an enterprise.
               each:
@@ -61,7 +56,24 @@ data:
                     - garm-operator.mercedes-benz.com/paused
                   labelsFromPath:
                     paused_value: []
-        
+
+            - name: enterprise_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]
+
+        ##################
+        #   Org         #
+        #################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Organization"
@@ -81,15 +93,7 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-            
-            - name: org_pool_manager_running
-              help: Whether the orgs poolManager is running.
-              each:
-                gauge:
-                  nilIsZero: true
-                  path: [ status, poolManagerIsRunning ]
-                type: Gauge
-            
+
             - name: org_info
               help: Information about an organization.
               each:
@@ -112,7 +116,24 @@ data:
                     - garm-operator.mercedes-benz.com/paused
                   labelsFromPath:
                     paused_value: [ ]
-        
+
+            - name: org_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]
+
+        ##################
+        #   Repo         #
+        #################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Repository"
@@ -132,15 +153,7 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-            
-            - name: repo_pool_manager_running
-              help: Whether the repositories poolManager is running.
-              each:
-                gauge:
-                  nilIsZero: true
-                  path: [ status, poolManagerIsRunning ]
-                type: Gauge
-            
+
             - name: repo_info
               help: Information about a repository.
               each:
@@ -164,7 +177,24 @@ data:
                     - garm-operator.mercedes-benz.com/paused
                   labelsFromPath:
                     paused_value: [ ]
-        
+
+            - name: repo_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]
+
+        ##################
+        #      Pool     #
+        #################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Pool"
@@ -219,6 +249,23 @@ data:
                   labelsFromPath:
                     paused_value: [ ]
 
+            - name: pool_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]
+
+        ##################
+        #      Image    #
+        #################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Image"
