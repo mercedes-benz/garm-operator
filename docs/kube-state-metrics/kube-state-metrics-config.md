@@ -29,68 +29,44 @@ customResourceState:
 The following metrics are exposed with this kube-state-metrics configuration:
 
 #### Image
-```
-# HELP garm_operator_image_created Unix creation timestamp.
-# TYPE garm_operator_image_created gauge
-
-# HELP garm_operator_image_info Information about an image.
-# TYPE garm_operator_image_info info
-```
+Metric name | Type  | Description                 | Unit (where applicable) |
+:-----------|:------|:----------------------------|:-----------------------|
+`garm_operator_image_created` | Gauge | Unix creation timestamp.    | seconds |
+`garm_operator_image_info` | Info  | Information about an image. | |
+<br>
 
 #### Repository
-```
-# HELP garm_operator_repo_created Unix creation timestamp.
-# TYPE garm_operator_repo_created gauge
-
-# HELP garm_operator_repo_pool_manager_running Whether the repositories poolManager is running.
-# TYPE garm_operator_repo_pool_manager_running gauge
-
-# HELP garm_operator_repo_info Information about a repository.
-# TYPE garm_operator_repo_info info
-
-# HELP garm_operator_repo_annotation_paused_info Whether the repo reconciliation is paused.
-# TYPE garm_operator_repo_annotation_paused_info info
-```
+Metric name | Type  | Description                                      | Unit (where applicable) |
+:-----------|:------|:-------------------------------------------------|:-----------------------|
+`garm_operator_repo_created` | Gauge | Unix creation timestamp.                         | seconds |
+`garm_operator_repo_pool_manager_running` | Gauge | Whether the repositories poolManager is running. | |
+`garm_operator_repo_info` | Info  | Information about a repository.                  | |
+`garm_operator_repo_annotation_paused_info` | Info  | Whether the repo reconciliation is paused.       | |
+<br>
 
 #### Organization
-```
-# HELP garm_operator_org_created Unix creation timestamp.
-# TYPE garm_operator_org_created gauge
-
-# HELP garm_operator_org_pool_manager_running Whether the orgs poolManager is running.
-# TYPE garm_operator_org_pool_manager_running gauge
-
-# HELP garm_operator_org_info Information about an enterprise.
-# TYPE garm_operator_org_info info
-
-# HELP garm_operator_org_annotation_paused_info Whether the org reconciliation is paused.
-# TYPE garm_operator_org_annotation_paused_info info
-```
+Metric name | Type  | Description                               | Unit (where applicable) |
+:-----------|:------|:------------------------------------------|:-----------------------|
+`garm_operator_org_created` | Gauge | Unix creation timestamp.                  | seconds |
+`garm_operator_org_pool_manager_running` | Gauge | Whether the orgs poolManager is running.  | |
+`garm_operator_org_info` | Info  | Information about an organization.        | |
+`garm_operator_org_annotation_paused_info` | Info  | Whether the org reconciliation is paused. | |
+<br>
 
 #### Enterprise
-```
-# HELP garm_operator_enterprise_created Unix creation timestamp.
-# TYPE garm_operator_enterprise_created gauge
-
-# HELP garm_operator_enterprise_pool_manager_running Whether the enterprises poolManager is running.
-# TYPE garm_operator_enterprise_pool_manager_running gauge
-
-# HELP garm_operator_enterprise_info Information about an enterprise.
-# TYPE garm_operator_enterprise_info info
-
-# HELP garm_operator_enterprise_annotation_paused_info Whether the enterprise reconciliation is paused.
-# TYPE garm_operator_enterprise_annotation_paused_info info
-```
+Metric name | Type  | Description                                      | Unit (where applicable) |
+:-----------|:------|:-------------------------------------------------|:-----------------------|
+`garm_operator_enterprise_created` | Gauge | Unix creation timestamp.                         | seconds |
+`garm_operator_enterprise_pool_manager_running` | Gauge | Whether the enterprises poolManager is running.  | |
+`garm_operator_enterprise_info` | Info  | Information about an enterprise.                 | |
+`garm_operator_enterprise_annotation_paused_info` | Info  | Whether the enterprise reconciliation is paused. | |
+<br>
 
 #### Pool
-```
-# HELP garm_operator_pool_created Unix creation timestamp.
-# TYPE garm_operator_pool_created gauge
+Metric name | Type  | Description                                | Unit (where applicable) |
+:-----------|:------|:-------------------------------------------|:-----------------------|
+`garm_operator_pool_created` | Gauge | Unix creation timestamp.                   | seconds |
+`garm_operator_pool_info` | Gauge | Information about a pool.                  | |
+`garm_operator_pool_annotation_paused_info` | Info  | Whether the pool reconciliation is paused. | |
 
-# HELP garm_operator_pool_info Information about a pool.
-# TYPE garm_operator_pool_info info
-
-# HELP garm_operator_pool_annotation_paused_info Whether the pool reconciliation is paused.
-# TYPE garm_operator_pool_annotation_paused_info info
-```
 
