@@ -6,6 +6,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/cloudbase/garm/client/organizations"
 	"github.com/cloudbase/garm/params"
@@ -23,6 +24,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
@@ -30,12 +32,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	tests := []struct {
-		name              string
-		object            runtime.Object
-		runtimeObjects    []runtime.Object
-		expectGarmRequest func(m *mock.MockOrganizationClientMockRecorder)
-		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Organization
+		name                         string
+		object                       runtime.Object
+		runtimeObjects               []runtime.Object
+		expectGarmRequest            func(m *mock.MockOrganizationClientMockRecorder)
+		wantErr                      bool
+		expectedObject               *garmoperatorv1alpha1.Organization
+		expectLastSyncTimeAnnotation bool
 	}{
 		{
 			name: "organization exist - update",
@@ -86,6 +89,29 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
@@ -111,6 +137,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "organization exist but spec has changed - update",
@@ -161,6 +188,29 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
@@ -186,6 +236,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "organization exist but pool status has changed - update",
@@ -235,9 +286,30 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Status: garmoperatorv1alpha1.OrganizationStatus{
-					ID:                       "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-					PoolManagerIsRunning:     false,
-					PoolManagerFailureReason: "no resources available",
+					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "no resources available",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
@@ -267,6 +339,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "organization does not exist - create and update",
@@ -311,6 +384,29 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
@@ -349,6 +445,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "organization already exist in garm - update",
@@ -393,6 +490,29 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
@@ -417,6 +537,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "organization does not exist in garm - create and update",
@@ -467,6 +588,29 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.OrganizationStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
@@ -500,6 +644,65 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
+		},
+		{
+			name: "secret ref not found condition",
+			object: &garmoperatorv1alpha1.Organization{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "new-organization",
+					Namespace: "default",
+					Finalizers: []string{
+						key.OrganizationFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.OrganizationStatus{},
+			},
+			runtimeObjects: []runtime.Object{},
+			expectedObject: &garmoperatorv1alpha1.Organization{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "new-organization",
+					Namespace: "default",
+					Finalizers: []string{
+						key.OrganizationFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.OrganizationSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.OrganizationStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.ReconcileErrorReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "secrets \"my-webhook-secret\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "secrets \"my-webhook-secret\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
+				},
+			},
+			expectGarmRequest:            func(m *mock.MockOrganizationClientMockRecorder) {},
+			expectLastSyncTimeAnnotation: false,
+			wantErr:                      true,
 		},
 	}
 	for _, tt := range tests {
@@ -534,15 +737,20 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 			}
 
 			// test last-sync-time
-			assert.Equal(t, annotations.HasAnnotation(organization, key.LastSyncTimeAnnotation), true)
+			assert.Equal(t, tt.expectLastSyncTimeAnnotation, annotations.HasAnnotation(organization, key.LastSyncTimeAnnotation))
 
 			// clear out annotations to avoid comparison errors
 			organization.ObjectMeta.Annotations = nil
 
 			// empty resource version to avoid comparison errors
 			organization.ObjectMeta.ResourceVersion = ""
+
+			// clear conditions lastTransitionTime to avoid comparison errors
+			conditions.NilLastTransitionTime(tt.expectedObject)
+			conditions.NilLastTransitionTime(organization)
+
 			if !reflect.DeepEqual(organization, tt.expectedObject) {
-				t.Errorf("OrganizationReconciler.reconcileNormal() got = %#v, want %#v", organization, tt.expectedObject)
+				t.Errorf("OrganizationReconciler.reconcileNormal() \ngot = %#v\n want %#v", organization, tt.expectedObject)
 			}
 		})
 	}

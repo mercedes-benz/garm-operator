@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,7 +29,7 @@ func FetchRef(ctx context.Context, c client.Client, ref *garmoperatorv1alpha1.Se
 		secret)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return "", errors.Wrapf(err, "secret not found: %s", ref.Name)
+			return "", err
 		}
 		return "", fmt.Errorf("error fetching secret %s/%s: %v", namespace, ref.Name, err)
 	}

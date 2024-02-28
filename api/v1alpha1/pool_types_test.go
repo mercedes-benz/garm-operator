@@ -70,7 +70,7 @@ func TestPoolList_FilterByFields(t *testing.T) {
 			args: args{
 				predicates: []Predicate{
 					MatchesImage("ubuntu-2204"),
-					MatchesFlavour("large"),
+					MatchesFlavor("large"),
 					MatchesProvider("openstack"),
 					MatchesGitHubScope("test", "Enterprise"),
 				},
@@ -122,7 +122,7 @@ func TestPoolList_FilterByFields(t *testing.T) {
 			args: args{
 				predicates: []Predicate{
 					MatchesImage("ubuntu-2404"),
-					MatchesFlavour("large"),
+					MatchesFlavor("large"),
 					MatchesProvider("openstack"),
 					MatchesGitHubScope("test", "Enterprise"),
 				},

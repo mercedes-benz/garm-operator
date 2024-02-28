@@ -6,6 +6,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/params"
@@ -23,6 +24,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
@@ -30,12 +32,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	tests := []struct {
-		name              string
-		object            runtime.Object
-		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
-		runtimeObjects    []runtime.Object
-		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Enterprise
+		name                         string
+		object                       runtime.Object
+		expectGarmRequest            func(m *mock.MockEnterpriseClientMockRecorder)
+		runtimeObjects               []runtime.Object
+		wantErr                      bool
+		expectedObject               *garmoperatorv1alpha1.Enterprise
+		expectLastSyncTimeAnnotation bool
 	}{
 		{
 			name: "enterprise exist - update",
@@ -86,6 +89,29 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
@@ -111,6 +137,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise exist but spec has changed - update",
@@ -161,6 +188,29 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
@@ -186,6 +236,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise exist but pool status has changed - update",
@@ -224,9 +275,30 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
-					ID:                       "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-					PoolManagerIsRunning:     false,
-					PoolManagerFailureReason: "no resources available",
+					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "no resources available",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -267,6 +339,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise does not exist - create and update",
@@ -300,6 +373,29 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -349,6 +445,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise already exist in garm - update",
@@ -382,6 +479,29 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -417,6 +537,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise does not exist in garm - create update",
@@ -467,6 +588,29 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.EnterpriseStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
@@ -500,6 +644,65 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+			expectLastSyncTimeAnnotation: true,
+		},
+		{
+			name: "secret ref not found condition",
+			object: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "new-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{},
+			},
+			runtimeObjects: []runtime.Object{},
+			expectedObject: &garmoperatorv1alpha1.Enterprise{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "new-enterprise",
+					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.EnterpriseSpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.EnterpriseStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.ReconcileErrorReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "secrets \"my-webhook-secret\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "secrets \"my-webhook-secret\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
+				},
+			},
+			expectGarmRequest:            func(m *mock.MockEnterpriseClientMockRecorder) {},
+			expectLastSyncTimeAnnotation: false,
+			wantErr:                      true,
 		},
 	}
 	for _, tt := range tests {
@@ -534,15 +737,20 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			}
 
 			// test last-sync-time
-			assert.Equal(t, annotations.HasAnnotation(enterprise, key.LastSyncTimeAnnotation), true)
+			assert.Equal(t, tt.expectLastSyncTimeAnnotation, annotations.HasAnnotation(enterprise, key.LastSyncTimeAnnotation))
 
 			// clear out annotations to avoid comparison errors
 			enterprise.ObjectMeta.Annotations = nil
 
 			// empty resource version to avoid comparison errors
 			enterprise.ObjectMeta.ResourceVersion = ""
+
+			// clear conditions lastTransitionTime to avoid comparison errors
+			conditions.NilLastTransitionTime(tt.expectedObject)
+			conditions.NilLastTransitionTime(enterprise)
+
 			if !reflect.DeepEqual(enterprise, tt.expectedObject) {
-				t.Errorf("EnterpriseReconciler.reconcileNormal() got = %#v, want %#v", enterprise, tt.expectedObject)
+				t.Errorf("EnterpriseReconciler.reconcileNormal() \ngot = %#v\n want %#v", enterprise, tt.expectedObject)
 			}
 		})
 	}
