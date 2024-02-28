@@ -30,6 +30,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 const namespaceName = "test-namespace"
@@ -122,7 +123,22 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					ID:                     poolID,
 					LongRunningIdleRunners: 3,
 					Selector:               "",
-					LastSyncError:          "",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.ImageReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "Successfully fetched Image CR Ref",
+							Reason:             string(conditions.FetchingImageRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -161,9 +177,23 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseID,
-						PoolManagerIsRunning:     false,
-						PoolManagerFailureReason: "no resources available",
+						ID: enterpriseID,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.SuccessfulReconcileReason),
+								Status:             metav1.ConditionTrue,
+								Message:            "",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+							{
+								Type:               string(conditions.PoolManager),
+								Reason:             string(conditions.PoolManagerFailureReason),
+								Status:             metav1.ConditionFalse,
+								Message:            "no resources available",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+						},
 					},
 				},
 			},
@@ -265,8 +295,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            outdatedPoolID,
-					LastSyncError: "",
+					ID: outdatedPoolID,
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Pool{
@@ -304,7 +333,22 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					ID:                     poolID,
 					LongRunningIdleRunners: 3,
 					Selector:               "",
-					LastSyncError:          "",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.ImageReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "Successfully fetched Image CR Ref",
+							Reason:             string(conditions.FetchingImageRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -343,9 +387,23 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseID,
-						PoolManagerIsRunning:     false,
-						PoolManagerFailureReason: "no resources available",
+						ID: enterpriseID,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.SuccessfulReconcileReason),
+								Status:             metav1.ConditionTrue,
+								Message:            "",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+							{
+								Type:               string(conditions.PoolManager),
+								Reason:             string(conditions.PoolManagerFailureReason),
+								Status:             metav1.ConditionFalse,
+								Message:            "no resources available",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+						},
 					},
 				},
 			},
@@ -427,8 +485,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					// LastSyncError: "",
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Pool{
@@ -463,8 +521,23 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.ImageReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "Successfully fetched Image CR Ref",
+							Reason:             string(conditions.FetchingImageRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -503,9 +576,23 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseID,
-						PoolManagerIsRunning:     false,
-						PoolManagerFailureReason: "no resources available",
+						ID: enterpriseID,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.SuccessfulReconcileReason),
+								Status:             metav1.ConditionTrue,
+								Message:            "",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+							{
+								Type:               string(conditions.PoolManager),
+								Reason:             string(conditions.PoolManagerFailureReason),
+								Status:             metav1.ConditionFalse,
+								Message:            "no resources available",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+						},
 					},
 				},
 			},
@@ -686,7 +773,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Status: garmoperatorv1alpha1.PoolStatus{
 					ID:                     poolID,
 					LongRunningIdleRunners: 3,
-					LastSyncError:          "",
+					// LastSyncError:          "",
 				},
 			},
 			expectLastSyncTimeAnnotation: true,
@@ -724,7 +811,22 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				Status: garmoperatorv1alpha1.PoolStatus{
 					ID:                     poolID,
 					LongRunningIdleRunners: 2,
-					LastSyncError:          "",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.ImageReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "Successfully fetched Image CR Ref",
+							Reason:             string(conditions.FetchingImageRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -763,9 +865,23 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseID,
-						PoolManagerIsRunning:     false,
-						PoolManagerFailureReason: "no resources available",
+						ID: enterpriseID,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.SuccessfulReconcileReason),
+								Status:             metav1.ConditionTrue,
+								Message:            "",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+							{
+								Type:               string(conditions.PoolManager),
+								Reason:             string(conditions.PoolManagerFailureReason),
+								Status:             metav1.ConditionFalse,
+								Message:            "no resources available",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+						},
 					},
 				},
 			},
@@ -1088,7 +1204,22 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					ID:                     "",
 					LongRunningIdleRunners: 0,
 					Selector:               "",
-					LastSyncError:          "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.ReconcileErrorReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.ImageReference),
+							Reason:             string(conditions.FetchingImageRefFailedReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -1118,9 +1249,23 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseID,
-						PoolManagerIsRunning:     false,
-						PoolManagerFailureReason: "no resources available",
+						ID: enterpriseID,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.SuccessfulReconcileReason),
+								Status:             metav1.ConditionTrue,
+								Message:            "",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+							{
+								Type:               string(conditions.PoolManager),
+								Reason:             string(conditions.PoolManagerFailureReason),
+								Status:             metav1.ConditionFalse,
+								Message:            "no resources available",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+						},
 					},
 				},
 			},
@@ -1160,8 +1305,8 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					// LastSyncError: "",
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Pool{
@@ -1196,8 +1341,23 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "images.garm-operator.mercedes-benz.com \"ubuntu-image-not-existent\" not found",
+					ID: poolID,
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.ReconcileErrorReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "images.garm-operator.mercedes-benz.com \"ubuntu-image-not-existent\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.ImageReference),
+							Reason:             string(conditions.FetchingImageRefFailedReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "images.garm-operator.mercedes-benz.com \"ubuntu-image-not-existent\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -1236,9 +1396,23 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseID,
-						PoolManagerIsRunning:     false,
-						PoolManagerFailureReason: "no resources available",
+						ID: enterpriseID,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.SuccessfulReconcileReason),
+								Status:             metav1.ConditionTrue,
+								Message:            "",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+							{
+								Type:               string(conditions.PoolManager),
+								Reason:             string(conditions.PoolManagerFailureReason),
+								Status:             metav1.ConditionFalse,
+								Message:            "no resources available",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+						},
 					},
 				},
 			},
@@ -1334,6 +1508,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 
 			// empty resource version to avoid comparison errors
 			pool.ObjectMeta.ResourceVersion = ""
+
+			// clear conditions lastTransitionTime to avoid comparison errors
+			conditions.NilLastTransitionTime(tt.expectedObject)
+			conditions.NilLastTransitionTime(pool)
+
 			if !reflect.DeepEqual(pool, tt.expectedObject) {
 				t.Errorf("PoolReconciler.reconcileNormal() \n got =  %#v \n want = %#v", pool, tt.expectedObject)
 			}
@@ -1395,8 +1574,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					// LastSyncError: "",
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Pool{
@@ -1429,8 +1608,16 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
 					ID:                     poolID,
-					LastSyncError:          "",
 					LongRunningIdleRunners: 0,
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Status:             metav1.ConditionFalse,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Reason:             string(conditions.DeletingReason),
+							Message:            "Deleting Pool",
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -1469,9 +1656,23 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseID,
-						PoolManagerIsRunning:     false,
-						PoolManagerFailureReason: "no resources available",
+						ID: enterpriseID,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.SuccessfulReconcileReason),
+								Status:             metav1.ConditionTrue,
+								Message:            "",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+							{
+								Type:               string(conditions.PoolManager),
+								Reason:             string(conditions.PoolManagerFailureReason),
+								Status:             metav1.ConditionFalse,
+								Message:            "no resources available",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+						},
 					},
 				},
 			},
@@ -1586,8 +1787,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:                     poolID,
-					LastSyncError:          "",
+					ID: poolID,
+					// LastSyncError:          "",
 					LongRunningIdleRunners: 0,
 				},
 			},
@@ -1620,8 +1821,16 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 					GitHubRunnerGroup:      "",
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
-					ID:            poolID,
-					LastSyncError: "",
+					ID: poolID,
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Status:             metav1.ConditionFalse,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Reason:             string(conditions.DeletingReason),
+							Message:            "Deleting Pool",
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{
@@ -1660,9 +1869,23 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 						},
 					},
 					Status: garmoperatorv1alpha1.EnterpriseStatus{
-						ID:                       enterpriseID,
-						PoolManagerIsRunning:     false,
-						PoolManagerFailureReason: "no resources available",
+						ID: enterpriseID,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.SuccessfulReconcileReason),
+								Status:             metav1.ConditionTrue,
+								Message:            "",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+							{
+								Type:               string(conditions.PoolManager),
+								Reason:             string(conditions.PoolManagerFailureReason),
+								Status:             metav1.ConditionFalse,
+								Message:            "no resources available",
+								LastTransitionTime: metav1.NewTime(time.Now()),
+							},
+						},
 					},
 				},
 			},
@@ -1763,6 +1986,8 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 			// empty resource version to avoid comparison errors
 			pool.ObjectMeta.ResourceVersion = ""
 			pool.Spec.GitHubScopeRef.APIGroup = nil
+			conditions.NilLastTransitionTime(pool)
+			conditions.NilLastTransitionTime(tt.expectedObject)
 
 			if !reflect.DeepEqual(pool, tt.expectedObject) {
 				t.Errorf("PoolReconciler.reconcileNormal() \n got =  %#v \n want = %#v", pool, tt.expectedObject)

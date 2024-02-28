@@ -55,7 +55,7 @@ func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, p
 	//nolint TODO: @rafalgalaw - can this happen?
 	// i guess it's blocked by the fact that we can't create a pool with the same spec on garm side
 	if len(filteredGarmPools) > 1 {
-		return nil, errors.New("can not create pool, multiple instances matching flavour, image and provider found in garm")
+		return nil, errors.New("can not create pool, multiple instances matching flavor, image and provider found in garm")
 	}
 
 	// pool with the same specs already exists

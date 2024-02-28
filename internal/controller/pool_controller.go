@@ -5,7 +5,6 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -34,6 +33,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 	poolUtil "github.com/mercedes-benz/garm-operator/pkg/util/pool"
 )
 
@@ -62,7 +62,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			return ctrl.Result{}, nil
 		}
 		log.Error(err, "cannot fetch Pool")
-		return r.handleUpdateError(ctx, pool, err)
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
 
 	// Ignore objects that are paused
@@ -84,22 +84,21 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 }
 
 func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
-	log := log.FromContext(ctx).
-		WithName("reconcileNormal")
-
 	gitHubScopeRef, err := r.fetchGitHubScopeCRD(ctx, pool)
 	if err != nil {
-		msg := fmt.Sprintf("Error: %s, referenced GitHubScopeRef %s/%s not found", err.Error(), pool.Spec.GitHubScopeRef.Kind, pool.Spec.GitHubScopeRef.Name)
-		log.Error(err, msg)
-		return r.handleUpdateError(ctx, pool, errors.New(msg))
+		conditions.MarkFalse(pool, conditions.ScopeReference, conditions.FetchingScopeRefFailedReason, err.Error())
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
 
 	if gitHubScopeRef.GetID() == "" {
-		return r.handleUpdateError(ctx, pool, fmt.Errorf("referenced GitHubScopeRef %s/%s not ready yet", pool.Spec.GitHubScopeRef.Kind, pool.Spec.GitHubScopeRef.Name))
+		err := fmt.Errorf("referenced GitHubScopeRef %s/%s not ready yet", pool.Spec.GitHubScopeRef.Kind, pool.Spec.GitHubScopeRef.Name)
+		conditions.MarkFalse(pool, conditions.ScopeReference, conditions.ScopeRefNotReadyReason, err.Error())
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
+	conditions.MarkTrue(pool, conditions.ScopeReference, conditions.FetchingScopeRefSuccessReason, fmt.Sprintf("Successfully fetched %s CR Ref", pool.Spec.GitHubScopeRef.Kind))
 
 	if err := r.ensureFinalizer(ctx, pool); err != nil {
-		return r.handleUpdateError(ctx, pool, err)
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
 
 	// pool status id has been set and id matches existing garm pool, so we know that the pool is persisted in garm and needs to be updated
@@ -118,29 +117,38 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	// get image cr object by name
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
-		return r.handleUpdateError(ctx, pool, err)
+		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
+	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
 
 	// check if there is already a pool with the same spec on garm side
 	matchingGarmPool, err := poolUtil.GetGarmPoolBySpecs(ctx, garmClient, pool, image, gitHubScopeRef)
 	if err != nil {
-		return r.handleUpdateError(ctx, pool, err)
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
 
 	if matchingGarmPool != nil {
 		log.Info("Found garm pool with matching specs, syncing IDs", "garmID", matchingGarmPool.ID)
 		event.Creating(r.Recorder, pool, fmt.Sprintf("found garm pool with matching specs, syncing IDs: %s", matchingGarmPool.ID))
-		return r.handleSuccessfulUpdate(ctx, pool, *matchingGarmPool)
+
+		pool.Status.ID = matchingGarmPool.ID
+		pool.Status.LongRunningIdleRunners = matchingGarmPool.MinIdleRunners
+		return r.handleSuccessfulUpdate(ctx, pool)
 	}
 
 	// create new pool in garm
 	garmPool, err := poolUtil.CreatePool(ctx, garmClient, pool, image, gitHubScopeRef)
 	if err != nil {
-		return r.handleUpdateError(ctx, pool, fmt.Errorf("failed creating pool %s: %s", pool.Name, err.Error()))
+		return r.handleUpdateError(ctx, pool, fmt.Errorf("failed creating pool %s: %s", pool.Name, err.Error()), conditions.ReconcileErrorReason)
 	}
+
 	log.Info("creating pool in garm succeeded")
 	event.Info(r.Recorder, pool, "creating pool in garm succeeded")
-	return r.handleSuccessfulUpdate(ctx, pool, garmPool)
+
+	pool.Status.ID = garmPool.ID
+	pool.Status.LongRunningIdleRunners = garmPool.MinIdleRunners
+	return r.handleSuccessfulUpdate(ctx, pool)
 }
 
 func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
@@ -150,13 +158,15 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
-		return r.handleUpdateError(ctx, pool, err)
+		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
+	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
 
 	poolCRdiffersFromGarmPool, idleRunners, err := r.comparePoolSpecs(ctx, pool, image.Spec.Tag, garmClient)
 	if err != nil {
 		log.Error(err, "error comparing pool specs")
-		return r.handleUpdateError(ctx, pool, err)
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
 
 	if !poolCRdiffersFromGarmPool {
@@ -164,7 +174,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 
 		if err = poolUtil.UpdatePool(ctx, garmClient, pool, image); err != nil {
 			log.Error(err, "error updating pool")
-			return r.handleUpdateError(ctx, pool, err)
+			return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 		}
 	}
 
@@ -211,18 +221,9 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 	// update pool idle runners count in status
 	if pool.Status.LongRunningIdleRunners != uint(longRunningIdleRunnersCount) {
 		pool.Status.LongRunningIdleRunners = uint(longRunningIdleRunnersCount)
-		if err := r.updatePoolCRStatus(ctx, pool); err != nil {
-			return ctrl.Result{}, err
-		}
 	}
 
-	err = annotations.SetLastSyncTime(pool, r.Client)
-	if err != nil {
-		log.Error(err, "can not set annotation")
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
+	return r.handleSuccessfulUpdate(ctx, pool)
 }
 
 func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
@@ -230,12 +231,16 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	log := log.FromContext(ctx)
 	log.Info("Deleting Pool", "pool", pool.Name)
 	event.Deleting(r.Recorder, pool, "")
+	conditions.MarkFalse(pool, conditions.ReadyCondition, conditions.DeletingReason, "Deleting Pool")
+	if err := r.Status().Update(ctx, pool); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	// this is to make the deletion of a "pending" pool CR possible
 	if pool.Status.ID == "" && controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) {
 		controllerutil.RemoveFinalizer(pool, key.PoolFinalizerName)
 		if err := r.Update(ctx, pool); err != nil {
-			return r.handleUpdateError(ctx, pool, err)
+			return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 		}
 
 		log.Info("Successfully deleted pool", "pool", pool.Name)
@@ -245,12 +250,12 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	pool.Spec.MinIdleRunners = 0
 	pool.Spec.Enabled = false
 	if err := r.Update(ctx, pool); err != nil {
-		return r.handleUpdateError(ctx, pool, err)
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
 
 	if err := poolUtil.UpdatePool(ctx, garmClient, pool, nil); err != nil {
 		log.Error(err, "error updating pool")
-		return r.handleUpdateError(ctx, pool, err)
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
 
 	// get all runners
@@ -280,13 +285,13 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 
 	// delete pool in garm
 	if err = garmClient.DeletePool(pools.NewDeletePoolParams().WithPoolID(pool.Status.ID)); err != nil {
-		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err))
+		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err), conditions.DeletionFailedReason)
 	}
 
 	// remove finalizer so k8s can delete resource
 	controllerutil.RemoveFinalizer(pool, key.PoolFinalizerName)
 	if err := r.Update(ctx, pool); err != nil {
-		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err))
+		return r.handleUpdateError(ctx, pool, fmt.Errorf("error deleting pool %s: %w", pool.Name, err), conditions.DeletionFailedReason)
 	}
 
 	log.Info("Successfully deleted pool", "pool", pool.Name)
@@ -302,13 +307,16 @@ func (r *PoolReconciler) updatePoolCRStatus(ctx context.Context, pool *garmopera
 	return nil
 }
 
-func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperatorv1alpha1.Pool, err error) (ctrl.Result, error) {
+func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperatorv1alpha1.Pool, err error, conditionReason conditions.ConditionReason) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
 	log.Error(err, "error")
 	event.Error(r.Recorder, pool, err.Error())
 
-	pool.Status.LastSyncError = err.Error()
+	conditions.MarkFalse(pool, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+	if conditionReason != "" {
+		conditions.MarkFalse(pool, conditions.ReadyCondition, conditionReason, err.Error())
+	}
 
 	if updateErr := r.updatePoolCRStatus(ctx, pool); updateErr != nil {
 		return ctrl.Result{}, updateErr
@@ -317,12 +325,10 @@ func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperat
 	return ctrl.Result{}, err
 }
 
-func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool, garmPool params.Pool) (ctrl.Result, error) {
+func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	pool.Status.ID = garmPool.ID
-	pool.Status.LongRunningIdleRunners = garmPool.MinIdleRunners
-	pool.Status.LastSyncError = ""
+	conditions.MarkTrue(pool, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
 
 	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
 		return ctrl.Result{}, err

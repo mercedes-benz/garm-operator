@@ -4,6 +4,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 // RepositorySpec defines the desired state of Repository
@@ -17,9 +19,8 @@ type RepositorySpec struct {
 
 // RepositoryStatus defines the observed state of Repository
 type RepositoryStatus struct {
-	ID                       string `json:"id"`
-	PoolManagerIsRunning     bool   `json:"poolManagerIsRunning"`
-	PoolManagerFailureReason string `json:"poolManagerFailureReason,omitempty"`
+	ID         string             `json:"id"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -39,6 +40,14 @@ type Repository struct {
 	Status RepositoryStatus `json:"status,omitempty"`
 }
 
+func (r *Repository) SetConditions(conditions []metav1.Condition) {
+	r.Status.Conditions = conditions
+}
+
+func (r *Repository) GetConditions() []metav1.Condition {
+	return r.Status.Conditions
+}
+
 func (r *Repository) GetCredentialsName() string {
 	return r.Spec.CredentialsName
 }
@@ -52,11 +61,25 @@ func (r *Repository) GetName() string {
 }
 
 func (r *Repository) GetPoolManagerIsRunning() bool {
-	return r.Status.PoolManagerIsRunning
+	condition := conditions.Get(r, conditions.PoolManager)
+	if condition == nil {
+		return false
+	}
+
+	return condition.Status == TrueAsString
 }
 
 func (r *Repository) GetPoolManagerFailureReason() string {
-	return r.Status.PoolManagerFailureReason
+	condition := conditions.Get(r, conditions.PoolManager)
+	if condition == nil {
+		return ""
+	}
+
+	if condition.Reason == string(conditions.PoolManagerFailureReason) {
+		return condition.Message
+	}
+
+	return ""
 }
 
 func (r *Repository) GetKind() string {
