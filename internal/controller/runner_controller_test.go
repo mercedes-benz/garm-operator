@@ -28,7 +28,6 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
 func TestRunnerReconciler_reconcileCreate(t *testing.T) {
@@ -133,9 +132,6 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 				t.Errorf("RunnerReconciler.reconcile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
-			// test last-sync-time
-			assert.Equal(t, annotations.HasAnnotation(runner, key.LastSyncTimeAnnotation), true)
 
 			// clear out annotations to avoid comparison errors
 			runner.ObjectMeta.Annotations = nil

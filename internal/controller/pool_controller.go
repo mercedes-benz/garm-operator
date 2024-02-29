@@ -326,16 +326,9 @@ func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperat
 }
 
 func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-
 	conditions.MarkTrue(pool, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
 
 	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	if err := annotations.SetLastSyncTime(pool, r.Client); err != nil {
-		log.Error(err, "can not set annotation")
 		return ctrl.Result{}, err
 	}
 

@@ -135,11 +135,6 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 		return ctrl.Result{}, err
 	}
 
-	if err = annotations.SetLastSyncTime(repository, r.Client); err != nil {
-		log.Error(err, "can not set annotation")
-		return ctrl.Result{}, err
-	}
-
 	log.Info("reconciling repository successfully done")
 
 	return ctrl.Result{}, nil

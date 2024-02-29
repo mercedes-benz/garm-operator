@@ -14,7 +14,6 @@ import (
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/client/pools"
 	"github.com/cloudbase/garm/params"
-	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +28,6 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
@@ -51,11 +49,10 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		// a list of objects to initialize the fake client with
 		// this can be used to define other existing objects that are referenced by the object to reconcile
 		// e.g. images or other pools ..
-		runtimeObjects               []runtime.Object
-		expectGarmRequest            func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder)
-		wantErr                      bool
-		expectLastSyncTimeAnnotation bool
-		expectedObject               *garmoperatorv1alpha1.Pool
+		runtimeObjects    []runtime.Object
+		expectGarmRequest func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder)
+		wantErr           bool
+		expectedObject    *garmoperatorv1alpha1.Pool
 	}{
 		{
 			name: "pool does not exist in garm - create",
@@ -197,7 +194,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
-			expectLastSyncTimeAnnotation: true,
 			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
 				poolClient.ListAllPools(pools.NewListPoolsParams()).Return(&pools.ListPoolsOK{Payload: params.Pools{}}, nil)
 
@@ -407,7 +403,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
-			expectLastSyncTimeAnnotation: true,
 			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
 				poolClient.GetPool(pools.NewGetPoolParams().WithPoolID(outdatedPoolID)).Return(&pools.GetPoolOK{Payload: params.Pool{}}, nil)
 
@@ -596,7 +591,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
-			expectLastSyncTimeAnnotation: true,
 			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
 				poolClient.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
 					RunnerPrefix: params.RunnerPrefix{
@@ -776,7 +770,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					// LastSyncError:          "",
 				},
 			},
-			expectLastSyncTimeAnnotation: true,
 			expectedObject: &garmoperatorv1alpha1.Pool{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Pool",
@@ -1269,8 +1262,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
-			wantErr:                      true,
-			expectLastSyncTimeAnnotation: false,
+			wantErr: true,
 			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
 			},
 		},
@@ -1416,8 +1408,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
-			expectLastSyncTimeAnnotation: false,
-			wantErr:                      true,
+			wantErr: true,
 			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
 				poolClient.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
 					RunnerPrefix: params.RunnerPrefix{
@@ -1499,9 +1490,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				t.Errorf("PoolReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
-			// test last-sync-time
-			assert.Equal(t, annotations.HasAnnotation(pool, key.LastSyncTimeAnnotation), tt.expectLastSyncTimeAnnotation)
 
 			// clear out annotations to avoid comparison errors
 			pool.ObjectMeta.Annotations = nil
