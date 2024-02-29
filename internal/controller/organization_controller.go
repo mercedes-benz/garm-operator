@@ -135,11 +135,6 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 		return ctrl.Result{}, err
 	}
 
-	if err = annotations.SetLastSyncTime(organization, r.Client); err != nil {
-		log.Error(err, "can not set annotation")
-		return ctrl.Result{}, err
-	}
-
 	log.Info("reconciling organization successfully done")
 
 	return ctrl.Result{}, nil

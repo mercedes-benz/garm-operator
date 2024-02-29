@@ -31,7 +31,6 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
 // RunnerReconciler reconciles a Runner object
@@ -187,11 +186,6 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 
 	if err := r.Status().Update(ctx, runner); err != nil {
 		log.Error(err, "unable to update Runner status")
-		return ctrl.Result{}, err
-	}
-
-	if err = annotations.SetLastSyncTime(runner, r.Client); err != nil {
-		log.Error(err, "can not set annotation")
 		return ctrl.Result{}, err
 	}
 
