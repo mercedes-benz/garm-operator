@@ -10,7 +10,6 @@ import (
 
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/params"
-	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +22,6 @@ import (
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
@@ -32,13 +30,12 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	tests := []struct {
-		name                         string
-		object                       runtime.Object
-		expectGarmRequest            func(m *mock.MockEnterpriseClientMockRecorder)
-		runtimeObjects               []runtime.Object
-		wantErr                      bool
-		expectedObject               *garmoperatorv1alpha1.Enterprise
-		expectLastSyncTimeAnnotation bool
+		name              string
+		object            runtime.Object
+		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
+		runtimeObjects    []runtime.Object
+		wantErr           bool
+		expectedObject    *garmoperatorv1alpha1.Enterprise
 	}{
 		{
 			name: "enterprise exist - update",
@@ -137,7 +134,6 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise exist but spec has changed - update",
@@ -236,7 +232,6 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise exist but pool status has changed - update",
@@ -339,7 +334,6 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise does not exist - create and update",
@@ -445,7 +439,6 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise already exist in garm - update",
@@ -537,7 +530,6 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "enterprise does not exist in garm - create update",
@@ -644,7 +636,6 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "secret ref not found condition",
@@ -700,9 +691,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest:            func(m *mock.MockEnterpriseClientMockRecorder) {},
-			expectLastSyncTimeAnnotation: false,
-			wantErr:                      true,
+			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {},
+			wantErr:           true,
 		},
 	}
 	for _, tt := range tests {
@@ -735,9 +725,6 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				t.Errorf("EnterpriseReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
-			// test last-sync-time
-			assert.Equal(t, tt.expectLastSyncTimeAnnotation, annotations.HasAnnotation(enterprise, key.LastSyncTimeAnnotation))
 
 			// clear out annotations to avoid comparison errors
 			enterprise.ObjectMeta.Annotations = nil

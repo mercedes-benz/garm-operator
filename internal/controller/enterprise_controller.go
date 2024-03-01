@@ -136,11 +136,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 		return ctrl.Result{}, err
 	}
 
-	if err = annotations.SetLastSyncTime(enterprise, r.Client); err != nil {
-		log.Error(err, fmt.Sprintf("can not set annotation: %s", key.LastSyncTimeAnnotation))
-		return ctrl.Result{}, err
-	}
-
 	log.Info("reconciling enterprise successfully done")
 	return ctrl.Result{}, nil
 }

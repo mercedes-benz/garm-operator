@@ -10,7 +10,6 @@ import (
 
 	"github.com/cloudbase/garm/client/repositories"
 	"github.com/cloudbase/garm/params"
-	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +22,6 @@ import (
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
@@ -32,13 +30,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	tests := []struct {
-		name                         string
-		object                       runtime.Object
-		runtimeObjects               []runtime.Object
-		expectGarmRequest            func(m *mock.MockRepositoryClientMockRecorder)
-		wantErr                      bool
-		expectedObject               *garmoperatorv1alpha1.Repository
-		expectLastSyncTimeAnnotation bool
+		name              string
+		object            runtime.Object
+		runtimeObjects    []runtime.Object
+		expectGarmRequest func(m *mock.MockRepositoryClientMockRecorder)
+		wantErr           bool
+		expectedObject    *garmoperatorv1alpha1.Repository
 	}{
 		{
 			name: "repository exist - update",
@@ -141,7 +138,6 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "repository exist but spec has changed - update",
@@ -244,7 +240,6 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "repository exist but pool status has changed - update",
@@ -351,7 +346,6 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "repository does not exist - create and update",
@@ -463,7 +457,6 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "repository already exist in garm - update",
@@ -559,7 +552,6 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 		{
 			name: "repository does not exist in garm - create and update",
@@ -671,7 +663,6 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectLastSyncTimeAnnotation: true,
 		},
 	}
 	for _, tt := range tests {
@@ -704,9 +695,6 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				t.Errorf("RepositoryReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
-			// test last-sync-time
-			assert.Equal(t, tt.expectLastSyncTimeAnnotation, annotations.HasAnnotation(repository, key.LastSyncTimeAnnotation))
 
 			// clear out annotations to avoid comparison errors
 			repository.ObjectMeta.Annotations = nil
