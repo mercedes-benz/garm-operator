@@ -171,6 +171,7 @@ SLICE ?= $(LOCALBIN)/kubectl-slice
 NANCY ?= $(LOCALBIN)/nancy
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 KBOM ?= $(LOCALBIN)/bom
+KIND ?= $(LOCALBIN)/kind
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
@@ -182,6 +183,7 @@ MDTOC_VERSION ?= v1.1.0
 SLICE_VERSION ?= v1.2.6
 NANCY_VERSION ?= v1.0.42
 KBOM_VERSION ?= v0.5.1
+KIND_VERSION ?= v0.22.0
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -246,10 +248,16 @@ $(GOVULNCHECK): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@latest
 
 .PHONY: kbom
-kbom: $(KBOM) ## Download nancy locally if necessary. If wrong version is installed, it will be overwritten.
+kbom: $(KBOM) ## Download kbom locally if necessary. If wrong version is installed, it will be overwritten.
 $(KBOM): $(LOCALBIN)
 	test -s $(LOCALBIN)/bom && $(LOCALBIN)/bom version | grep -q $(KBOM_VERSION) || \
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/bom/cmd/bom@$(KBOM_VERSION)
+
+.PHONY: kind
+kind: $(KIND) ## Download kind locally if necessary. If wrong version is installed, it will be overwritten.
+$(KIND): $(LOCALBIN)
+	test -s $(LOCALBIN)/kind && $(LOCALBIN)/kind version | grep -q $(KIND_VERSION) || \
+	GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@$(KIND_VERSION)
 
 ##@ Lint / Verify
 .PHONY: lint

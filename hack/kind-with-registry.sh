@@ -18,9 +18,12 @@ if [[ "${TRACE-0}" == "1" ]]; then
 fi
 
 KIND_CLUSTER_NAME=${CAPI_KIND_CLUSTER_NAME:-"garm-operator"}
+KIND_BINARY="bin/kind"
+# available versions can be found at https://github.com/kubernetes-sigs/kind/releases
+NODE_IMAGE="kindest/node:v1.28.7@sha256:9bc6c451a289cf96ad0bbaf33d416901de6fd632415b076ab05f5fa7e4f65c58"
 
 # 1. If kind cluster already exists exit.
-if [[ "$(kind get clusters)" =~ .*"${KIND_CLUSTER_NAME}".* ]]; then
+if [[ "$(${KIND_BINARY} get clusters)" =~ .*"${KIND_CLUSTER_NAME}".* ]]; then
   echo "kind cluster already exists, moving on"
   exit 0
 fi
@@ -42,7 +45,7 @@ fi
 # https://github.com/kubernetes-sigs/kind/issues/2875
 # https://github.com/containerd/containerd/blob/main/docs/cri/config.md#registry-configuration
 # See: https://github.com/containerd/containerd/blob/main/docs/hosts.md
-cat <<EOF | kind create cluster --name="$KIND_CLUSTER_NAME" --config=-
+cat <<EOF | "${KIND_BINARY}" create cluster --name="${KIND_CLUSTER_NAME}" --image="${NODE_IMAGE}" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 containerdConfigPatches:
@@ -59,7 +62,7 @@ EOF
 # We want a consistent name that works from both ends, so we tell containerd to
 # alias localhost:${reg_port} to the registry container when pulling images
 REGISTRY_DIR="/etc/containerd/certs.d/localhost:${reg_port}"
-for node in $(kind get nodes --name "$KIND_CLUSTER_NAME"); do
+for node in $(${KIND_BINARY} get nodes --name "${KIND_CLUSTER_NAME}"); do
   docker exec "${node}" mkdir -p "${REGISTRY_DIR}"
   cat <<EOF | docker exec -i "${node}" cp /dev/stdin "${REGISTRY_DIR}/hosts.toml"
 [host."http://${reg_name}:5000"]
