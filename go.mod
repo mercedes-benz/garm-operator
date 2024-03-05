@@ -7,7 +7,7 @@ require (
 	github.com/cloudbase/garm v0.1.4
 	github.com/cloudbase/garm-provider-common v0.1.1
 	github.com/go-openapi/runtime v0.27.2
-	github.com/go-playground/validator/v10 v10.17.0
+	github.com/go-playground/validator/v10 v10.19.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
@@ -40,7 +40,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.22.2 // indirect
@@ -68,7 +68,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
-	github.com/leodido/go-urn v1.2.4 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/minio/sio v0.3.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -88,13 +88,13 @@ require (
 	go.opentelemetry.io/otel v1.21.0 // indirect
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
-	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/term v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
