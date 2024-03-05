@@ -45,12 +45,18 @@ OPERATOR_HEALTH_PROBE_BIND_ADDRESS
 OPERATOR_LEADER_ELECTION
 OPERATOR_SYNC_PERIOD
 OPERATOR_WATCH_NAMESPACE
+OPERATOR_SYNC_RUNNERS_INTERVAL
+OPERATOR_MIN_IDLE_RUNNERS_AGE
 
-OPERATOR_ENTERPRISE_CONCURRENCY
-OPERATOR_ORGANIZATION_CONCURRENCY
-OPERATOR_POOL_CONCURRENCY
-OPERATOR_REPOSITORY_CONCURRENCY
 OPERATOR_RUNNER_CONCURRENCY
+OPERATOR_REPOSITORY_CONCURRENCY
+OPERATOR_ORGANIZATION_CONCURRENCY
+OPERATOR_ENTERPRISE_CONCURRENCY
+OPERATOR_POOL_CONCURRENCY
+
+OPERATOR_RUNNER_RECONCILATION
+
+OPERATOR_LOG_VERBOSITY_LEVEL
 ```
 
 ## Flags
@@ -69,12 +75,18 @@ The following flags will be parsed and can be found in the [flags package](../..
 --operator-leader-election
 --operator-sync-period
 --operator-watch-namespace
+--operator-sync-runners-interval
+--operator-min-idle-runners-age
 
---operator-enterprise-concurrency
---operator-organization-concurrency
---operator-pool-concurrency
---operator-repository-concurrency
 --operator-runner-concurrency
+--operator-repository-concurrency
+--operator-organization-concurrency
+--operator-enterprise-concurrency
+--operator-pool-concurrency
+
+--operator-runner-reconcilation
+
+--operator-log-verbosity-level
 ```
 
 ### Additional Flags
@@ -104,11 +116,15 @@ operator:
   leaderElection: false
   syncPeriod: 5m0s
   watchNamespace: garm-operator-system
-  enterpriseConcurrency: 1
-  organizationConcurrency: 3
-  poolConcurrency: 10
-  repositoryConcurrency: 5
+  syncRunnersInterval: 5m0s
+  minIdleRunnersAge: 5m0s
   runnerConcurrency: 20
+  repositoryConcurrency: 5
+  organizationConcurrency: 3
+  enterpriseConcurrency: 1
+  poolConcurrency: 10
+  runnerReconcilation: true
+  logVerbosityLevel: 0
 ```
 
 ## Config File (yaml)
@@ -130,11 +146,15 @@ operator:
   leaderElection: true
   syncPeriod: "10m"
   watchNamespace: "garm-operator-namespace"
-  enterpriseConcurrency: 1
-  organizationConcurrency: 3
-  poolConcurrency: 10
-  repositoryConcurrency: 5
+  syncRunnersInterval: "5m"
+  minIdleRunnersAge: "5m"
   runnerConcurrency: 20
+  repositoryConcurrency: 5
+  organizationConcurrency: 3
+  enterpriseConcurrency: 1
+  poolConcurrency: 10
+  runnerReconcilation: true
+  logVerbosityLevel: 0
 ```
 
 ## Configuration Default Values

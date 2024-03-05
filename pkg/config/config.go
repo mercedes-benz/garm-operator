@@ -32,12 +32,14 @@ type OperatorConfig struct {
 	SyncPeriod              time.Duration `koanf:"syncPeriod" validate:"required" yaml:"syncPeriod"`
 	WatchNamespace          string        `koanf:"watchNamespace" yaml:"watchNamespace"`
 	SyncRunnersInterval     time.Duration `koanf:"syncRunnersInterval" validate:"gte=5s,lte=5m" yaml:"syncRunnersInterval"`
+	MinIdleRunnersAge       time.Duration `koanf:"minIdleRunnersAge" yaml:"minIdleRunnersAge"`
 	RunnerConcurrency       int           `koanf:"runnerConcurrency" validate:"gte=1" yaml:"runnerConcurrency"`
 	RepositoryConcurrency   int           `koanf:"repositoryConcurrency" validate:"gte=1" yaml:"repositoryConcurrency"`
-	EnterpriseConcurrency   int           `koanf:"enterpriseConcurrency" validate:"gte=1" yaml:"enterpriseConcurrency"`
 	OrganizationConcurrency int           `koanf:"organizationConcurrency" validate:"gte=1" yaml:"organizationConcurrency"`
+	EnterpriseConcurrency   int           `koanf:"enterpriseConcurrency" validate:"gte=1" yaml:"enterpriseConcurrency"`
 	PoolConcurrency         int           `koanf:"poolConcurrency" validate:"gte=1" yaml:"poolConcurrency"`
 	RunnerReconciliation    bool          `koanf:"runnerReconciliation" yaml:"runnerReconciliation"`
+	LogVerbosityLevel       int           `koanf:"logVerbosityLevel" validate:"gte=0,lte=5" yaml:"logVerbosityLevel"`
 }
 
 type AppConfig struct {

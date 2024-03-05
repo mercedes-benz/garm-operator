@@ -6,10 +6,10 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/cloudbase/garm/client/repositories"
 	"github.com/cloudbase/garm/params"
-	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,7 +22,7 @@ import (
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
+	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
@@ -88,6 +88,29 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
@@ -167,6 +190,29 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
@@ -245,9 +291,30 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Status: garmoperatorv1alpha1.RepositoryStatus{
-					ID:                       "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
-					PoolManagerIsRunning:     false,
-					PoolManagerFailureReason: "no resources available",
+					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "no resources available",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
@@ -325,6 +392,29 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.RepositoryStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
@@ -413,6 +503,29 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
@@ -491,6 +604,29 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.RepositoryStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Message:            "",
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Status:             metav1.ConditionFalse,
+							Message:            "",
+							Reason:             string(conditions.PoolManagerFailureReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
@@ -560,16 +696,18 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				return
 			}
 
-			// test last-sync-time
-			assert.Equal(t, annotations.HasAnnotation(repository, key.LastSyncTimeAnnotation), true)
-
 			// clear out annotations to avoid comparison errors
 			repository.ObjectMeta.Annotations = nil
 
 			// empty resource version to avoid comparison errors
 			repository.ObjectMeta.ResourceVersion = ""
+
+			// clear conditions lastTransitionTime to avoid comparison errors
+			conditions.NilLastTransitionTime(tt.expectedObject)
+			conditions.NilLastTransitionTime(repository)
+
 			if !reflect.DeepEqual(repository, tt.expectedObject) {
-				t.Errorf("RepositoryReconciler.reconcileNormal() got = %#v, want %#v", repository, tt.expectedObject)
+				t.Errorf("RepositoryReconciler.reconcileNormal() \ngot = %#v\n want %#v", repository, tt.expectedObject)
 			}
 		})
 	}

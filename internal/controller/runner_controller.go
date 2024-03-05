@@ -4,6 +4,7 @@ package controller
 
 import (
 	"context"
+	"reflect"
 	"strings"
 	"time"
 
@@ -30,7 +31,6 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
 // RunnerReconciler reconciles a Runner object
@@ -151,6 +151,10 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 		return ctrl.Result{}, nil
 	}
 
+	if r.runnerSpecsEqual(*runner, garmRunner) {
+		return ctrl.Result{}, nil
+	}
+
 	log := log.FromContext(ctx)
 	log.Info("Update runner status...")
 
@@ -182,11 +186,6 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 
 	if err := r.Status().Update(ctx, runner); err != nil {
 		log.Error(err, "unable to update Runner status")
-		return ctrl.Result{}, err
-	}
-
-	if err = annotations.SetLastSyncTime(runner, r.Client); err != nil {
-		log.Error(err, "can not set annotation")
 		return ctrl.Result{}, err
 	}
 
@@ -339,6 +338,28 @@ func (r *RunnerReconciler) fetchRunnerInstancesByNamespacedPools(instanceClient 
 		garmRunnerInstances = append(garmRunnerInstances, poolRunners.Payload...)
 	}
 	return garmRunnerInstances, nil
+}
+
+func (r *RunnerReconciler) runnerSpecsEqual(runner garmoperatorv1alpha1.Runner, garmRunner *params.Instance) bool {
+	runner.Status.PoolID = ""
+	tmpRunnerStatus := garmoperatorv1alpha1.RunnerStatus{
+		ID:                garmRunner.ID,
+		ProviderID:        garmRunner.ProviderID,
+		AgentID:           garmRunner.AgentID,
+		Name:              garmRunner.Name,
+		OSType:            garmRunner.OSType,
+		OSName:            garmRunner.OSName,
+		OSVersion:         garmRunner.OSVersion,
+		OSArch:            garmRunner.OSArch,
+		Addresses:         garmRunner.Addresses,
+		Status:            garmRunner.Status,
+		InstanceStatus:    garmRunner.RunnerStatus,
+		ProviderFault:     string(garmRunner.ProviderFault),
+		GitHubRunnerGroup: garmRunner.GitHubRunnerGroup,
+		PoolID:            "",
+	}
+
+	return reflect.DeepEqual(runner.Status, tmpRunnerStatus)
 }
 
 func getRunnerDiff(runnerCRs, garmRunners []string) []string {
