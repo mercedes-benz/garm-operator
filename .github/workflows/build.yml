@@ -35,7 +35,7 @@ jobs:
       - name: make sbom
         run: make sbom
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
          name: sbom 
          path: tmp/garm-operator.bom.spdx
