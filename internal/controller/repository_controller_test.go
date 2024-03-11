@@ -91,10 +91,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.ComponentNotReadyReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -193,10 +193,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.ComponentNotReadyReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -295,10 +295,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.ComponentNotReadyReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -395,10 +395,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.ComponentNotReadyReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -506,10 +506,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.ComponentNotReadyReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -607,10 +607,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.ComponentNotReadyReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
