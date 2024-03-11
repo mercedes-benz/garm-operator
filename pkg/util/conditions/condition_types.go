@@ -14,6 +14,8 @@ const (
 	ReconcileErrorReason      ConditionReason = "ReconcileError"
 	DeletingReason            ConditionReason = "Deleting"
 	DeletionFailedReason      ConditionReason = "DeletionFailed"
+	GarmAPIErrorReason        ConditionReason = "GarmAPIError"
+	ComponentNotReadyReason   ConditionReason = "ComponentNotReady"
 )
 
 // Pool Conditions & Reasons
