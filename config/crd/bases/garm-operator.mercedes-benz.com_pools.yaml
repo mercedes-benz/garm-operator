@@ -46,7 +46,10 @@ spec:
       name: ScopeName
       priority: 1
       type: string
-    - jsonPath: .status.lastSyncError
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
       name: Error
       priority: 1
       type: string
@@ -233,5 +236,5 @@ spec:
       scale:
         labelSelectorPath: .status.selector
         specReplicasPath: .spec.minIdleRunners
-        statusReplicasPath: .status.idleRunners
+        statusReplicasPath: .status.longRunningIdleRunners
       status: {}
