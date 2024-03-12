@@ -92,7 +92,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	garmOrganization, err := r.getExistingGarmOrg(ctx, client, organization)
 	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
-		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		if err := r.Status().Update(ctx, organization); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -104,7 +104,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 		garmOrganization, err = r.createOrganization(ctx, client, organization, webhookSecret)
 		if err != nil {
 			event.Error(r.Recorder, organization, err.Error())
-			conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+			conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 			if err := r.Status().Update(ctx, organization); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -116,7 +116,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	garmOrganization, err = r.updateOrganization(ctx, client, garmOrganization.ID, webhookSecret, organization.Spec.CredentialsName)
 	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
-		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		if err := r.Status().Update(ctx, organization); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -125,12 +125,14 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 
 	// set and update organization status
 	organization.Status.ID = garmOrganization.ID
-	conditions.MarkTrue(organization, conditions.PoolManager, conditions.PoolManagerRunningReason, garmOrganization.PoolManagerStatus.FailureReason)
+	conditions.MarkTrue(organization, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
+	conditions.MarkTrue(organization, conditions.PoolManager, conditions.PoolManagerRunningReason, "")
+
 	if !garmOrganization.PoolManagerStatus.IsRunning {
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ComponentNotReadyReason, "Pool Manager is not running")
 		conditions.MarkFalse(organization, conditions.PoolManager, conditions.PoolManagerFailureReason, garmOrganization.PoolManagerStatus.FailureReason)
 	}
 
-	conditions.MarkTrue(organization, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
 	if err := r.Status().Update(ctx, organization); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -208,7 +210,7 @@ func (r *OrganizationReconciler) getExistingGarmOrg(ctx context.Context, client 
 	return params.Organization{}, nil
 }
 
-func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (ctrl.Result, error) {
+func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("organization", organization.Name)
 
@@ -219,14 +221,14 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, scope garm
 		return ctrl.Result{}, err
 	}
 
-	err := scope.DeleteOrganization(
+	err := client.DeleteOrganization(
 		organizations.NewDeleteOrgParams().
 			WithOrgID(organization.Status.ID),
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteOrganization error: %s", err))
 		event.Error(r.Recorder, organization, err.Error())
-		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		if err := r.Status().Update(ctx, organization); err != nil {
 			return ctrl.Result{}, err
 		}

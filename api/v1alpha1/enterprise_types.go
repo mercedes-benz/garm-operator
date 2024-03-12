@@ -26,8 +26,9 @@ type EnterpriseStatus struct {
 //+kubebuilder:resource:path=enterprises,scope=Namespaced,categories=garm,shortName=ent
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Enterprise ID"
-//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.poolManagerIsRunning",description="Status of the referenced pool"
-//+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.poolManagerFailureReason",description="Error description",priority=1
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+//+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1
+//+kubebuilder:printcolumn:name="Pool_Manager_Failure",type="string",JSONPath=`.status.conditions[?(@.reason=='PoolManagerFailure')].message`,priority=1
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Enterprise"
 
 // Enterprise is the Schema for the enterprises API

@@ -23,13 +23,15 @@ spec:
       jsonPath: .status.id
       name: ID
       type: string
-    - description: Status of the referenced pool
-      jsonPath: .status.poolManagerIsRunning
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: Ready
       type: string
-    - description: Error description
-      jsonPath: .status.poolManagerFailureReason
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
       name: Error
+      priority: 1
+      type: string
+    - jsonPath: .status.conditions[?(@.reason=='PoolManagerFailure')].message
+      name: Pool_Manager_Failure
       priority: 1
       type: string
     - description: Time duration since creation of Enterprise
