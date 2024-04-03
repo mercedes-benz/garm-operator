@@ -28,8 +28,8 @@ import (
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
-	"github.com/mercedes-benz/garm-operator/pkg/filter"
-	instancefilter "github.com/mercedes-benz/garm-operator/pkg/filter/instance"
+	"github.com/mercedes-benz/garm-operator/pkg/util/filter"
+	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/util/runners"
 )
 
 // RunnerReconciler reconciles a Runner object
@@ -50,7 +50,7 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 func (r *RunnerReconciler) reconcile(ctx context.Context, req ctrl.Request, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
 	// try fetch runner instance in garm db with events coming from reconcile loop events of RunnerCR or from manually enqueued events of garm api.
-	garmRunner, err := r.getGarmRunnerInstance(instanceClient, req.Name)
+	garmRunner, err := r.getGarmRunnerInstanceByName(instanceClient, req.Name)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -123,13 +123,13 @@ func (r *RunnerReconciler) reconcileDelete(ctx context.Context, runnerClient gar
 	return ctrl.Result{}, nil
 }
 
-func (r *RunnerReconciler) getGarmRunnerInstance(client garmClient.InstanceClient, name string) (*params.Instance, error) {
+func (r *RunnerReconciler) getGarmRunnerInstanceByName(client garmClient.InstanceClient, name string) (*params.Instance, error) {
 	allInstances, err := client.ListInstances(instances.NewListInstancesParams().WithDefaults())
 	if err != nil {
 		return nil, err
 	}
 
-	filteredInstances := filter.Match(allInstances.Payload, instancefilter.MatchesName(name))
+	filteredInstances := filter.Match(allInstances.Payload, runnerUtil.MatchesName(name))
 	if len(filteredInstances) == 0 {
 		return nil, nil
 	}

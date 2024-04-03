@@ -34,7 +34,9 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
-	poolUtil "github.com/mercedes-benz/garm-operator/pkg/util/pool"
+	poolUtil "github.com/mercedes-benz/garm-operator/pkg/util/pools"
+	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/util/runners"
+	"github.com/mercedes-benz/garm-operator/pkg/util/tags"
 )
 
 // PoolReconciler reconciles a Pool object
@@ -178,7 +180,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		}
 	}
 
-	longRunningIdleRunnersCount := len(poolUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, idleRunners))
+	longRunningIdleRunnersCount := len(runnerUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, idleRunners))
 
 	switch {
 	case pool.Spec.MinIdleRunners == 0:
@@ -188,7 +190,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		log.Info("Scaling pool", "pool", pool.Name)
 		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
 
-		runners := poolUtil.DeletableRunners(ctx, idleRunners)
+		runners := runnerUtil.DeletableRunners(ctx, idleRunners)
 		for _, runner := range runners {
 			if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
 				log.Error(err, "unable to delete runner", "runner", runner.Name)
@@ -200,13 +202,13 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		// the spec, we delete old idle runners
 
 		// get all idle runners that are older than minRunnerAge
-		longRunningIdleRunners := poolUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, idleRunners)
+		longRunningIdleRunners := runnerUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, idleRunners)
 
 		// calculate how many old runners need to be deleted to match the desired minIdleRunners
-		alignedRunners := poolUtil.AlignIdleRunners(int(pool.Spec.MinIdleRunners), longRunningIdleRunners)
+		alignedRunners := runnerUtil.AlignIdleRunners(int(pool.Spec.MinIdleRunners), longRunningIdleRunners)
 
 		// extract runners which are deletable
-		runners := poolUtil.DeletableRunners(ctx, alignedRunners)
+		runners := runnerUtil.DeletableRunners(ctx, alignedRunners)
 		for _, runner := range runners {
 			log.Info("Scaling pool", "pool", pool.Name)
 			event.Scaling(r.Recorder, pool, fmt.Sprintf("scale long running idle runners down to %d", pool.Spec.MinIdleRunners))
@@ -259,13 +261,13 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	}
 
 	// get all runners
-	runners, err := poolUtil.GetAllRunners(ctx, pool, instanceClient)
+	runners, err := runnerUtil.GetRunnersByPoolID(ctx, pool, instanceClient)
 	if err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 	}
 
 	// get a list of all idle runners to trigger deletion
-	deletableRunners := poolUtil.DeletableRunners(ctx, runners)
+	deletableRunners := runnerUtil.DeletableRunners(ctx, runners)
 	if err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 	}
@@ -355,7 +357,7 @@ func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperato
 
 	// as there are some "special" tags, which aren't set by the user and aren't part of the pool spec
 	// we need to "discover" them and add them to the pool spec before comparing
-	poolTags, err := poolUtil.CreateComparableRunnerTags(pool.Spec.Tags, pool.Spec.OSArch, pool.Spec.OSType)
+	poolTags, err := tags.CreateComparableRunnerTags(pool.Spec.Tags, pool.Spec.OSArch, pool.Spec.OSType)
 	if err != nil {
 		return false, []params.Instance{}, err
 	}
@@ -406,7 +408,7 @@ func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperato
 	}
 
 	// we are only interested in IdleRunners
-	idleInstances := poolUtil.IdleRunners(ctx, garmPool.Payload.Instances)
+	idleInstances := runnerUtil.IdleRunners(ctx, garmPool.Payload.Instances)
 
 	// empty instances for comparison
 	garmPool.Payload.Instances = nil
