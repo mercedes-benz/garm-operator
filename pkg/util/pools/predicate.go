@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-package pool
+package pools
 
 import (
 	"github.com/cloudbase/garm/params"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
-	"github.com/mercedes-benz/garm-operator/pkg/filter"
+	"github.com/mercedes-benz/garm-operator/pkg/util/filter"
 )
 
 func MatchesGitHubScope(scope garmoperatorv1alpha1.GitHubScopeKind, id string) filter.Predicate[params.Pool] {
