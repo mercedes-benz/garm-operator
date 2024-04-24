@@ -1200,7 +1200,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.ReconcileErrorReason),
+							Reason:             string(conditions.FetchingImageRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -1337,7 +1337,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.ReconcileErrorReason),
+							Reason:             string(conditions.FetchingImageRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "images.garm-operator.mercedes-benz.com \"ubuntu-image-not-existent\" not found",
 							LastTransitionTime: metav1.NewTime(time.Now()),

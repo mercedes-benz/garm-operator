@@ -80,8 +80,9 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &organization.Spec.WebhookSecretRef, organization.Namespace)
 	if err != nil {
-		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(organization, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		conditions.MarkUnknown(organization, conditions.PoolManager, conditions.UnknownReason, "GARM server not reconciled yet")
 		if err := r.Status().Update(ctx, organization); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -129,7 +130,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	conditions.MarkTrue(organization, conditions.PoolManager, conditions.PoolManagerRunningReason, "")
 
 	if !garmOrganization.PoolManagerStatus.IsRunning {
-		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.ComponentNotReadyReason, "Pool Manager is not running")
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.PoolManagerFailureReason, "Pool Manager is not running")
 		conditions.MarkFalse(organization, conditions.PoolManager, conditions.PoolManagerFailureReason, garmOrganization.PoolManagerStatus.FailureReason)
 	}
 
