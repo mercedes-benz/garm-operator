@@ -4,6 +4,7 @@ package controller
 import (
 	"context"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -11,7 +12,6 @@ import (
 	commonParams "github.com/cloudbase/garm-provider-common/params"
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/params"
-	"github.com/life4/genesis/slices"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
@@ -458,9 +458,11 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 			var eventCount int
 			for obj := range fakeChan {
 				t.Logf("Received Event: %s", obj.Object.GetName())
-				filtered := slices.Filter(tt.expectedEvents, func(e event.GenericEvent) bool {
-					return e.Object.GetName() == obj.Object.GetName() && e.Object.GetNamespace() == obj.Object.GetNamespace()
+
+				filtered := slices.CompactFunc(tt.expectedEvents, func(i, j event.GenericEvent) bool {
+					return i.Object.GetName() == j.Object.GetName() && i.Object.GetNamespace() == j.Object.GetNamespace()
 				})
+
 				eventCount++
 				assert.Equal(t, 1, len(filtered))
 			}
