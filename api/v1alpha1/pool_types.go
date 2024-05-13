@@ -6,6 +6,8 @@ import (
 	commonParams "github.com/cloudbase/garm-provider-common/params"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/mercedes-benz/garm-operator/pkg/util/filter"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -98,54 +100,32 @@ func init() {
 	SchemeBuilder.Register(&Pool{}, &PoolList{})
 }
 
-// +k8s:deepcopy-gen=false
-type Predicate func(p Pool) bool
-
-func MatchesImage(image string) Predicate {
+func MatchesImage(image string) filter.Predicate[Pool] {
 	return func(p Pool) bool {
 		return p.Spec.ImageName == image
 	}
 }
 
-func MatchesFlavor(flavor string) Predicate {
+func MatchesFlavor(flavor string) filter.Predicate[Pool] {
 	return func(p Pool) bool {
 		return p.Spec.Flavor == flavor
 	}
 }
 
-func MatchesProvider(provider string) Predicate {
+func MatchesProvider(provider string) filter.Predicate[Pool] {
 	return func(p Pool) bool {
 		return p.Spec.ProviderName == provider
 	}
 }
 
-func MatchesGitHubScope(name, kind string) Predicate {
+func MatchesGitHubScope(name, kind string) filter.Predicate[Pool] {
 	return func(p Pool) bool {
 		return p.Spec.GitHubScopeRef.Name == name && p.Spec.GitHubScopeRef.Kind == kind
 	}
 }
 
-func MatchesID(id string) Predicate {
+func MatchesID(id string) filter.Predicate[Pool] {
 	return func(p Pool) bool {
 		return p.Status.ID == id
 	}
-}
-
-func (p *PoolList) FilterByFields(predicates ...Predicate) {
-	var filteredItems []Pool
-
-	for _, pool := range p.Items {
-		match := true
-		for _, predicate := range predicates {
-			if !predicate(pool) {
-				match = false
-				break
-			}
-		}
-		if match {
-			filteredItems = append(filteredItems, pool)
-		}
-	}
-
-	p.Items = filteredItems
 }

@@ -17,6 +17,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	"github.com/mercedes-benz/garm-operator/pkg/util/filter"
 )
 
 // log is for logging in this package.
@@ -58,15 +60,15 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 		return nil, err
 	}
 
-	poolList.FilterByFields(
+	filteredPoolList := filter.Match(poolList.Items,
 		MatchesFlavor(r.Spec.Flavor),
 		MatchesImage(r.Spec.ImageName),
 		MatchesProvider(r.Spec.ProviderName),
 		MatchesGitHubScope(r.Spec.GitHubScopeRef.Name, r.Spec.GitHubScopeRef.Kind),
 	)
 
-	if len(poolList.Items) > 0 {
-		existing := poolList.Items[0]
+	if len(filteredPoolList) > 0 {
+		existing := filteredPoolList[0]
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("can not create pool, pool=%s with same image=%s, flavor=%s and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.ImageName, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScopeRef.Name))
 	}
