@@ -3,9 +3,8 @@
 package conditions
 
 type (
-	ConditionType    string
-	ConditionReason  string
-	ConditionMessage string
+	ConditionType   string
+	ConditionReason string
 )
 
 // Common Conditions & Reasons
@@ -16,7 +15,6 @@ const (
 	DeletingReason            ConditionReason = "Deleting"
 	DeletionFailedReason      ConditionReason = "DeletionFailed"
 	GarmAPIErrorReason        ConditionReason = "GarmAPIError"
-	ComponentNotReadyReason   ConditionReason = "EntityNotReady"
 	UnknownReason             ConditionReason = "UnknownReason"
 )
 
@@ -44,6 +42,9 @@ const (
 )
 
 const (
-	GarmServerNotReconciledYet ConditionMessage = "GARM server not reconciled yet"
-	DeletingEnterprise         ConditionMessage = "Deleting enterprise"
+	GarmServerNotReconciledYetMsg string = "GARM server not reconciled yet"
+	DeletingEnterpriseMsg         string = "Deleting enterprise"
+	DeletingOrgMsg                string = "Deleting organization"
+	DeletingRepoMsg               string = "Deleting repository"
+	DeletingPoolMsg               string = "Deleting pool"
 )

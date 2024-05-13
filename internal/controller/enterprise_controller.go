@@ -83,7 +83,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	if err != nil {
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(enterprise, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkUnknown(enterprise, conditions.PoolManager, conditions.UnknownReason, "GARM server not reconciled yet")
+		conditions.MarkUnknown(enterprise, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
 		if err := r.Status().Update(ctx, enterprise); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -217,7 +217,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmC
 
 	log.Info("starting enterprise deletion")
 	event.Deleting(r.Recorder, enterprise, "starting enterprise deletion")
-	conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.DeletingReason, "Deleting Enterprise")
+	conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingEnterpriseMsg)
 	if err := r.Status().Update(ctx, enterprise); err != nil {
 		return ctrl.Result{}, err
 	}

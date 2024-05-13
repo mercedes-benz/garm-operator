@@ -231,7 +231,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	log := log.FromContext(ctx)
 	log.Info("Deleting Pool", "pool", pool.Name)
 	event.Deleting(r.Recorder, pool, "")
-	conditions.MarkFalse(pool, conditions.ReadyCondition, conditions.DeletingReason, "Deleting Pool")
+	conditions.MarkFalse(pool, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingPoolMsg)
 	if err := r.Status().Update(ctx, pool); err != nil {
 		return ctrl.Result{}, err
 	}

@@ -82,7 +82,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	if err != nil {
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(organization, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkUnknown(organization, conditions.PoolManager, conditions.UnknownReason, "GARM server not reconciled yet")
+		conditions.MarkUnknown(organization, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
 		if err := r.Status().Update(ctx, organization); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -217,7 +217,7 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client gar
 
 	log.Info("starting organization deletion")
 	event.Deleting(r.Recorder, organization, "starting organization deletion")
-	conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.DeletingReason, "Deleting Org")
+	conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingOrgMsg)
 	if err := r.Status().Update(ctx, organization); err != nil {
 		return ctrl.Result{}, err
 	}

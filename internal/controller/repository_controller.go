@@ -82,7 +82,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	if err != nil {
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(repository, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkUnknown(repository, conditions.PoolManager, conditions.UnknownReason, "GARM server not reconciled yet")
+		conditions.MarkUnknown(repository, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
 		if err := r.Status().Update(ctx, repository); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -218,7 +218,7 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmC
 
 	log.Info("starting repository deletion")
 	event.Deleting(r.Recorder, repository, "starting repository deletion")
-	conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.DeletingReason, "Deleting Repo")
+	conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingRepoMsg)
 	if err := r.Status().Update(ctx, repository); err != nil {
 		return ctrl.Result{}, err
 	}
