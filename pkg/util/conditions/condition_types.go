@@ -14,6 +14,8 @@ const (
 	ReconcileErrorReason      ConditionReason = "ReconcileError"
 	DeletingReason            ConditionReason = "Deleting"
 	DeletionFailedReason      ConditionReason = "DeletionFailed"
+	GarmAPIErrorReason        ConditionReason = "GarmAPIError"
+	UnknownReason             ConditionReason = "UnknownReason"
 )
 
 // Pool Conditions & Reasons
@@ -37,4 +39,12 @@ const (
 	SecretReference                ConditionType   = "SecretReference"
 	FetchingSecretRefSuccessReason ConditionReason = "FetchingSecretRefSuccess"
 	FetchingSecretRefFailedReason  ConditionReason = "FetchingSecretRefFailed"
+)
+
+const (
+	GarmServerNotReconciledYetMsg string = "GARM server not reconciled yet"
+	DeletingEnterpriseMsg         string = "Deleting enterprise"
+	DeletingOrgMsg                string = "Deleting organization"
+	DeletingRepoMsg               string = "Deleting repository"
+	DeletingPoolMsg               string = "Deleting pool"
 )

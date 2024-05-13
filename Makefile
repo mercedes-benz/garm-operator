@@ -318,7 +318,7 @@ generate-doctoc: mdtoc ## Generate documentation table of contents
 ##@ Local Development
 
 .PHONY: kind-cluster
-kind-cluster: ## Create a new kind cluster designed for local development
+kind-cluster: kind ## Create a new kind cluster designed for local development
 	hack/kind-with-registry.sh
 
 .PHONY: delete-kind-cluster

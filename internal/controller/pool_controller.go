@@ -118,7 +118,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
 		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
-		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
+		return r.handleUpdateError(ctx, pool, err, conditions.FetchingImageRefFailedReason)
 	}
 	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
 
@@ -159,7 +159,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 	image, err := r.getImage(ctx, pool)
 	if err != nil {
 		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
-		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
+		return r.handleUpdateError(ctx, pool, err, conditions.FetchingImageRefFailedReason)
 	}
 	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
 
@@ -231,7 +231,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	log := log.FromContext(ctx)
 	log.Info("Deleting Pool", "pool", pool.Name)
 	event.Deleting(r.Recorder, pool, "")
-	conditions.MarkFalse(pool, conditions.ReadyCondition, conditions.DeletingReason, "Deleting Pool")
+	conditions.MarkFalse(pool, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingPoolMsg)
 	if err := r.Status().Update(ctx, pool); err != nil {
 		return ctrl.Result{}, err
 	}
