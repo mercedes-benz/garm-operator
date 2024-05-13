@@ -161,10 +161,10 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 	pools := &garmoperatorv1alpha1.PoolList{}
 	err := r.List(ctx, pools)
 	if err == nil {
-		pools.FilterByFields(garmoperatorv1alpha1.MatchesID(garmRunner.PoolID))
+		filteredPools := filter.Match(pools.Items, garmoperatorv1alpha1.MatchesID(garmRunner.PoolID))
 
-		if len(pools.Items) > 0 {
-			poolName = pools.Items[0].Name
+		if len(filteredPools) > 0 {
+			poolName = filteredPools[0].Name
 		}
 	}
 
