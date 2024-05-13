@@ -91,10 +91,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -193,10 +193,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -295,10 +295,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -395,10 +395,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -506,10 +506,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -607,10 +607,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -663,6 +663,70 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				}, nil)
 			},
+		},
+		{
+			name: "secret ref not found condition",
+			object: &garmoperatorv1alpha1.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "new-repository",
+					Namespace: "default",
+					Finalizers: []string{
+						key.RepositoryFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.RepositorySpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.RepositoryStatus{},
+			},
+			runtimeObjects: []runtime.Object{},
+			expectedObject: &garmoperatorv1alpha1.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "new-repository",
+					Namespace: "default",
+					Finalizers: []string{
+						key.RepositoryFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1alpha1.RepositorySpec{
+					CredentialsName: "foobar",
+					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+						Name: "my-webhook-secret",
+						Key:  "webhookSecret",
+					},
+				},
+				Status: garmoperatorv1alpha1.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "secrets \"my-webhook-secret\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.UnknownReason),
+							Status:             metav1.ConditionUnknown,
+							Message:            "GARM server not reconciled yet",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "secrets \"my-webhook-secret\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
+				},
+			},
+			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {},
+			wantErr:           true,
 		},
 	}
 	for _, tt := range tests {

@@ -64,7 +64,7 @@ func (p *Pool) GetConditions() []metav1.Condition {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:subresource:scale:specpath=.spec.minIdleRunners,statuspath=.status.idleRunners,selectorpath=.status.selector
+//+kubebuilder:subresource:scale:specpath=.spec.minIdleRunners,statuspath=.status.longRunningIdleRunners,selectorpath=.status.selector
 //+kubebuilder:resource:path=pools,scope=Namespaced,categories=garm
 //+kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
 //+kubebuilder:printcolumn:name="MinIdleRunners",type=string,JSONPath=`.spec.minIdleRunners`
@@ -74,7 +74,8 @@ func (p *Pool) GetConditions() []metav1.Condition {
 //+kubebuilder:printcolumn:name="Provider",type=string,JSONPath=`.spec.providerName`,priority=1
 //+kubebuilder:printcolumn:name="ScopeType",type=string,JSONPath=`.spec.githubScopeRef.kind`,priority=1
 //+kubebuilder:printcolumn:name="ScopeName",type=string,JSONPath=`.spec.githubScopeRef.name`,priority=1
-//+kubebuilder:printcolumn:name="Error",type=string,JSONPath=`.status.lastSyncError`,priority=1
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+//+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1
 //+kubebuilder:printcolumn:name="Enabled",type=boolean,JSONPath=`.spec.enabled`,priority=1
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 

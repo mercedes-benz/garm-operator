@@ -7,7 +7,7 @@ require (
 	github.com/cloudbase/garm v0.1.4
 	github.com/cloudbase/garm-provider-common v0.1.1
 	github.com/go-openapi/runtime v0.28.0
-	github.com/go-playground/validator/v10 v10.19.0
+	github.com/go-playground/validator/v10 v10.20.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
@@ -15,7 +15,7 @@ require (
 	github.com/knadh/koanf/providers/file v0.1.0
 	github.com/knadh/koanf/providers/posflag v0.1.0
 	github.com/knadh/koanf/v2 v2.1.1
-	github.com/life4/genesis v1.10.2
+	github.com/life4/genesis v1.10.3
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.19.0
 	github.com/spf13/pflag v1.0.5
@@ -27,7 +27,7 @@ require (
 	k8s.io/client-go v0.28.9
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
-	sigs.k8s.io/controller-runtime v0.16.5
+	sigs.k8s.io/controller-runtime v0.16.6
 )
 
 require (
@@ -104,8 +104,8 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.28.3 // indirect
-	k8s.io/component-base v0.28.3 // indirect
+	k8s.io/apiextensions-apiserver v0.28.9 // indirect
+	k8s.io/component-base v0.28.9 // indirect
 	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect

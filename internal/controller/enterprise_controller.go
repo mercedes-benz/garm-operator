@@ -81,8 +81,9 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace)
 	if err != nil {
-		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(enterprise, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		conditions.MarkUnknown(enterprise, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
 		if err := r.Status().Update(ctx, enterprise); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -93,7 +94,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	garmEnterprise, err := r.getExistingGarmEnterprise(ctx, client, enterprise)
 	if err != nil {
 		event.Error(r.Recorder, enterprise, err.Error())
-		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		if err := r.Status().Update(ctx, enterprise); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -105,7 +106,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 		garmEnterprise, err = r.createEnterprise(ctx, client, enterprise, webhookSecret)
 		if err != nil {
 			event.Error(r.Recorder, enterprise, err.Error())
-			conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+			conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 			if err := r.Status().Update(ctx, enterprise); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -117,7 +118,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	garmEnterprise, err = r.updateEnterprise(ctx, client, garmEnterprise.ID, webhookSecret, enterprise.Spec.CredentialsName)
 	if err != nil {
 		event.Error(r.Recorder, enterprise, err.Error())
-		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		if err := r.Status().Update(ctx, enterprise); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -126,12 +127,14 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	// set and update enterprise status
 	enterprise.Status.ID = garmEnterprise.ID
-	conditions.MarkTrue(enterprise, conditions.PoolManager, conditions.PoolManagerRunningReason, garmEnterprise.PoolManagerStatus.FailureReason)
+	conditions.MarkTrue(enterprise, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
+	conditions.MarkTrue(enterprise, conditions.PoolManager, conditions.PoolManagerRunningReason, "")
+
 	if !garmEnterprise.PoolManagerStatus.IsRunning {
+		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.PoolManagerFailureReason, "Pool Manager is not running")
 		conditions.MarkFalse(enterprise, conditions.PoolManager, conditions.PoolManagerFailureReason, garmEnterprise.PoolManagerStatus.FailureReason)
 	}
 
-	conditions.MarkTrue(enterprise, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
 	if err := r.Status().Update(ctx, enterprise); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -208,25 +211,25 @@ func (r *EnterpriseReconciler) getExistingGarmEnterprise(ctx context.Context, cl
 	return params.Enterprise{}, nil
 }
 
-func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, scope garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (ctrl.Result, error) {
+func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("enterprise", enterprise.Name)
 
 	log.Info("starting enterprise deletion")
 	event.Deleting(r.Recorder, enterprise, "starting enterprise deletion")
-	conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.DeletingReason, "Deleting Enterprise")
+	conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingEnterpriseMsg)
 	if err := r.Status().Update(ctx, enterprise); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	err := scope.DeleteEnterprise(
+	err := client.DeleteEnterprise(
 		enterprises.NewDeleteEnterpriseParams().
 			WithEnterpriseID(enterprise.Status.ID),
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteEnterprise error: %s", err))
 		event.Error(r.Recorder, enterprise, err.Error())
-		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.ReconcileErrorReason, err.Error())
+		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		if err := r.Status().Update(ctx, enterprise); err != nil {
 			return ctrl.Result{}, err
 		}

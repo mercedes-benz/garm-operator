@@ -89,10 +89,10 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            "",
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -187,10 +187,10 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
-							Message:            "",
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -285,10 +285,10 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
-							Message:            "",
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -381,10 +381,10 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
-							Message:            "",
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -486,10 +486,10 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
-							Message:            "",
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -583,10 +583,10 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.SuccessfulReconcileReason),
-							Status:             metav1.ConditionTrue,
-							Message:            "",
+							Reason:             string(conditions.PoolManagerFailureReason),
+							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            "Pool Manager is not running",
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -676,9 +676,16 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.ReconcileErrorReason),
+							Reason:             string(conditions.FetchingSecretRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "secrets \"my-webhook-secret\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.PoolManager),
+							Reason:             string(conditions.UnknownReason),
+							Status:             metav1.ConditionUnknown,
+							Message:            "GARM server not reconciled yet",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
