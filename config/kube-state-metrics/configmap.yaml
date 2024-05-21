@@ -23,7 +23,7 @@ data:
             crd_type: "enterprise"
           labelsFromPath:
             name: [ metadata, name ]
-          namespace: [ metadata, namespace ]
+            namespace: [ metadata, namespace ]
           metrics:
             - name: enterprise_created
               help: Unix creation timestamp.
@@ -83,7 +83,7 @@ data:
             crd_type: "organization"
           labelsFromPath:
             name: [ metadata, name ]
-          namespace: [ metadata, namespace ]
+            namespace: [ metadata, namespace ]
           metrics:
             - name: org_created
               help: Unix creation timestamp.
@@ -143,7 +143,7 @@ data:
             crd_type: "repository"
           labelsFromPath:
             name: [ metadata, name ]
-          namespace: [ metadata, namespace ]
+            namespace: [ metadata, namespace ]
           metrics:
             - name: repo_created
               help: Unix creation timestamp.
@@ -204,7 +204,7 @@ data:
             crd_type: "pool"
           labelsFromPath:
             name: [ metadata, name ]
-          namespace: [ metadata, namespace ]
+            namespace: [ metadata, namespace ]
           metrics:
             - name: pool_created
               help: Unix creation timestamp.
@@ -221,13 +221,10 @@ data:
                 type: Info
                 info:
                   labelsFromPath:
-                    enabled: [spec, enabled]
                     githubRunnerGroup: [spec, githubRunnerGroup]
                     scopeKind: [spec, githubScopeRef, kind]
                     scopeName: [spec, githubScopeRef, name]
                     imageName: [spec, imageName]
-                    maxRunners: [spec, maxRunners]
-                    minIdleRunners: [spec, minIdleRunners]
                     osArch: [spec, osArch]
                     osType: [spec, osType]
                     providerName: [spec, providerName]
@@ -235,7 +232,43 @@ data:
                     runnerPrefix: [spec, runnerPrefix]
                     tags: [spec, tags]
                     id: [status, id]
-                    longRunningIdleRunners: [status, longRunningIdleRunners]
+
+            - name: pool_enabled
+              help: Whether the pool is enabled.
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                    - spec
+                    - enabled
+
+            - name: pool_min_idle_runners
+              help: Minimum number of idle runners.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - spec
+                    - minIdleRunners
+                  
+            - name: pool_max_runners
+              help: Maximum number of runners.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - spec
+                    - maxRunners
+            
+            - name: status_long_running_idle_runners
+              help: Number of long running idle runners.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - longRunningIdleRunners
             
             - name: pool_annotation_paused_info
               help: Whether the pool reconciliation is paused.
@@ -275,7 +308,7 @@ data:
             crd_type: "image"
           labelsFromPath:
             name: [ metadata, name ]
-          namespace: [ metadata, namespace ]
+            namespace: [ metadata, namespace ]
           metrics:
             - name: image_created
               help: Unix creation timestamp.
