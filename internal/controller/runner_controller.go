@@ -10,7 +10,6 @@ import (
 
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/params"
-	"github.com/life4/genesis/slices"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -275,13 +274,15 @@ func (r *RunnerReconciler) cleanUpNotMatchingRunnerCRs(ctx context.Context, garm
 		return err
 	}
 
-	runnerCRNameList := slices.Map(runnerCRList.Items, func(runner garmoperatorv1alpha1.Runner) string {
-		return runner.Name
-	})
+	var runnerCRNameList []string
+	for _, runner := range runnerCRList.Items {
+		runnerCRNameList = append(runnerCRNameList, runner.Name)
+	}
 
-	runnerInstanceNameList := slices.Map(garmRunnerInstances, func(runner params.Instance) string {
-		return strings.ToLower(runner.Name)
-	})
+	var runnerInstanceNameList []string
+	for _, runner := range garmRunnerInstances {
+		runnerInstanceNameList = append(runnerInstanceNameList, strings.ToLower(runner.Name))
+	}
 
 	runnersToDelete := getRunnerDiff(runnerCRNameList, runnerInstanceNameList)
 	log.Log.V(1).Info("Deleting runners: ", "Runners", runnersToDelete)
