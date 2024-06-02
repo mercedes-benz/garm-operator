@@ -230,10 +230,6 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, instanceC
 		return err
 	}
 
-	if len(pools.Items) < 1 {
-		return nil
-	}
-
 	// fetching runners by pools to ensure only runners belonging to pools in same namespace are being shown
 	garmRunnerInstances, err := r.fetchRunnerInstancesByNamespacedPools(instanceClient, pools)
 	if err != nil {
