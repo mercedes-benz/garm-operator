@@ -6,8 +6,8 @@ github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cloudbase/garm v0.1.4 h1:hknw8d4VPdHWGhnPkcKU2+tj3BjV6+M2mcjMU9z76yw=
 github.com/cloudbase/garm v0.1.4/go.mod h1:yalSeTH2GX6bZ5L4I2YaynhBFqYIHW1ZaiaQ/tq0GIE=
-github.com/cloudbase/garm-provider-common v0.1.1 h1:9SbkEevpycI/P3J7jEmjJf6VzdrxAIHkLppnjqaKAWU=
-github.com/cloudbase/garm-provider-common v0.1.1/go.mod h1:igxJRT3OlykERYc6ssdRQXcb+BCaeSfnucg6I0OSoDc=
+github.com/cloudbase/garm-provider-common v0.1.2 h1:EqSpUjw9rzo4PiUmteHkFtZNWCnRi0QXHRKZ+VA1IPo=
+github.com/cloudbase/garm-provider-common v0.1.2/go.mod h1:igxJRT3OlykERYc6ssdRQXcb+BCaeSfnucg6I0OSoDc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
