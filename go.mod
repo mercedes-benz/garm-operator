@@ -17,7 +17,7 @@ require (
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/life4/genesis v1.10.3
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/mock v0.4.0
