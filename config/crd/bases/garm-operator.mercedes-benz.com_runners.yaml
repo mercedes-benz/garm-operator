@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: runners.garm-operator.mercedes-benz.com
 spec:
   group: garm-operator.mercedes-benz.com
@@ -54,14 +54,19 @@ spec:
         description: Runner is the Schema for the runners API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -72,7 +77,8 @@ spec:
             description: RunnerStatus defines the observed state of Runner
             properties:
               addresses:
-                description: Addresses is a list of IP addresses the provider reports
+                description: |-
+                  Addresses is a list of IP addresses the provider reports
                   for this instance.
                 items:
                   properties:
@@ -90,9 +96,9 @@ spec:
                 format: int64
                 type: integer
               githubRunnerGroup:
-                description: GithubRunnerGroup is the github runner group to which
-                  the runner belongs. The runner group must be created by someone
-                  with access to the enterprise.
+                description: |-
+                  GithubRunnerGroup is the github runner group to which the runner belongs.
+                  The runner group must be created by someone with access to the enterprise.
                 type: string
               id:
                 description: ID is the database ID of this instance.
@@ -102,9 +108,11 @@ spec:
                   on GitHub.
                 type: string
               name:
-                description: Name is the name associated with an instance. Depending
-                  on the provider, this may or may not be useful in the context of
-                  the provider, but we can use it internally to identify the instance.
+                description: |-
+                  Name is the name associated with an instance. Depending on
+                  the provider, this may or may not be useful in the context of
+                  the provider, but we can use it internally to identify the
+                  instance.
                 type: string
               osArch:
                 description: OSArch is the operating system architecture.
@@ -113,8 +121,9 @@ spec:
                 description: 'OSName is the name of the OS. Eg: ubuntu, centos, etc.'
                 type: string
               osType:
-                description: OSType is the operating system type. For now, only Linux
-                  and Windows are supported.
+                description: |-
+                  OSType is the operating system type. For now, only Linux and
+                  Windows are supported.
                 type: string
               osVersion:
                 description: OSVersion is the version of the operating system.
@@ -123,14 +132,15 @@ spec:
                 description: PoolID is the ID of the garm pool to which a runner belongs.
                 type: string
               providerFault:
-                description: ProviderFault holds any error messages captured from
-                  the IaaS provider that is responsible for managing the lifecycle
-                  of the runner.
+                description: |-
+                  ProviderFault holds any error messages captured from the IaaS provider that is
+                  responsible for managing the lifecycle of the runner.
                 type: string
               providerId:
-                description: PeoviderID is the unique ID the provider associated with
-                  the compute instance. We use this to identify the instance in the
-                  provider.
+                description: |-
+                  PeoviderID is the unique ID the provider associated
+                  with the compute instance. We use this to identify the
+                  instance in the provider.
                 type: string
               status:
                 description: 'Status is the status of the instance inside the provider
