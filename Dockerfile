@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Build the manager binary
-FROM golang:1.21.9 as builder
+FROM golang:1.22.4 as builder
 ARG TARGETOS
 ARG TARGETARCH
 
