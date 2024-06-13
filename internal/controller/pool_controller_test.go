@@ -194,7 +194,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
+			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, _ *mock.MockInstanceClientMockRecorder) {
 				poolClient.ListAllPools(pools.NewListPoolsParams()).Return(&pools.ListPoolsOK{Payload: params.Pools{}}, nil)
 
 				extraSpecs := json.RawMessage([]byte{})
@@ -403,7 +403,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
+			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, _ *mock.MockInstanceClientMockRecorder) {
 				poolClient.GetPool(pools.NewGetPoolParams().WithPoolID(outdatedPoolID)).Return(&pools.GetPoolOK{Payload: params.Pool{}}, nil)
 
 				poolClient.ListAllPools(pools.NewListPoolsParams()).Return(&pools.ListPoolsOK{Payload: params.Pools{
@@ -591,7 +591,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
+			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, _ *mock.MockInstanceClientMockRecorder) {
 				poolClient.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
 					RunnerPrefix: params.RunnerPrefix{
 						Prefix: "",
@@ -1263,7 +1263,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
+			expectGarmRequest: func(_ *mock.MockPoolClientMockRecorder, _ *mock.MockInstanceClientMockRecorder) {
 			},
 		},
 		{
@@ -1409,7 +1409,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder) {
+			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, _ *mock.MockInstanceClientMockRecorder) {
 				poolClient.GetPool(pools.NewGetPoolParams().WithPoolID(poolID)).Return(&pools.GetPoolOK{Payload: params.Pool{
 					RunnerPrefix: params.RunnerPrefix{
 						Prefix: "",
