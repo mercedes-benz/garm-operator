@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 module github.com/mercedes-benz/garm-operator
 
-go 1.21.9
+go 1.22.4
 
 require (
 	github.com/cloudbase/garm v0.1.4
 	github.com/cloudbase/garm-provider-common v0.1.2
 	github.com/go-openapi/runtime v0.28.0
-	github.com/go-playground/validator/v10 v10.20.0
+	github.com/go-playground/validator/v10 v10.21.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
@@ -17,7 +17,7 @@ require (
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/life4/genesis v1.10.3
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/mock v0.4.0

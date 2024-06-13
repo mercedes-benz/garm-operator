@@ -698,7 +698,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 			},
-			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {},
+			expectGarmRequest: func(_ *mock.MockEnterpriseClientMockRecorder) {},
 			wantErr:           true,
 		},
 	}
