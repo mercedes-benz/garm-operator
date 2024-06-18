@@ -70,10 +70,6 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 			},
 			wantErr: false,
 			expectedObject: &garmoperatorv1alpha1.Runner{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Runner",
-					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "road-runner-k8s-fy5snjcv5dzn",
 					Namespace: "runner",
@@ -216,10 +212,6 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 			},
 			wantErr: false,
 			expectedObject: &garmoperatorv1alpha1.Runner{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Runner",
-					APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "road-runner-k8s-fy5snjcv5dzn",
 					Namespace: "runner",
