@@ -26,6 +26,8 @@ spec:
             - --garm-username=admin
             - --garm-password=LmrBG1KcBOsDfNKq4cQTGpc0hJ0kejkk
             - --operator-watch-namespace=garm-operator-system
+            - --operator-min-idle-runners-age=1m
+            - --operator-runner-reconciliation=true
           ports:
             - containerPort: 2345
               name: delve
@@ -35,3 +37,7 @@ spec:
               memory: 1Gi
             requests:
               memory: 1Gi
+          livenessProbe:
+            $patch: delete
+          readinessProbe:
+            $patch: delete

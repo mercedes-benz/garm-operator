@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 
-package instance
+package runners
 
 import (
 	"strings"
 
 	"github.com/cloudbase/garm/params"
 
-	"github.com/mercedes-benz/garm-operator/pkg/filter"
+	"github.com/mercedes-benz/garm-operator/pkg/util/filter"
 )
 
 func MatchesName(name string) filter.Predicate[params.Instance] {

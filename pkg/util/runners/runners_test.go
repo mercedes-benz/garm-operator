@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package pool
+package runners
 
 import (
 	"context"
