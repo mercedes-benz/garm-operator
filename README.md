@@ -35,6 +35,14 @@
 garm-operator uses [`garm-api-client`](https://github.com/cloudbase/garm/tree/main/client) to talk
 with `garm` servers. The supported `garm` server version is determined by `garm-api-client`.
 
+> [!WARNING]  
+> `garm-operator` is currently tested with `garm` server version `v0.1.4`. Newer versions are not guaranteed to work.
+> 
+> `garm` server version `>v0.1.4` introduces a few breaking changes.
+> [provider]() and [credential]() configuration has moved away from being defined in the `garm` server configuration.
+> Instead, they are now defined via the `garm` API itself.
+> This feature set isn't implemented in the `garm-operator` yet.
+
 ### Kubernetes Version
 
 garm-operator uses [`client-go`](https://github.com/kubernetes/client-go) to talk with
