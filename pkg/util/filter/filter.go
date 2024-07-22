@@ -5,20 +5,20 @@ package filter
 type Predicate[T any] func(T) bool
 
 func Match[T any](items []T, predicates ...Predicate[T]) []T {
-	var filteredPools []T
+	var resultList []T
 
-	for _, pool := range items {
+	for _, item := range items {
 		match := true
 		for _, predicate := range predicates {
-			if !predicate(pool) {
+			if !predicate(item) {
 				match = false
 				break
 			}
 		}
 		if match {
-			filteredPools = append(filteredPools, pool)
+			resultList = append(resultList, item)
 		}
 	}
 
-	return filteredPools
+	return resultList
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package pool
+package runners
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 )
 
-func GetAllRunners(ctx context.Context, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) ([]params.Instance, error) {
+func GetRunnersByPoolID(ctx context.Context, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) ([]params.Instance, error) {
 	log := log.FromContext(ctx)
 	log.Info("discover idle runners", "pool", pool.Name)
 
