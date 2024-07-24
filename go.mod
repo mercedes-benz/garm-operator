@@ -15,7 +15,6 @@ require (
 	github.com/knadh/koanf/providers/file v1.0.0
 	github.com/knadh/koanf/providers/posflag v0.1.0
 	github.com/knadh/koanf/v2 v2.1.1
-	github.com/life4/genesis v1.10.3
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/spf13/pflag v1.0.5
