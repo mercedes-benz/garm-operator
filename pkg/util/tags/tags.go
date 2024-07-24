@@ -3,12 +3,12 @@
 package tags
 
 import (
+	"slices"
 	"sort"
 
 	providerParams "github.com/cloudbase/garm-provider-common/params"
 	"github.com/cloudbase/garm-provider-common/util"
 	"github.com/cloudbase/garm/params"
-	"github.com/life4/genesis/slices"
 )
 
 // from: https://github.com/cloudbase/garm/blob/46ac1b81666250e21a5d31fc8c35d754e8d0b601/runner/runner.go#L779-L786
@@ -42,7 +42,7 @@ func CreateComparableRunnerTags(poolTags []string, osArch providerParams.OSArch,
 		return tags[i].Name < tags[j].Name
 	})
 
-	return slices.Uniq(tags), nil
+	return slices.Compact(tags), nil
 }
 
 func getGithubDefaultTags(osArch providerParams.OSArch, osType providerParams.OSType) ([]string, error) {
