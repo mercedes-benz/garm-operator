@@ -1,0 +1,331 @@
+controllerManager:
+  manager:
+    args:
+    - --garm-server=$GARM_SERVER_URL
+    - --garm-username=$GARM_SERVER_USERNAME
+    - --garm-password=$GARM_SERVER_PASSWORD
+    - --operator-watch-namespace=$OPERATOR_WATCH_NAMESPACE
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+    image:
+      repository: controller
+      tag: latest
+    resources:
+      limits:
+        cpu: 500m
+        memory: 128Mi
+      requests:
+        cpu: 10m
+        memory: 64Mi
+  replicas: 1
+  serviceAccount:
+    annotations: {}
+kubeStateMetricsConfig:
+  configYaml: |-
+    kind: CustomResourceStateMetrics
+    spec:
+      resources:
+        ##################
+        #   ENTERPRISE   #
+        #################
+        - groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: "Enterprise"
+            version: "v1alpha1"
+          metricNamePrefix: garm_operator
+          commonLabels:
+            crd_type: "enterprise"
+          labelsFromPath:
+            name: [ metadata, name ]
+            namespace: [ metadata, namespace ]
+          metrics:
+            - name: enterprise_created
+              help: Unix creation timestamp.
+              each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+            - name: enterprise_info
+              help: Information about an enterprise.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    credentialsName: [ spec, credentialsName ]
+                    webhookSecretRefKey: [ spec, webhookSecretRef, key ]
+                    webhookSecretRefName: [ spec, webhookSecretRef, name ]
+                    id: [ status, id ]
+            - name: enterprise_annotation_paused_info
+              help: Whether the enterprise reconciliation is paused.
+              each:
+                type: Info
+                info:
+                  path:
+                    - metadata
+                    - annotations
+                    - garm-operator.mercedes-benz.com/paused
+                  labelsFromPath:
+                    paused_value: []
+            - name: enterprise_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]
+        ##################
+        #   Org         #
+        #################
+        - groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: "Organization"
+            version: "v1alpha1"
+          metricNamePrefix: garm_operator
+          commonLabels:
+            crd_type: "organization"
+          labelsFromPath:
+            name: [ metadata, name ]
+            namespace: [ metadata, namespace ]
+          metrics:
+            - name: org_created
+              help: Unix creation timestamp.
+              each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+            - name: org_info
+              help: Information about an organization.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    credentialsName: [ spec, credentialsName ]
+                    webhookSecretRefKey: [ spec, webhookSecretRef, key ]
+                    webhookSecretRefName: [ spec, webhookSecretRef, name ]
+                    id: [ status, id ]
+            - name: org_annotation_paused_info
+              help: Whether the org reconciliation is paused.
+              each:
+                type: Info
+                info:
+                  path:
+                    - metadata
+                    - annotations
+                    - garm-operator.mercedes-benz.com/paused
+                  labelsFromPath:
+                    paused_value: [ ]
+            - name: org_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]
+        ##################
+        #   Repo         #
+        #################
+        - groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: "Repository"
+            version: "v1alpha1"
+          metricNamePrefix: garm_operator
+          commonLabels:
+            crd_type: "repository"
+          labelsFromPath:
+            name: [ metadata, name ]
+            namespace: [ metadata, namespace ]
+          metrics:
+            - name: repo_created
+              help: Unix creation timestamp.
+              each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+            - name: repo_info
+              help: Information about a repository.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    owner: [ spec, owner ]
+                    credentialsName: [ spec, credentialsName ]
+                    webhookSecretRefKey: [ spec, webhookSecretRef, key ]
+                    webhookSecretRefName: [ spec, webhookSecretRef, name ]
+                    id: [ status, id ]
+            - name: repo_annotation_paused_info
+              help: Whether the repo reconciliation is paused.
+              each:
+                type: Info
+                info:
+                  path:
+                    - metadata
+                    - annotations
+                    - garm-operator.mercedes-benz.com/paused
+                  labelsFromPath:
+                    paused_value: [ ]
+            - name: repo_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]
+        ##################
+        #      Pool     #
+        #################
+        - groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: "Pool"
+            version: "v1alpha1"
+          metricNamePrefix: garm_operator
+          commonLabels:
+            crd_type: "pool"
+          labelsFromPath:
+            name: [ metadata, name ]
+            namespace: [ metadata, namespace ]
+          metrics:
+            - name: pool_created
+              help: Unix creation timestamp.
+              each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+            - name: pool_info
+              help: Information about a pool.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    githubRunnerGroup: [spec, githubRunnerGroup]
+                    scopeKind: [spec, githubScopeRef, kind]
+                    scopeName: [spec, githubScopeRef, name]
+                    imageName: [spec, imageName]
+                    osArch: [spec, osArch]
+                    osType: [spec, osType]
+                    providerName: [spec, providerName]
+                    runnerBootstrapTimeout: [spec, runnerBootstrapTimeout]
+                    runnerPrefix: [spec, runnerPrefix]
+                    tags: [spec, tags]
+                    id: [status, id]
+            - name: pool_enabled
+              help: Whether the pool is enabled.
+              each:
+                type: Gauge
+                gauge:
+                  nilIsZero: true
+                  path:
+                    - spec
+                    - enabled
+            - name: pool_min_idle_runners
+              help: Minimum number of idle runners.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - spec
+                    - minIdleRunners
+            - name: pool_max_runners
+              help: Maximum number of runners.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - spec
+                    - maxRunners
+            - name: status_long_running_idle_runners
+              help: Number of long running idle runners.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - longRunningIdleRunners
+            - name: pool_annotation_paused_info
+              help: Whether the pool reconciliation is paused.
+              each:
+                type: Info
+                info:
+                  path:
+                    - metadata
+                    - annotations
+                    - garm-operator.mercedes-benz.com/paused
+                  labelsFromPath:
+                    paused_value: [ ]
+            - name: pool_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]
+        ##################
+        #      Image    #
+        #################
+        - groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: "Image"
+            version: "v1alpha1"
+          metricNamePrefix: garm_operator
+          commonLabels:
+            crd_type: "image"
+          labelsFromPath:
+            name: [ metadata, name ]
+            namespace: [ metadata, namespace ]
+          metrics:
+            - name: image_created
+              help: Unix creation timestamp.
+              each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+            - name: image_info
+              help: Information about an image.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    tag: [spec, tag]
+kubernetesClusterDomain: cluster.local
+webhookService:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 9443
+  type: ClusterIP

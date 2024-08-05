@@ -1,0 +1,184 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "chart.fullname" . }}-manager-role
+  labels:
+  {{- include "chart.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - enterprises
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - enterprises/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - enterprises/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - images
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - organizations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - organizations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - organizations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - pools
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - pools/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - repositories
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - repositories/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - repositories/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - runners
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - runners/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - runners/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "chart.fullname" . }}-manager-role
+  labels:
+  {{- include "chart.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "chart.fullname" . }}-manager-rolebinding
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: garm-operator
+    app.kubernetes.io/part-of: garm-operator
+  {{- include "chart.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: '{{ include "chart.fullname" . }}-manager-role'
+subjects:
+- kind: ServiceAccount
+  name: '{{ include "chart.fullname" . }}-controller-manager'
+  namespace: '{{ .Release.Namespace }}'
