@@ -1,0 +1,75 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: images.garm-operator.mercedes-benz.com
+  annotations:
+    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/{{ include "chart.fullname"
+      . }}-serving-cert'
+    controller-gen.kubebuilder.io/version: v0.15.0
+  labels:
+  {{- include "chart.labels" . | nindent 4 }}
+spec:
+  group: garm-operator.mercedes-benz.com
+  names:
+    categories:
+    - garm
+    kind: Image
+    listKind: ImageList
+    plural: images
+    singular: image
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.tag
+      name: Tag
+      priority: 1
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Image is the Schema for the images API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ImageSpec defines the desired state of Image
+            properties:
+              tag:
+                description: |-
+                  Tag is the Name of the image in its registry
+                  e.g.
+                  - in openstack it can be the image name or id
+                  - in k8s it can be the docker image name + tag
+                type: string
+            type: object
+          status:
+            description: ImageStatus defines the observed state of Image
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
