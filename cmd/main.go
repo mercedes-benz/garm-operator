@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -188,14 +189,14 @@ func run() error {
 	}
 
 	if config.Config.Operator.RunnerReconciliation {
-		eventChan := make(chan event.GenericEvent)
+		runnerEvents := make(chan event.GenericEvent)
 		runnerReconciler := &garmcontroller.RunnerReconciler{
 			Client: mgr.GetClient(),
 			Scheme: mgr.GetScheme(),
 		}
 
-		// setup controller so it can reconcile if events from eventChan are queued
-		if err = runnerReconciler.SetupWithManager(mgr, eventChan,
+		// setup controller so it can reconcile if events from runnerEvents are queued
+		if err = runnerReconciler.SetupWithManager(mgr, runnerEvents,
 			controller.Options{
 				MaxConcurrentReconciles: config.Config.Operator.RunnerConcurrency,
 			},
@@ -205,10 +206,17 @@ func run() error {
 
 		// fetch runner instances periodically and enqueue reconcile events for runner ctrl if external system has changed
 		ctx, cancel := context.WithCancel(ctx)
-		go runnerReconciler.PollRunnerInstances(ctx, eventChan)
+		go runnerReconciler.PollRunnerInstances(ctx, runnerEvents)
 		defer cancel()
 	}
 
+	if err = (&garmcontroller.GarmServerConfigReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GarmServerConfig")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
