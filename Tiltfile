@@ -18,7 +18,7 @@ deploy_cert_manager(
 # the manager binary and the dlv debug port will be exposed
 #
 # for more details, please read the DEVELOPMENT.md
-mode = 'local' 
+mode = 'debug'
 
 # kustomize overlays
 templated_yaml = kustomize('config/overlays/' + mode)
@@ -36,6 +36,7 @@ k8s_resource(
         'pools.garm-operator.mercedes-benz.com:customresourcedefinition',
         'runners.garm-operator.mercedes-benz.com:customresourcedefinition',
         'repositories.garm-operator.mercedes-benz.com:customresourcedefinition',
+        'garmserverconfigs.garm-operator.mercedes-benz.com:customresourcedefinition',
         'garm-operator-controller-manager:serviceaccount',
         'garm-operator-leader-election-role:role',
         'garm-operator-manager-role:clusterrole',
