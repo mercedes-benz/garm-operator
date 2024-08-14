@@ -13,7 +13,10 @@ spec:
   webhookSecretRef:
     key: "webhookSecret"
     name: "org-webhook-secret"
-  credentialsName: "GitHub-Actions"
+  credentialsRef:
+    apiGroup: garm-operator.mercedes-benz.com
+    kind: GitHubCredentials
+    name: github-pat
   owner: "mercedes-benz"
 ---
 apiVersion: v1

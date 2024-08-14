@@ -40,6 +40,17 @@ const (
 	SecretReference                ConditionType   = "SecretReference"
 	FetchingSecretRefSuccessReason ConditionReason = "FetchingSecretRefSuccess"
 	FetchingSecretRefFailedReason  ConditionReason = "FetchingSecretRefFailed"
+
+	CredentialsReference                ConditionType   = "CredentialsReference"
+	FetchingCredentialsRefSuccessReason ConditionReason = "CredentialsRefSuccess"
+	FetchingCredentialsRefFailedReason  ConditionReason = "CredentialsRefFailed"
+)
+
+// Credential Conditions
+const (
+	EndpointReference                ConditionType   = "EndpointReference"
+	FetchingEndpointRefSuccessReason ConditionReason = "FetchingEndpointRefSuccess"
+	FetchingEndpointRefFailedReason  ConditionReason = "FetchingEndpointRefFailed"
 )
 
 const (
@@ -49,4 +60,5 @@ const (
 	DeletingRepoMsg               string = "Deleting repository"
 	DeletingPoolMsg               string = "Deleting pool"
 	DeletingEndpointMsg           string = "Deleting endpoint"
+	DeletingCredentialsMsg        string = "Deleting credentials"
 )
