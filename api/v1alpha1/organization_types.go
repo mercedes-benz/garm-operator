@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
@@ -10,7 +11,7 @@ import (
 
 // OrganizationSpec defines the desired state of Organization
 type OrganizationSpec struct {
-	CredentialsName string `json:"credentialsName"`
+	CredentialsRef corev1.TypedLocalObjectReference `json:"credentialsRef"`
 
 	// WebhookSecretRef represents a secret that should be used for the webhook
 	WebhookSecretRef SecretRef `json:"webhookSecretRef"`
@@ -49,7 +50,7 @@ func (o *Organization) GetConditions() []metav1.Condition {
 }
 
 func (o *Organization) GetCredentialsName() string {
-	return o.Spec.CredentialsName
+	return o.Spec.CredentialsRef.Name
 }
 
 func (o *Organization) GetID() string {

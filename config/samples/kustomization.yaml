@@ -8,4 +8,5 @@ resources:
   - garm-operator_v1alpha1_runner.yaml
   - garm-operator_v1alpha1_garmserverconfig.yaml
 - garm-operator_v1alpha1_endpoint.yaml
+- garm-operator_v1alpha1_githubcredentials.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

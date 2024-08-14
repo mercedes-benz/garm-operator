@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
@@ -10,8 +11,8 @@ import (
 
 // RepositorySpec defines the desired state of Repository
 type RepositorySpec struct {
-	CredentialsName string `json:"credentialsName"`
-	Owner           string `json:"owner"`
+	CredentialsRef corev1.TypedLocalObjectReference `json:"credentialsRef"`
+	Owner          string                           `json:"owner"`
 
 	// WebhookSecretRef represents a secret that should be used for the webhook
 	WebhookSecretRef SecretRef `json:"webhookSecretRef"`
@@ -50,7 +51,7 @@ func (r *Repository) GetConditions() []metav1.Condition {
 }
 
 func (r *Repository) GetCredentialsName() string {
-	return r.Spec.CredentialsName
+	return r.Spec.CredentialsRef.Name
 }
 
 func (r *Repository) GetID() string {
