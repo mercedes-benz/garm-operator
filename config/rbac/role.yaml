@@ -29,6 +29,32 @@ rules:
 - apiGroups:
   - garm-operator.mercedes-benz.com
   resources:
+  - endpoints
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - endpoints/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - endpoints/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
   - enterprises
   verbs:
   - create

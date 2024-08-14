@@ -250,10 +250,10 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
-func (r *EnterpriseReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1alpha1.Enterprise) error {
-	if !controllerutil.ContainsFinalizer(pool, key.EnterpriseFinalizerName) {
-		controllerutil.AddFinalizer(pool, key.EnterpriseFinalizerName)
-		return r.Update(ctx, pool)
+func (r *EnterpriseReconciler) ensureFinalizer(ctx context.Context, enterprise *garmoperatorv1alpha1.Enterprise) error {
+	if !controllerutil.ContainsFinalizer(enterprise, key.EnterpriseFinalizerName) {
+		controllerutil.AddFinalizer(enterprise, key.EnterpriseFinalizerName)
+		return r.Update(ctx, enterprise)
 	}
 	return nil
 }
