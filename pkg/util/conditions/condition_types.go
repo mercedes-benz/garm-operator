@@ -47,4 +47,5 @@ const (
 	DeletingOrgMsg                string = "Deleting organization"
 	DeletingRepoMsg               string = "Deleting repository"
 	DeletingPoolMsg               string = "Deleting pool"
+	DeletingEndpointMsg           string = "Deleting endpoint"
 )

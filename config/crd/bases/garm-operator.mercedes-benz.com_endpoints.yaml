@@ -4,57 +4,40 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-  name: garmserverconfigs.garm-operator.mercedes-benz.com
+  name: endpoints.garm-operator.mercedes-benz.com
 spec:
   group: garm-operator.mercedes-benz.com
   names:
     categories:
     - garm
-    kind: GarmServerConfig
-    listKind: GarmServerConfigList
-    plural: garmserverconfigs
+    kind: Endpoint
+    listKind: EndpointList
+    plural: endpoints
     shortNames:
-    - server
-    singular: garmserverconfig
+    - gep
+    singular: endpoint
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - description: Controller ID
-      jsonPath: .status.controllerID
-      name: ID
+    - description: API Base URL
+      jsonPath: .spec.apiBaseURL
+      name: URL
       type: string
-    - description: Garm Version
-      jsonPath: .status.version
-      name: Version
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: Ready
       type: string
-    - description: MetadataURL
-      jsonPath: .status.metadataURL
-      name: MetadataURL
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
+      name: Error
       priority: 1
       type: string
-    - description: CallbackURL
-      jsonPath: .status.callbackURL
-      name: CallbackURL
-      priority: 1
-      type: string
-    - description: WebhookURL
-      jsonPath: .status.webhookURL
-      name: WebhookURL
-      priority: 1
-      type: string
-    - description: ControllerWebhookURL
-      jsonPath: .status.controllerWebhookURL
-      name: ControllerWebhookURL
-      priority: 1
-      type: string
-    - description: Time duration since creation of GarmServerConfig
+    - description: Time duration since creation of Endpoint
       jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: GarmServerConfig is the Schema for the garmserverconfigs API
+        description: Endpoint is the Schema for the endpoints API
         properties:
           apiVersion:
             description: |-
@@ -74,20 +57,23 @@ spec:
           metadata:
             type: object
           spec:
-            description: GarmServerConfigSpec defines the desired state of GarmServerConfig
+            description: EndpointSpec defines the desired state of Endpoint
             properties:
-              callbackURL:
+              apiBaseURL:
                 type: string
-              metadataURL:
+              baseURL:
                 type: string
-              webhookURL:
+              caCertBundle:
+                format: byte
+                type: string
+              description:
+                type: string
+              uploadBaseURL:
                 type: string
             type: object
           status:
-            description: GarmServerConfigStatus defines the observed state of GarmServerConfig
+            description: EndpointStatus defines the observed state of Endpoint
             properties:
-              callbackURL:
-                type: string
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -157,29 +143,6 @@ spec:
                   - type
                   type: object
                 type: array
-              controllerID:
-                type: string
-              controllerWebhookURL:
-                type: string
-              hostname:
-                type: string
-              metadataURL:
-                type: string
-              minimumJobAgeBackoff:
-                type: integer
-              version:
-                type: string
-              webhookURL:
-                type: string
-            required:
-            - callbackURL
-            - controllerID
-            - controllerWebhookURL
-            - hostname
-            - metadataURL
-            - minimumJobAgeBackoff
-            - version
-            - webhookURL
             type: object
         type: object
     served: true
