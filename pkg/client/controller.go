@@ -21,7 +21,7 @@ func NewControllerClient() ControllerClient {
 	}
 }
 
-func (s controllerClient) GetControllerInfo() (*controller_info.ControllerInfoOK, error) {
+func (s *controllerClient) GetControllerInfo() (*controller_info.ControllerInfoOK, error) {
 	return EnsureAuth(func() (*controller_info.ControllerInfoOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("controller.Info").Inc()
 		controllerInfo, err := s.GarmAPI().ControllerInfo.ControllerInfo(&controller_info.ControllerInfoParams{}, s.Token())
@@ -33,7 +33,7 @@ func (s controllerClient) GetControllerInfo() (*controller_info.ControllerInfoOK
 	})
 }
 
-func (s controllerClient) UpdateController(param *controller.UpdateControllerParams) (*controller.UpdateControllerOK, error) {
+func (s *controllerClient) UpdateController(param *controller.UpdateControllerParams) (*controller.UpdateControllerOK, error) {
 	return EnsureAuth(func() (*controller.UpdateControllerOK, error) {
 		metrics.TotalGarmCalls.WithLabelValues("controller.Update").Inc()
 		enterprise, err := s.GarmAPI().Controller.UpdateController(param, s.Token())

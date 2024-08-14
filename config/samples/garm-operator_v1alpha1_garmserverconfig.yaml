@@ -9,4 +9,6 @@ metadata:
     app.kubernetes.io/created-by: garm-operator
   name: garmserverconfig-sample
 spec:
-  # TODO(user): Add fields here
+  callbackURL: http://garm-server.garm-server.svc:9997/api/v1/callback
+  metadataURL: http://garm-server.garm-server.svc:9997/api/v1/metadata
+  webhookURL: http://garm-server.garm-server.svc:9997/api/v1/webhook

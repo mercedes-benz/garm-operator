@@ -192,6 +192,14 @@ func IsUnauthenticatedError(err interface{}) bool {
 	return apiErr.IsCode(401)
 }
 
+func IsNotFoundError(err interface{}) bool {
+	apiErr, ok := err.(runtime.ClientResponseStatus)
+	if !ok {
+		return false
+	}
+	return apiErr.IsCode(404)
+}
+
 type Func[T interface{}] func() (T, error)
 
 func EnsureAuth[T interface{}](f Func[T]) (T, error) {
