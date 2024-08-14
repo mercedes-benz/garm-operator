@@ -107,6 +107,32 @@ rules:
 - apiGroups:
   - garm-operator.mercedes-benz.com
   resources:
+  - githubcredentials
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - githubcredentials/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - githubcredentials/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
   - images
   verbs:
   - create

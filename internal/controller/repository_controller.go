@@ -5,7 +5,12 @@ package controller
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strings"
 
 	"github.com/cloudbase/garm/client/repositories"
@@ -90,6 +95,20 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	}
 	conditions.MarkTrue(repository, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
 
+	credentials, err := r.getCredentialsRef(ctx, repository)
+	if err != nil {
+		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(repository, conditions.CredentialsReference, conditions.FetchingCredentialsRefFailedReason, err.Error())
+		if conditions.Get(repository, conditions.PoolManager) == nil {
+			conditions.MarkUnknown(repository, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+		}
+		if err := r.Status().Update(ctx, repository); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
+	}
+	conditions.MarkTrue(repository, conditions.CredentialsReference, conditions.FetchingCredentialsRefSuccessReason, "")
+
 	garmRepository, err := r.getExistingGarmRepo(ctx, client, repository)
 	if err != nil {
 		event.Error(r.Recorder, repository, err.Error())
@@ -114,7 +133,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	}
 
 	// update repository anytime
-	garmRepository, err = r.updateRepository(ctx, client, garmRepository.ID, webhookSecret, repository.Spec.CredentialsName)
+	garmRepository, err = r.updateRepository(ctx, client, garmRepository.ID, webhookSecret, credentials.Name)
 	if err != nil {
 		event.Error(r.Recorder, repository, err.Error())
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
@@ -154,7 +173,7 @@ func (r *RepositoryReconciler) createRepository(ctx context.Context, client garm
 		repositories.NewCreateRepoParams().
 			WithBody(params.CreateRepoParams{
 				Name:            repository.Name,
-				CredentialsName: repository.Spec.CredentialsName,
+				CredentialsName: repository.GetCredentialsName(),
 				Owner:           repository.Spec.Owner,
 				WebhookSecret:   webhookSecret, // gh hook secret
 			}))
@@ -251,6 +270,18 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
+func (r *RepositoryReconciler) getCredentialsRef(ctx context.Context, repository *garmoperatorv1alpha1.Repository) (*garmoperatorv1alpha1.GitHubCredentials, error) {
+	creds := &garmoperatorv1alpha1.GitHubCredentials{}
+	err := r.Get(ctx, types.NamespacedName{
+		Namespace: repository.Namespace,
+		Name:      repository.Spec.CredentialsRef.Name,
+	}, creds)
+	if err != nil {
+		return creds, err
+	}
+	return creds, nil
+}
+
 func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1alpha1.Repository) error {
 	if !controllerutil.ContainsFinalizer(pool, key.RepositoryFinalizerName) {
 		controllerutil.AddFinalizer(pool, key.RepositoryFinalizerName)
@@ -259,10 +290,41 @@ func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmop
 	return nil
 }
 
+func (r *RepositoryReconciler) findReposForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {
+	credentials, ok := obj.(*garmoperatorv1alpha1.GitHubCredentials)
+	if !ok {
+		return nil
+	}
+
+	var repos garmoperatorv1alpha1.RepositoryList
+	if err := r.List(ctx, &repos); err != nil {
+		return nil
+	}
+
+	var requests []reconcile.Request
+	for _, repo := range repos.Items {
+		if repo.GetCredentialsName() == credentials.Name {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: repo.Namespace,
+					Name:      repo.Name,
+				},
+			})
+		}
+	}
+
+	return requests
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *RepositoryReconciler) SetupWithManager(mgr ctrl.Manager, options controller.Options) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&garmoperatorv1alpha1.Repository{}).
+		Watches(
+			&garmoperatorv1alpha1.GitHubCredentials{},
+			handler.EnqueueRequestsFromMapFunc(r.findReposForCredentials),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
 		WithOptions(options).
 		Complete(r)
 }

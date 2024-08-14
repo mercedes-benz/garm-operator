@@ -10,5 +10,6 @@ const (
 	PoolFinalizerName         = groupName + "/pool"
 	RunnerFinalizerName       = groupName + "/runner"
 	EndpointFinalizerName     = groupName + "/endpoint"
+	CredentialsFinalizerName  = groupName + "/credentials"
 	PausedAnnotation          = groupName + "/paused"
 )
