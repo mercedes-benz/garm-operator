@@ -29,7 +29,7 @@ type ImageStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=images,scope=Namespaced,categories=garm
-//+kubebuilder:printcolumn:name="Tag",type=string,JSONPath=`.spec.tag`,priority=1
+//+kubebuilder:printcolumn:name="Tag",type=string,JSONPath=`.spec.tag`
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Image is the Schema for the images API

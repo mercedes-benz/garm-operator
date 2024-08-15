@@ -4,26 +4,24 @@ package controller
 
 import (
 	"context"
-	garmController "github.com/cloudbase/garm/client/controller"
+	"errors"
+	garmapiserverparams "github.com/cloudbase/garm/apiserver/params"
+	garmcontroller "github.com/cloudbase/garm/client/controller"
+	"github.com/cloudbase/garm/client/controller_info"
 	"github.com/cloudbase/garm/params"
-	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
+	garmclient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
-	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/util"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
@@ -42,24 +40,27 @@ type GarmServerConfigReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=garmserverconfigs/finalizers,verbs=update
 
 func (r *GarmServerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerClient := garmClient.NewControllerClient()
+	controllerClient := garmclient.NewControllerClient()
 	return r.reconcile(ctx, req, controllerClient)
 }
 
-func (r *GarmServerConfigReconciler) reconcile(ctx context.Context, req ctrl.Request, controllerClient garmClient.ControllerClient) (ctrl.Result, error) {
+func (r *GarmServerConfigReconciler) reconcile(ctx context.Context, req ctrl.Request, controllerClient garmclient.ControllerClient) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("Reconciling GarmServerConfig")
 
-	controllerInfo, err := controllerClient.GetControllerInfo()
+	controllerInfo, err := r.getControllerInfo(controllerClient)
 	if err != nil {
 		log.Error(err, "Failed to get controller info")
 		return ctrl.Result{}, err
 	}
 
-	// initially create GarmServerConfig CR reflecting values from garm-server controller info
 	garmServerConfig := &garmoperatorv1alpha1.GarmServerConfig{}
 	if err := r.Get(ctx, req.NamespacedName, garmServerConfig); err != nil {
-		return r.handleCreateGarmServerConfigCR(ctx, req, err, &controllerInfo.Payload)
+		if apierrors.IsNotFound(err) {
+			log.Info("object was not found")
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
 	}
 
 	// Ignore objects that are paused
@@ -69,7 +70,7 @@ func (r *GarmServerConfigReconciler) reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// sync applied spec with controller info in garm
-	newControllerInfo, err := r.updateControllerInfo(ctx, controllerClient, garmServerConfig, &controllerInfo.Payload)
+	newControllerInfo, err := r.updateControllerInfo(ctx, controllerClient, garmServerConfig, &controllerInfo)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -77,18 +78,6 @@ func (r *GarmServerConfigReconciler) reconcile(ctx context.Context, req ctrl.Req
 	// update CR with new state from garm
 	if err := r.updateGarmServerConfigStatus(ctx, newControllerInfo, garmServerConfig); err != nil {
 		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
-}
-
-func (r *GarmServerConfigReconciler) handleCreateGarmServerConfigCR(ctx context.Context, req ctrl.Request, fetchErr error, controllerInfo *params.ControllerInfo) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-	if apierrors.IsNotFound(fetchErr) {
-		log.Info("GarmServerConfig was not found")
-		if err := r.createGarmServerConfigCR(ctx, controllerInfo, req.Name, req.Namespace); err != nil {
-			return ctrl.Result{}, err
-		}
 	}
 
 	return ctrl.Result{}, nil
@@ -118,7 +107,7 @@ func (r *GarmServerConfigReconciler) createGarmServerConfigCR(ctx context.Contex
 	return nil
 }
 
-func (r *GarmServerConfigReconciler) updateControllerInfo(ctx context.Context, client garmClient.ControllerClient, garmServerConfigCR *garmoperatorv1alpha1.GarmServerConfig, controllerInfo *params.ControllerInfo) (*params.ControllerInfo, error) {
+func (r *GarmServerConfigReconciler) updateControllerInfo(ctx context.Context, client garmclient.ControllerClient, garmServerConfigCR *garmoperatorv1alpha1.GarmServerConfig, controllerInfo *params.ControllerInfo) (*params.ControllerInfo, error) {
 	log := log.FromContext(ctx)
 
 	if garmServerConfigCR.Spec.MetadataURL == controllerInfo.MetadataURL &&
@@ -128,7 +117,7 @@ func (r *GarmServerConfigReconciler) updateControllerInfo(ctx context.Context, c
 		return controllerInfo, nil
 	}
 
-	params := garmController.NewUpdateControllerParams().WithBody(params.UpdateControllerParams{
+	params := garmcontroller.NewUpdateControllerParams().WithBody(params.UpdateControllerParams{
 		MetadataURL: util.StringPtr(garmServerConfigCR.Spec.MetadataURL),
 		CallbackURL: util.StringPtr(garmServerConfigCR.Spec.CallbackURL),
 		WebhookURL:  util.StringPtr(garmServerConfigCR.Spec.WebhookURL),
@@ -195,28 +184,28 @@ func (r *GarmServerConfigReconciler) ensureFinalizer(ctx context.Context, garmSe
 	return nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *GarmServerConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	c, err := ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1alpha1.GarmServerConfig{}).
-		WithOptions(controller.Options{}).
-		Build(r)
-	if err != nil {
-		return err
+func (r *GarmServerConfigReconciler) getControllerInfo(client garmclient.ControllerClient) (params.ControllerInfo, error) {
+	controllerInfo, err := client.GetControllerInfo()
+	if err == nil {
+		return controllerInfo.Payload, nil
 	}
 
-	eventChan := make(chan event.GenericEvent)
-	go func() {
-		eventChan <- event.GenericEvent{
-			Object: &garmoperatorv1alpha1.GarmServerConfig{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "garm-server-config",
-					Namespace: config.Config.Operator.WatchNamespace,
-				},
-			},
-		}
-		close(eventChan)
-	}()
+	var conflictErr *controller_info.ControllerInfoConflict
+	if !errors.As(err, &conflictErr) {
+		return params.ControllerInfo{}, err
+	}
 
-	return c.Watch(&source.Channel{Source: eventChan}, &handler.EnqueueRequestForObject{})
+	if reflect.DeepEqual(conflictErr.Payload, garmapiserverparams.URLsRequired) {
+		return params.ControllerInfo{}, nil
+	}
+
+	return params.ControllerInfo{}, err
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *GarmServerConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&garmoperatorv1alpha1.GarmServerConfig{}).
+		WithOptions(controller.Options{}).
+		Complete(r)
 }

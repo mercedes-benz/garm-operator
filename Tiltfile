@@ -4,7 +4,7 @@
 load('ext://cert_manager', 'deploy_cert_manager')
 
 # garm-operator is the name of the kind-cluster and therefore usable as k8s context
-allow_k8s_contexts('garm-operator')
+allow_k8s_contexts('kind-garm-operator')
 
 # we use the `cert_manager` extension to deploy cert-manager into the kind-cluster
 # as the plugin has already well written readiness checks we can use it to wait for
@@ -18,7 +18,7 @@ deploy_cert_manager(
 # the manager binary and the dlv debug port will be exposed
 #
 # for more details, please read the DEVELOPMENT.md
-mode = 'debug'
+mode = 'local'
 
 # kustomize overlays
 templated_yaml = kustomize('config/overlays/' + mode)

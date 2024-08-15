@@ -295,8 +295,8 @@ func (r *GitHubCredentialsReconciler) getEndpointRef(ctx context.Context, creden
 }
 
 func (r *GitHubCredentialsReconciler) ensureFinalizer(ctx context.Context, credentials *garmoperatorv1alpha1.GitHubCredentials) error {
-	if !controllerutil.ContainsFinalizer(credentials, key.EndpointFinalizerName) {
-		controllerutil.AddFinalizer(credentials, key.EndpointFinalizerName)
+	if !controllerutil.ContainsFinalizer(credentials, key.CredentialsFinalizerName) {
+		controllerutil.AddFinalizer(credentials, key.CredentialsFinalizerName)
 		return r.Update(ctx, credentials)
 	}
 	return nil
