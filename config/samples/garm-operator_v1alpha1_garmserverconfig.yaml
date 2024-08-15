@@ -9,6 +9,6 @@ metadata:
     app.kubernetes.io/created-by: garm-operator
   name: garmserverconfig-sample
 spec:
-  callbackURL: http://garm-server.garm-server.svc:9997/api/v1/callback
+  callbackURL: http://garm-server.garm-server.svc:9997/api/v1/callbacks
   metadataURL: http://garm-server.garm-server.svc:9997/api/v1/metadata
   webhookURL: http://garm-server.garm-server.svc:9997/api/v1/webhook

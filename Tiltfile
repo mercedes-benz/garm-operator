@@ -18,7 +18,7 @@ deploy_cert_manager(
 # the manager binary and the dlv debug port will be exposed
 #
 # for more details, please read the DEVELOPMENT.md
-mode = 'debug'
+mode = 'local'
 
 # kustomize overlays
 templated_yaml = kustomize('config/overlays/' + mode)

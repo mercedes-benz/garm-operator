@@ -211,8 +211,9 @@ func run() error {
 	}
 
 	if err = (&garmcontroller.GarmServerConfigReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("garm-server-config-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GarmServerConfig")
 		os.Exit(1)

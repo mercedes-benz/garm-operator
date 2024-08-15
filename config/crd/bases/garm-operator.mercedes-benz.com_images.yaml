@@ -19,7 +19,6 @@ spec:
   - additionalPrinterColumns:
     - jsonPath: .spec.tag
       name: Tag
-      priority: 1
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
