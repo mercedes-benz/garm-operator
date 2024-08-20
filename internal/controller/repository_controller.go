@@ -88,6 +88,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(repository, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkUnknown(repository, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+		conditions.MarkUnknown(repository, conditions.CredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
 		if err := r.Status().Update(ctx, repository); err != nil {
 			return ctrl.Result{}, err
 		}
