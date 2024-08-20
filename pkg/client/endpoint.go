@@ -2,6 +2,7 @@ package client
 
 import (
 	"github.com/cloudbase/garm/client/endpoints"
+
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 

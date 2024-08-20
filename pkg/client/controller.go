@@ -2,9 +2,10 @@ package client
 
 import (
 	"github.com/cloudbase/garm/client/controller"
+	"github.com/cloudbase/garm/client/controller_info"
+
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
-import "github.com/cloudbase/garm/client/controller_info"
 
 type ControllerClient interface {
 	GetControllerInfo() (*controller_info.ControllerInfoOK, error)

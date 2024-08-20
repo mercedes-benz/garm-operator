@@ -2,6 +2,7 @@ package client
 
 import (
 	"github.com/cloudbase/garm/client/credentials"
+
 	"github.com/mercedes-benz/garm-operator/pkg/metrics"
 )
 

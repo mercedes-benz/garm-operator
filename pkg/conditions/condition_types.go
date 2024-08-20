@@ -61,5 +61,5 @@ const (
 	DeletingRepoMsg                string = "Deleting repository"
 	DeletingPoolMsg                string = "Deleting pool"
 	DeletingEndpointMsg            string = "Deleting endpoint"
-	DeletingCredentialsMsg         string = "Deleting credentials"
+	DeletingCredentialsMsg         string = "Deleting credentials" // #nosec G101
 )

@@ -20,7 +20,7 @@ spec:
   versions:
   - additionalPrinterColumns:
     - description: API Base URL
-      jsonPath: .spec.apiBaseURL
+      jsonPath: .spec.apiBaseUrl
       name: URL
       type: string
     - jsonPath: .status.conditions[?(@.type=='Ready')].status
@@ -59,16 +59,16 @@ spec:
           spec:
             description: EndpointSpec defines the desired state of Endpoint
             properties:
-              apiBaseURL:
+              apiBaseUrl:
                 type: string
-              baseURL:
+              baseUrl:
                 type: string
               caCertBundle:
                 format: byte
                 type: string
               description:
                 type: string
-              uploadBaseURL:
+              uploadBaseUrl:
                 type: string
             type: object
           status:

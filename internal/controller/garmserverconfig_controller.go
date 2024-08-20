@@ -11,21 +11,18 @@ import (
 	garmcontroller "github.com/cloudbase/garm/client/controller"
 	"github.com/cloudbase/garm/client/controller_info"
 	"github.com/cloudbase/garm/params"
-	garmclient "github.com/mercedes-benz/garm-operator/pkg/client"
-	"github.com/mercedes-benz/garm-operator/pkg/client/key"
-	"github.com/mercedes-benz/garm-operator/pkg/util"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmclient "github.com/mercedes-benz/garm-operator/pkg/client"
+	"github.com/mercedes-benz/garm-operator/pkg/util"
+	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 )
 
 // GarmServerConfigReconciler reconciles a GarmServerConfig object
@@ -66,7 +63,7 @@ func (r *GarmServerConfigReconciler) reconcile(ctx context.Context, req ctrl.Req
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(garmServerConfig) {
-		log.Info("Reconciliation is paused for GarmServerConfig: %s", garmServerConfig.Name)
+		log.Info("Reconciliation is paused for GarmServerConfig")
 		return ctrl.Result{}, nil
 	}
 
@@ -82,30 +79,6 @@ func (r *GarmServerConfigReconciler) reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func (r *GarmServerConfigReconciler) createGarmServerConfigCR(ctx context.Context, controllerInfo *params.ControllerInfo, name, namespace string) error {
-	log := log.FromContext(ctx)
-	log.Info("Creating GarmServerConfig CR")
-
-	garmServerConfig := &garmoperatorv1alpha1.GarmServerConfig{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: garmoperatorv1alpha1.GarmServerConfigSpec{
-			MetadataURL: controllerInfo.MetadataURL,
-			CallbackURL: controllerInfo.CallbackURL,
-			WebhookURL:  controllerInfo.WebhookURL,
-		},
-	}
-
-	err := r.Create(ctx, garmServerConfig)
-	if err != nil {
-		log.Error(err, "Failed to create GarmServerConfig CR")
-		return err
-	}
-	return nil
 }
 
 func (r *GarmServerConfigReconciler) updateControllerInfo(ctx context.Context, client garmclient.ControllerClient, garmServerConfigCR *garmoperatorv1alpha1.GarmServerConfig, controllerInfo *params.ControllerInfo) (*params.ControllerInfo, error) {
@@ -175,14 +148,6 @@ func (r *GarmServerConfigReconciler) needsStatusUpdate(controllerInfo *params.Co
 	}
 
 	return !reflect.DeepEqual(garmServerConfigCR.Status, tempStatus)
-}
-
-func (r *GarmServerConfigReconciler) ensureFinalizer(ctx context.Context, garmServerConfig *garmoperatorv1alpha1.GarmServerConfig) error {
-	if !controllerutil.ContainsFinalizer(garmServerConfig, key.RunnerFinalizerName) {
-		controllerutil.AddFinalizer(garmServerConfig, key.RunnerFinalizerName)
-		return r.Update(ctx, garmServerConfig)
-	}
-	return nil
 }
 
 func (r *GarmServerConfigReconciler) getControllerInfo(client garmclient.ControllerClient) (params.ControllerInfo, error) {

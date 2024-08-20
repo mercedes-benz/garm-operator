@@ -17,8 +17,8 @@ type GitHubCredentialsSpec struct {
 	AuthType params.GithubAuthType `json:"authType"`
 
 	// if AuthType is app
-	AppID          int64 `json:"appID,omitempty"`
-	InstallationID int64 `json:"installationID,omitempty"`
+	AppID          int64 `json:"appId,omitempty"`
+	InstallationID int64 `json:"installationId,omitempty"`
 
 	// containing either privateKey or pat token
 	SecretRef SecretRef `json:"secretRef,omitempty"`
@@ -27,9 +27,9 @@ type GitHubCredentialsSpec struct {
 // GitHubCredentialsStatus defines the observed state of GitHubCredentials
 type GitHubCredentialsStatus struct {
 	ID            int64  `json:"id"`
-	APIBaseURL    string `json:"apiBaseURL"`
-	UploadBaseURL string `json:"uploadBaseURL"`
-	BaseURL       string `json:"baseURL"`
+	APIBaseURL    string `json:"apiBaseUrl"`
+	UploadBaseURL string `json:"uploadBaseUrl"`
+	BaseURL       string `json:"baseUrl"`
 
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }

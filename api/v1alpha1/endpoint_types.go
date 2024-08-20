@@ -9,9 +9,9 @@ import (
 // EndpointSpec defines the desired state of Endpoint
 type EndpointSpec struct {
 	Description   string `json:"description,omitempty"`
-	APIBaseURL    string `json:"apiBaseURL,omitempty"`
-	UploadBaseURL string `json:"uploadBaseURL,omitempty"`
-	BaseURL       string `json:"baseURL,omitempty"`
+	APIBaseURL    string `json:"apiBaseUrl,omitempty"`
+	UploadBaseURL string `json:"uploadBaseUrl,omitempty"`
+	BaseURL       string `json:"baseUrl,omitempty"`
 	CACertBundle  []byte `json:"caCertBundle,omitempty"`
 }
 
@@ -23,7 +23,7 @@ type EndpointStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=endpoints,scope=Namespaced,categories=garm,shortName=gep
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="URL",type="string",JSONPath=".spec.apiBaseURL",description="API Base URL"
+//+kubebuilder:printcolumn:name="URL",type="string",JSONPath=".spec.apiBaseUrl",description="API Base URL"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 //+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Endpoint"

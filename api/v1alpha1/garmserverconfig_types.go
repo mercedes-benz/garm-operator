@@ -8,33 +8,33 @@ import (
 
 // GarmServerConfigSpec defines the desired state of GarmServerConfig
 type GarmServerConfigSpec struct {
-	MetadataURL string `json:"metadataURL,omitempty"`
-	CallbackURL string `json:"callbackURL,omitempty"`
-	WebhookURL  string `json:"webhookURL,omitempty"`
+	MetadataURL string `json:"metadataUrl,omitempty"`
+	CallbackURL string `json:"callbackUrl,omitempty"`
+	WebhookURL  string `json:"webhookUrl,omitempty"`
 }
 
 // GarmServerConfigStatus defines the observed state of GarmServerConfig
 type GarmServerConfigStatus struct {
-	ControllerID         string             `json:"controllerID"`
-	Hostname             string             `json:"hostname"`
-	MetadataURL          string             `json:"metadataURL"`
-	CallbackURL          string             `json:"callbackURL"`
-	WebhookURL           string             `json:"webhookURL"`
-	ControllerWebhookURL string             `json:"controllerWebhookURL"`
-	MinimumJobAgeBackoff uint               `json:"minimumJobAgeBackoff"`
-	Version              string             `json:"version"`
+	ControllerID         string             `json:"controllerId,omitempty"`
+	Hostname             string             `json:"hostname,omitempty"`
+	MetadataURL          string             `json:"metadataUrl,omitempty"`
+	CallbackURL          string             `json:"callbackUrl,omitempty"`
+	WebhookURL           string             `json:"webhookUrl,omitempty"`
+	ControllerWebhookURL string             `json:"controllerWebhookUrl,omitempty"`
+	MinimumJobAgeBackoff uint               `json:"minimumJobAgeBackoff,omitempty"`
+	Version              string             `json:"version,omitempty"`
 	Conditions           []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=garmserverconfigs,scope=Namespaced,categories=garm,shortName=server
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.controllerID",description="Controller ID"
+//+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.controllerId",description="Controller ID"
 //+kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Garm Version"
-//+kubebuilder:printcolumn:name="MetadataURL",type="string",JSONPath=".status.metadataURL",description="MetadataURL",priority=1
-//+kubebuilder:printcolumn:name="CallbackURL",type="string",JSONPath=".status.callbackURL",description="CallbackURL",priority=1
-//+kubebuilder:printcolumn:name="WebhookURL",type="string",JSONPath=".status.webhookURL",description="WebhookURL",priority=1
-//+kubebuilder:printcolumn:name="ControllerWebhookURL",type="string",JSONPath=".status.controllerWebhookURL",description="ControllerWebhookURL",priority=1
+//+kubebuilder:printcolumn:name="MetadataURL",type="string",JSONPath=".status.metadataUrl",description="MetadataURL",priority=1
+//+kubebuilder:printcolumn:name="CallbackURL",type="string",JSONPath=".status.callbackUrl",description="CallbackURL",priority=1
+//+kubebuilder:printcolumn:name="WebhookURL",type="string",JSONPath=".status.webhookUrl",description="WebhookURL",priority=1
+//+kubebuilder:printcolumn:name="ControllerWebhookURL",type="string",JSONPath=".status.controllerWebhookUrl",description="ControllerWebhookURL",priority=1
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of GarmServerConfig"
 
 // GarmServerConfig is the Schema for the garmserverconfigs API

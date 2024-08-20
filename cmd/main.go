@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -215,8 +214,7 @@ func run() error {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("garm-server-config-controller"),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GarmServerConfig")
-		os.Exit(1)
+		return fmt.Errorf("unable to create controller GarmServerConfig: %w", err)
 	}
 
 	if err = (&garmcontroller.EndpointReconciler{
@@ -224,16 +222,14 @@ func run() error {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("endpoint-controller"),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Endpoint")
-		os.Exit(1)
+		return fmt.Errorf("unable to create controller Endpoint: %w", err)
 	}
 	if err = (&garmcontroller.GitHubCredentialsReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("credentials-controller"),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GitHubCredentials")
-		os.Exit(1)
+		return fmt.Errorf("unable to create controller GitHubCredentials: %w", err)
 	}
 	//+kubebuilder:scaffold:builder
 
