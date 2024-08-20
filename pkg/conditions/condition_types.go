@@ -54,11 +54,12 @@ const (
 )
 
 const (
-	GarmServerNotReconciledYetMsg string = "GARM server not reconciled yet"
-	DeletingEnterpriseMsg         string = "Deleting enterprise"
-	DeletingOrgMsg                string = "Deleting organization"
-	DeletingRepoMsg               string = "Deleting repository"
-	DeletingPoolMsg               string = "Deleting pool"
-	DeletingEndpointMsg           string = "Deleting endpoint"
-	DeletingCredentialsMsg        string = "Deleting credentials"
+	GarmServerNotReconciledYetMsg  string = "GARM server not reconciled yet"
+	CredentialsNotReconciledYetMsg string = "credentials not reconciled yet"
+	DeletingEnterpriseMsg          string = "Deleting enterprise"
+	DeletingOrgMsg                 string = "Deleting organization"
+	DeletingRepoMsg                string = "Deleting repository"
+	DeletingPoolMsg                string = "Deleting pool"
+	DeletingEndpointMsg            string = "Deleting endpoint"
+	DeletingCredentialsMsg         string = "Deleting credentials"
 )

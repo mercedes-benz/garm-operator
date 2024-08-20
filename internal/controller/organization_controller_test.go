@@ -48,7 +48,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -68,6 +72,21 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1alpha1.GitHubCredentials{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1alpha1.GitHubCredentialsSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
@@ -78,7 +97,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -93,6 +116,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -123,13 +153,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
 					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -146,7 +176,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "has-changed",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "has-changed",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -166,6 +200,21 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("has-changed"),
 					},
 				},
+				&garmoperatorv1alpha1.GitHubCredentials{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "has-changed",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1alpha1.GitHubCredentialsSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
@@ -176,7 +225,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "has-changed",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "has-changed",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -191,6 +244,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -244,7 +304,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -264,6 +328,21 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1alpha1.GitHubCredentials{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1alpha1.GitHubCredentialsSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
@@ -274,7 +353,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -289,6 +372,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -312,20 +402,20 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}}, nil)
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
 					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						PoolManagerStatus: params.PoolManagerStatus{
 							IsRunning:     false,
@@ -343,7 +433,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -360,6 +454,21 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1alpha1.GitHubCredentials{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1alpha1.GitHubCredentialsSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
@@ -370,7 +479,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -385,6 +498,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -415,12 +535,12 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				m.CreateOrganization(organizations.NewCreateOrgParams().WithBody(
 					params.CreateOrgParams{
 						Name:            "new-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.CreateOrgOK{
 					Payload: params.Organization{
 						Name:            "new-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 					},
@@ -428,13 +548,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("9e0da3cb-130b-428d-aa8a-e314d955060e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
 					Payload: params.Organization{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "new-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -448,7 +568,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -465,6 +589,21 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1alpha1.GitHubCredentials{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1alpha1.GitHubCredentialsSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
@@ -475,7 +614,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -490,6 +633,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -519,13 +669,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-12345").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
 					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -542,7 +692,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -562,6 +716,21 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1alpha1.GitHubCredentials{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1alpha1.GitHubCredentialsSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Organization{
 				ObjectMeta: metav1.ObjectMeta{
@@ -572,7 +741,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -587,6 +760,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -612,12 +792,12 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				m.CreateOrganization(organizations.NewCreateOrgParams().WithBody(
 					params.CreateOrgParams{
 						Name:            "existing-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.CreateOrgOK{
 					Payload: params.Organization{
 						Name:            "existing-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 					},
@@ -625,13 +805,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("9e0da3cb-130b-428d-aa8a-e314d955060e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
 					Payload: params.Organization{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "existing-organization",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -648,7 +828,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -666,7 +850,11 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "foobar",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -679,6 +867,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Reason:             string(conditions.FetchingSecretRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "secrets \"my-webhook-secret\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.UnknownReason),
+							Status:             metav1.ConditionUnknown,
+							Message:            "credentials not reconciled yet",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
@@ -773,7 +968,11 @@ func TestOrganizationReconciler_reconcileDelete(t *testing.T) {
 					},
 				},
 				Spec: garmoperatorv1alpha1.OrganizationSpec{
-					CredentialsName: "totally-insecure",
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+						Kind:     "GitHubCredentials",
+						Name:     "github-creds",
+					},
 					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
@@ -791,6 +990,21 @@ func TestOrganizationReconciler_reconcileDelete(t *testing.T) {
 					},
 					Data: map[string][]byte{
 						"webhookSecret": []byte("foobar"),
+					},
+				},
+				&garmoperatorv1alpha1.GitHubCredentials{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1alpha1.GitHubCredentialsSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1alpha1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
 					},
 				},
 			},

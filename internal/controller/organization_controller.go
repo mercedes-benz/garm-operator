@@ -88,6 +88,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(organization, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkUnknown(organization, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+		conditions.MarkUnknown(organization, conditions.CredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
 		if err := r.Status().Update(ctx, organization); err != nil {
 			return ctrl.Result{}, err
 		}
