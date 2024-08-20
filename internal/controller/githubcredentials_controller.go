@@ -5,9 +5,26 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	garmcredentials "github.com/cloudbase/garm/client/credentials"
 	garmconfig "github.com/cloudbase/garm/config"
 	"github.com/cloudbase/garm/params"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
@@ -15,23 +32,6 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/util"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
-	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
-	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 )
 
 // GitHubCredentialsReconciler reconciles a GitHubCredentials object
@@ -95,7 +95,7 @@ func (r *GitHubCredentialsReconciler) reconcileNormal(ctx context.Context, clien
 		return ctrl.Result{}, err
 	}
 
-	//fetch endpoint resource
+	// fetch endpoint resource
 	endpoint, err := r.getEndpointRef(ctx, credentials)
 	if err != nil {
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.FetchingEndpointRefFailedReason, err.Error())
@@ -107,7 +107,7 @@ func (r *GitHubCredentialsReconciler) reconcileNormal(ctx context.Context, clien
 	}
 	conditions.MarkTrue(credentials, conditions.EndpointReference, conditions.FetchingEndpointRefSuccessReason, "Successfully fetched Endpoint CR Ref")
 
-	//fetch secret
+	// fetch secret
 	githubSecret, err := secret.FetchRef(ctx, r.Client, &credentials.Spec.SecretRef, credentials.Namespace)
 	if err != nil {
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
@@ -198,7 +198,6 @@ func (r *GitHubCredentialsReconciler) createCredentials(ctx context.Context, cli
 	}
 
 	garmCredentials, err := client.CreateCredentials(garmcredentials.NewCreateCredentialsParams().WithBody(req))
-
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateCredentials error: %s", err))
 		return params.GithubCredentials{}, err

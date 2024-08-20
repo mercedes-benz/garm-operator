@@ -20,7 +20,7 @@ spec:
   versions:
   - additionalPrinterColumns:
     - description: Controller ID
-      jsonPath: .status.controllerID
+      jsonPath: .status.controllerId
       name: ID
       type: string
     - description: Garm Version
@@ -28,22 +28,22 @@ spec:
       name: Version
       type: string
     - description: MetadataURL
-      jsonPath: .status.metadataURL
+      jsonPath: .status.metadataUrl
       name: MetadataURL
       priority: 1
       type: string
     - description: CallbackURL
-      jsonPath: .status.callbackURL
+      jsonPath: .status.callbackUrl
       name: CallbackURL
       priority: 1
       type: string
     - description: WebhookURL
-      jsonPath: .status.webhookURL
+      jsonPath: .status.webhookUrl
       name: WebhookURL
       priority: 1
       type: string
     - description: ControllerWebhookURL
-      jsonPath: .status.controllerWebhookURL
+      jsonPath: .status.controllerWebhookUrl
       name: ControllerWebhookURL
       priority: 1
       type: string
@@ -76,17 +76,17 @@ spec:
           spec:
             description: GarmServerConfigSpec defines the desired state of GarmServerConfig
             properties:
-              callbackURL:
+              callbackUrl:
                 type: string
-              metadataURL:
+              metadataUrl:
                 type: string
-              webhookURL:
+              webhookUrl:
                 type: string
             type: object
           status:
             description: GarmServerConfigStatus defines the observed state of GarmServerConfig
             properties:
-              callbackURL:
+              callbackUrl:
                 type: string
               conditions:
                 items:
@@ -157,29 +157,20 @@ spec:
                   - type
                   type: object
                 type: array
-              controllerID:
+              controllerId:
                 type: string
-              controllerWebhookURL:
+              controllerWebhookUrl:
                 type: string
               hostname:
                 type: string
-              metadataURL:
+              metadataUrl:
                 type: string
               minimumJobAgeBackoff:
                 type: integer
               version:
                 type: string
-              webhookURL:
+              webhookUrl:
                 type: string
-            required:
-            - callbackURL
-            - controllerID
-            - controllerWebhookURL
-            - hostname
-            - metadataURL
-            - minimumJobAgeBackoff
-            - version
-            - webhookURL
             type: object
         type: object
     served: true

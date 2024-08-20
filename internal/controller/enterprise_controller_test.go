@@ -521,7 +521,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							Key:  "token",
 						},
 					},
-				}},
+				},
+			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
 				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
 					{

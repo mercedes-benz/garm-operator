@@ -5,25 +5,25 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	"github.com/cloudbase/garm/client/endpoints"
 	"github.com/cloudbase/garm/params"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"github.com/mercedes-benz/garm-operator/pkg/util"
 	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
 	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/tools/record"
-	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 )
 
 // EndpointReconciler reconciles a Endpoint object
@@ -89,7 +89,7 @@ func (r *EndpointReconciler) reconcileNormal(ctx context.Context, client garmCli
 
 	// if not found, create endpoint in garm db
 	if reflect.ValueOf(garmEndpoint).IsZero() {
-		garmEndpoint, err = r.createEndpoint(ctx, client, endpoint)
+		garmEndpoint, err = r.createEndpoint(ctx, client, endpoint) // nolint:wastedassign
 		if err != nil {
 			event.Error(r.Recorder, endpoint, err.Error())
 			conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
@@ -113,6 +113,7 @@ func (r *EndpointReconciler) reconcileNormal(ctx context.Context, client garmCli
 
 	// set and update endpoint status
 	conditions.MarkTrue(endpoint, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
+	log.Info("reconciling endpoint successfully done", "endpoint", garmEndpoint.Name)
 	if err := r.Status().Update(ctx, endpoint); err != nil {
 		return ctrl.Result{}, err
 	}
