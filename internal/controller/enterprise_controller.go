@@ -88,6 +88,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	if err != nil {
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(enterprise, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		conditions.MarkUnknown(enterprise, conditions.CredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
 		if conditions.Get(enterprise, conditions.PoolManager) == nil {
 			conditions.MarkUnknown(enterprise, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
 		}
