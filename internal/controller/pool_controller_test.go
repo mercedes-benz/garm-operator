@@ -167,7 +167,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						Namespace: namespaceName,
 					},
 					Spec: garmoperatorv1alpha1.EnterpriseSpec{
-						CredentialsName: "foobar",
+						CredentialsRef: corev1.TypedLocalObjectReference{
+							APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+							Kind:     "GitHubCredentials",
+							Name:     "github-creds",
+						},
 						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 							Name: "my-webhook-secret",
 							Key:  "webhookSecret",
@@ -376,7 +380,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						Namespace: namespaceName,
 					},
 					Spec: garmoperatorv1alpha1.EnterpriseSpec{
-						CredentialsName: "foobar",
+						CredentialsRef: corev1.TypedLocalObjectReference{
+							APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+							Kind:     "GitHubCredentials",
+							Name:     "github-creds",
+						},
 						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 							Name: "my-webhook-secret",
 							Key:  "webhookSecret",
@@ -564,7 +572,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						Namespace: namespaceName,
 					},
 					Spec: garmoperatorv1alpha1.EnterpriseSpec{
-						CredentialsName: "foobar",
+						CredentialsRef: corev1.TypedLocalObjectReference{
+							APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+							Kind:     "GitHubCredentials",
+							Name:     "github-creds",
+						},
 						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 							Name: "my-webhook-secret",
 							Key:  "webhookSecret",
@@ -851,7 +863,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						Namespace: namespaceName,
 					},
 					Spec: garmoperatorv1alpha1.EnterpriseSpec{
-						CredentialsName: "foobar",
+						CredentialsRef: corev1.TypedLocalObjectReference{
+							APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+							Kind:     "GitHubCredentials",
+							Name:     "github-creds",
+						},
 						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 							Name: "my-webhook-secret",
 							Key:  "webhookSecret",
@@ -1235,7 +1251,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						Namespace: namespaceName,
 					},
 					Spec: garmoperatorv1alpha1.EnterpriseSpec{
-						CredentialsName: "foobar",
+						CredentialsRef: corev1.TypedLocalObjectReference{
+							APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+							Kind:     "GitHubCredentials",
+							Name:     "github-creds",
+						},
 						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 							Name: "my-webhook-secret",
 							Key:  "webhookSecret",
@@ -1298,7 +1318,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 				Status: garmoperatorv1alpha1.PoolStatus{
 					ID: poolID,
-					// LastSyncError: "",
 				},
 			},
 			expectedObject: &garmoperatorv1alpha1.Pool{
@@ -1381,7 +1400,11 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 						Namespace: namespaceName,
 					},
 					Spec: garmoperatorv1alpha1.EnterpriseSpec{
-						CredentialsName: "foobar",
+						CredentialsRef: corev1.TypedLocalObjectReference{
+							APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+							Kind:     "GitHubCredentials",
+							Name:     "github-creds",
+						},
 						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 							Name: "my-webhook-secret",
 							Key:  "webhookSecret",
@@ -1828,7 +1851,11 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 						Namespace: namespaceName,
 					},
 					Spec: garmoperatorv1alpha1.EnterpriseSpec{
-						CredentialsName: "foobar",
+						CredentialsRef: corev1.TypedLocalObjectReference{
+							APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+							Kind:     "GitHubCredentials",
+							Name:     "github-creds",
+						},
 						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 							Name: "my-webhook-secret",
 							Key:  "webhookSecret",
@@ -2041,7 +2068,11 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 						Namespace: namespaceName,
 					},
 					Spec: garmoperatorv1alpha1.EnterpriseSpec{
-						CredentialsName: "foobar",
+						CredentialsRef: corev1.TypedLocalObjectReference{
+							APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
+							Kind:     "GitHubCredentials",
+							Name:     "github-creds",
+						},
 						WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
 							Name: "my-webhook-secret",
 							Key:  "webhookSecret",
