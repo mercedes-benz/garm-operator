@@ -105,7 +105,7 @@ func (r *GitHubCredentialsReconciler) reconcileNormal(ctx context.Context, clien
 		}
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(credentials, conditions.EndpointReference, conditions.FetchingEndpointRefSuccessReason, "Successfully fetched Endpoint CR Ref")
+	conditions.MarkTrue(credentials, conditions.EndpointReference, conditions.FetchingEndpointRefSuccessReason, "Successfully fetched GitHubEndpoint CR Ref")
 
 	// fetch secret
 	githubSecret, err := secret.FetchRef(ctx, r.Client, &credentials.Spec.SecretRef, credentials.Namespace)
@@ -281,8 +281,8 @@ func (r *GitHubCredentialsReconciler) reconcileDelete(ctx context.Context, clien
 	return ctrl.Result{}, nil
 }
 
-func (r *GitHubCredentialsReconciler) getEndpointRef(ctx context.Context, credentials *garmoperatorv1alpha1.GitHubCredentials) (*garmoperatorv1alpha1.Endpoint, error) {
-	endpoint := &garmoperatorv1alpha1.Endpoint{}
+func (r *GitHubCredentialsReconciler) getEndpointRef(ctx context.Context, credentials *garmoperatorv1alpha1.GitHubCredentials) (*garmoperatorv1alpha1.GitHubEndpoint, error) {
+	endpoint := &garmoperatorv1alpha1.GitHubEndpoint{}
 	err := r.Get(ctx, types.NamespacedName{
 		Namespace: credentials.Namespace,
 		Name:      credentials.Spec.EndpointRef.Name,

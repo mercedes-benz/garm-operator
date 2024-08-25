@@ -217,17 +217,18 @@ func run() error {
 		return fmt.Errorf("unable to create controller GarmServerConfig: %w", err)
 	}
 
-	if err = (&garmcontroller.EndpointReconciler{
+	if err = (&garmcontroller.GitHubEndpointReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("endpoint-controller"),
+		Recorder: mgr.GetEventRecorderFor("github-endpoint-controller"),
 	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create controller Endpoint: %w", err)
+		return fmt.Errorf("unable to create controller GitHubEndpoint: %w", err)
 	}
+
 	if err = (&garmcontroller.GitHubCredentialsReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("credentials-controller"),
+		Recorder: mgr.GetEventRecorderFor("github-credentials-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller GitHubCredentials: %w", err)
 	}

@@ -9,7 +9,7 @@ resources:
 - bases/garm-operator.mercedes-benz.com_repositories.yaml
 - bases/garm-operator.mercedes-benz.com_runners.yaml
 - bases/garm-operator.mercedes-benz.com_garmserverconfigs.yaml
-- bases/garm-operator.mercedes-benz.com_endpoints.yaml
+- bases/garm-operator.mercedes-benz.com_githubendpoints.yaml
 - bases/garm-operator.mercedes-benz.com_githubcredentials.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
@@ -22,7 +22,7 @@ patches:
 - path: patches/webhook_in_repositories.yaml
 #- path: patches/webhook_in_runners.yaml
 #- path: patches/webhook_in_garmserverconfigs.yaml
-#- path: patches/webhook_in_endpoints.yaml
+#- path: patches/webhook_in_githubendpoints.yaml
 #- path: patches/webhook_in_githubcredentials.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
@@ -35,7 +35,7 @@ patches:
 - path: patches/cainjection_in_repositories.yaml
 #- path: patches/cainjection_in_runners.yaml
 #- path: patches/cainjection_in_garmserverconfigs.yaml
-#- path: patches/cainjection_in_endpoints.yaml
+#- path: patches/cainjection_in_githubendpoints.yaml
 #- path: patches/cainjection_in_githubcredentials.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 

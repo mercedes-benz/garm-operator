@@ -41,7 +41,7 @@ type GitHubCredentialsStatus struct {
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 //+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1
 //+kubebuilder:printcolumn:name="AuthType",type="string",JSONPath=`.spec.authType`,description="Authentication type"
-//+kubebuilder:printcolumn:name="Endpoint",type="string",JSONPath=`.spec.endpointRef.name`,description="Endpoint name these credentials are tied to"
+//+kubebuilder:printcolumn:name="GitHubEndpoint",type="string",JSONPath=`.spec.endpointRef.name`,description="GitHubEndpoint name these credentials are tied to"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of GitHubCredentials"
 
 // GitHubCredentials is the Schema for the githubcredentials API
