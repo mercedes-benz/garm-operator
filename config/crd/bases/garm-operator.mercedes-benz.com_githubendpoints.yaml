@@ -4,18 +4,18 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-  name: endpoints.garm-operator.mercedes-benz.com
+  name: githubendpoints.garm-operator.mercedes-benz.com
 spec:
   group: garm-operator.mercedes-benz.com
   names:
     categories:
     - garm
-    kind: Endpoint
-    listKind: EndpointList
-    plural: endpoints
+    kind: GitHubEndpoint
+    listKind: GitHubEndpointList
+    plural: githubendpoints
     shortNames:
     - gep
-    singular: endpoint
+    singular: githubendpoint
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -30,14 +30,14 @@ spec:
       name: Error
       priority: 1
       type: string
-    - description: Time duration since creation of Endpoint
+    - description: Time duration since creation of GitHubEndpoint
       jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Endpoint is the Schema for the endpoints API
+        description: GitHubEndpoint is the Schema for the githubendpoints API
         properties:
           apiVersion:
             description: |-
@@ -57,7 +57,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: EndpointSpec defines the desired state of Endpoint
+            description: GitHubEndpointSpec defines the desired state of GitHubEndpoint
             properties:
               apiBaseUrl:
                 type: string
@@ -72,7 +72,7 @@ spec:
                 type: string
             type: object
           status:
-            description: EndpointStatus defines the observed state of Endpoint
+            description: GitHubEndpointStatus defines the observed state of GitHubEndpoint
             properties:
               conditions:
                 items:

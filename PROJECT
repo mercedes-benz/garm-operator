@@ -84,7 +84,7 @@ resources:
   controller: true
   domain: mercedes-benz.com
   group: garm-operator
-  kind: Endpoint
+  kind: GitHubEndpoint
   path: github.com/mercedes-benz/garm-operator/api/v1alpha1
   version: v1alpha1
 - api:
