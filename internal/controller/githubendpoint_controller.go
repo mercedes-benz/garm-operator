@@ -210,8 +210,8 @@ func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client g
 		return ctrl.Result{}, err
 	}
 
-	if controllerutil.ContainsFinalizer(endpoint, key.EndpointFinalizerName) {
-		controllerutil.RemoveFinalizer(endpoint, key.EndpointFinalizerName)
+	if controllerutil.ContainsFinalizer(endpoint, key.GitHubEndpointFinalizerName) {
+		controllerutil.RemoveFinalizer(endpoint, key.GitHubEndpointFinalizerName)
 		if err := r.Update(ctx, endpoint); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -223,8 +223,8 @@ func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client g
 }
 
 func (r *GitHubEndpointReconciler) ensureFinalizer(ctx context.Context, endpoint *garmoperatorv1alpha1.GitHubEndpoint) error {
-	if !controllerutil.ContainsFinalizer(endpoint, key.EndpointFinalizerName) {
-		controllerutil.AddFinalizer(endpoint, key.EndpointFinalizerName)
+	if !controllerutil.ContainsFinalizer(endpoint, key.GitHubEndpointFinalizerName) {
+		controllerutil.AddFinalizer(endpoint, key.GitHubEndpointFinalizerName)
 		return r.Update(ctx, endpoint)
 	}
 	return nil
