@@ -17,7 +17,7 @@ import (
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
-	"github.com/mercedes-benz/garm-operator/pkg/util/filter"
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
 
 func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (*params.Pool, error) {

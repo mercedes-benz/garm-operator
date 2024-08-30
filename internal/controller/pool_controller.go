@@ -28,15 +28,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
-	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
-	poolUtil "github.com/mercedes-benz/garm-operator/pkg/util/pools"
-	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/util/runners"
-	"github.com/mercedes-benz/garm-operator/pkg/util/tags"
+	poolUtil "github.com/mercedes-benz/garm-operator/pkg/pools"
+	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/runners"
+	"github.com/mercedes-benz/garm-operator/pkg/tags"
 )
 
 // PoolReconciler reconciles a Pool object

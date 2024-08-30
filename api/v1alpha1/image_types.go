@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -48,6 +49,12 @@ type ImageList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Image `json:"items"`
+}
+
+func MatchesTag(tag string) filter.Predicate[Image] {
+	return func(i Image) bool {
+		return i.Spec.Tag == tag
+	}
 }
 
 func init() {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/cloudbase/garm/params"
 
-	"github.com/mercedes-benz/garm-operator/pkg/util/filter"
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
 
 func MatchesName(name string) filter.Predicate[params.Instance] {

@@ -22,7 +22,7 @@ import (
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
-	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 )
 
 func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
