@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/mercedes-benz/garm-operator/pkg/image"
 	"reflect"
 	"sort"
 	"time"
@@ -123,6 +124,17 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 		return r.handleUpdateError(ctx, pool, err, conditions.FetchingImageRefFailedReason)
 	}
 	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
+
+	// check for duplicate pools
+	duplicate, duplicateName, err := poolUtil.CheckDuplicate(ctx, r.Client, pool, image)
+	if err != nil {
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
+	}
+
+	if duplicate {
+		err := fmt.Errorf("pool with same image, flavor, provider and github scope already exists: %s", duplicateName)
+		return r.handleUpdateError(ctx, pool, err, conditions.DuplicatePoolReason)
+	}
 
 	// check if there is already a pool with the same spec on garm side
 	matchingGarmPool, err := poolUtil.GetGarmPoolBySpecs(ctx, garmClient, pool, image, gitHubScopeRef)
@@ -451,13 +463,7 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoper
 }
 
 func (r *PoolReconciler) getImage(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (*garmoperatorv1alpha1.Image, error) {
-	image := &garmoperatorv1alpha1.Image{}
-	if pool.Spec.ImageName != "" {
-		if err := r.Get(ctx, types.NamespacedName{Name: pool.Spec.ImageName, Namespace: pool.Namespace}, image); err != nil {
-			return nil, err
-		}
-	}
-	return image, nil
+	return image.GetByPoolCR(ctx, r.Client, pool)
 }
 
 func (r *PoolReconciler) findPoolsForImage(ctx context.Context, obj client.Object) []reconcile.Request {

@@ -28,6 +28,7 @@ const (
 	FetchingScopeRefSuccessReason ConditionReason = "FetchingScopeRefSuccess"
 	FetchingScopeRefFailedReason  ConditionReason = "FetchingScopeRefFailed"
 	ScopeRefNotReadyReason        ConditionReason = "ScopeRefNotReady"
+	DuplicatePoolReason           ConditionReason = "DuplicatePoolFound"
 )
 
 // Enterprise, Org & Repo Conditions

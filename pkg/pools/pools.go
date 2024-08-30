@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/cloudbase/garm/client/enterprises"
 	"github.com/cloudbase/garm/client/organizations"
@@ -18,6 +19,7 @@ import (
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
+	imageUtil "github.com/mercedes-benz/garm-operator/pkg/image"
 )
 
 func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (*params.Pool, error) {
@@ -182,4 +184,32 @@ func GarmPoolExists(garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1
 		return false
 	}
 	return result.Payload.ID != ""
+}
+
+func CheckDuplicate(ctx context.Context, client client.Client, pool *garmoperatorv1alpha1.Pool, poolImage *garmoperatorv1alpha1.Image) (bool, string, error) {
+	poolList := &garmoperatorv1alpha1.PoolList{}
+	err := client.List(ctx, poolList)
+	if err != nil {
+		return false, "", err
+	}
+
+	// only get other pools
+	filteredPoolList := filter.Match(poolList.Items,
+		garmoperatorv1alpha1.MatchesFlavor(pool.Spec.Flavor),
+		garmoperatorv1alpha1.MatchesProvider(pool.Spec.ProviderName),
+		garmoperatorv1alpha1.MatchesGitHubScope(pool.Spec.GitHubScopeRef.Name, pool.Spec.GitHubScopeRef.Kind),
+		garmoperatorv1alpha1.NotMatchingName(pool.Name),
+	)
+
+	for _, p := range filteredPoolList {
+		pool := p
+		image, err := imageUtil.GetByPoolCR(ctx, client, &pool)
+		if err != nil {
+			continue
+		}
+		if image.Spec.Tag == poolImage.Spec.Tag {
+			return true, fmt.Sprintf("%s/%s", pool.Namespace, pool.Name), nil
+		}
+	}
+	return false, "", nil
 }

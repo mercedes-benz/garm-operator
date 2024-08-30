@@ -130,3 +130,9 @@ func MatchesID(id string) filter.Predicate[Pool] {
 		return p.Status.ID == id
 	}
 }
+
+func NotMatchingName(name string) filter.Predicate[Pool] {
+	return func(p Pool) bool {
+		return p.Name != name
+	}
+}
