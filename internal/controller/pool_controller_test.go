@@ -50,7 +50,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		// this can be used to define other existing objects that are referenced by the object to reconcile
 		// e.g. images or other pools ..
 		runtimeObjects    []runtime.Object
-		expectGarmRequest func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder)
+		expectGarmRequest func(_ *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder)
 		wantErr           bool
 		expectedObject    *garmoperatorv1alpha1.Pool
 	}{
@@ -1640,7 +1640,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			wantErr:           true,
-			expectGarmRequest: func(poolClient *mock.MockPoolClientMockRecorder, _ *mock.MockInstanceClientMockRecorder) {},
+			expectGarmRequest: func(_ *mock.MockPoolClientMockRecorder, _ *mock.MockInstanceClientMockRecorder) {},
 		},
 	}
 
@@ -1715,7 +1715,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 		// this can be used to define other existing objects that are referenced by the object to reconcile
 		// e.g. images or other pools ..
 		runtimeObjects    []runtime.Object
-		expectGarmRequest func(poolClient *mock.MockPoolClientMockRecorder, instanceClient *mock.MockInstanceClientMockRecorder)
+		expectGarmRequest func(_ *mock.MockPoolClientMockRecorder, _ *mock.MockInstanceClientMockRecorder)
 		wantErr           bool
 		expectedObject    *garmoperatorv1alpha1.Pool
 	}{

@@ -3,9 +3,11 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
-	"github.com/mercedes-benz/garm-operator/pkg/filter"
+
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
 
 func (p *Pool) CheckDuplicate(ctx context.Context, client client.Client, poolImage *Image) (bool, string, error) {
