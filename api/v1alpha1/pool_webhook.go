@@ -6,8 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mercedes-benz/garm-operator/pkg/image"
-	poolUtil "github.com/mercedes-benz/garm-operator/pkg/pools"
 	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -50,13 +48,13 @@ func (p *Pool) ValidateCreate() (admission.Warnings, error) {
 		)
 	}
 
-	poolImage, err := image.GetByPoolCR(ctx, c, p)
+	poolImage, err := p.GetImageCR(ctx, c)
 	if err != nil {
 		poollog.Error(err, "cannot fetch Image", "error", err)
 		return nil, nil
 	}
 
-	duplicate, duplicateName, err := poolUtil.CheckDuplicate(ctx, c, p, poolImage)
+	duplicate, duplicateName, err := p.CheckDuplicate(ctx, c, poolImage)
 	if err != nil {
 		poollog.Error(err, "error checking for duplicate", "error", err)
 		return nil, nil

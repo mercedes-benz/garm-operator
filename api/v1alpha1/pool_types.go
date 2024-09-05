@@ -6,8 +6,6 @@ import (
 	commonParams "github.com/cloudbase/garm-provider-common/params"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -99,40 +97,4 @@ type PoolList struct {
 
 func init() {
 	SchemeBuilder.Register(&Pool{}, &PoolList{})
-}
-
-func MatchesImage(image string) filter.Predicate[Pool] {
-	return func(p Pool) bool {
-		return p.Spec.ImageName == image
-	}
-}
-
-func MatchesFlavor(flavor string) filter.Predicate[Pool] {
-	return func(p Pool) bool {
-		return p.Spec.Flavor == flavor
-	}
-}
-
-func MatchesProvider(provider string) filter.Predicate[Pool] {
-	return func(p Pool) bool {
-		return p.Spec.ProviderName == provider
-	}
-}
-
-func MatchesGitHubScope(name, kind string) filter.Predicate[Pool] {
-	return func(p Pool) bool {
-		return p.Spec.GitHubScopeRef.Name == name && p.Spec.GitHubScopeRef.Kind == kind
-	}
-}
-
-func MatchesID(id string) filter.Predicate[Pool] {
-	return func(p Pool) bool {
-		return p.Status.ID == id
-	}
-}
-
-func NotMatchingName(name string) filter.Predicate[Pool] {
-	return func(p Pool) bool {
-		return p.Name != name
-	}
 }

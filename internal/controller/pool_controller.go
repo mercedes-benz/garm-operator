@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mercedes-benz/garm-operator/pkg/image"
 	"reflect"
 	"sort"
 	"time"
@@ -118,7 +117,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	log.Info("Pool doesn't exist on garm side. Creating new pool in garm")
 
 	// get image cr object by name
-	image, err := r.getImage(ctx, pool)
+	image, err := pool.GetImageCR(ctx, r.Client)
 	if err != nil {
 		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
 		return r.handleUpdateError(ctx, pool, err, conditions.FetchingImageRefFailedReason)
@@ -126,7 +125,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
 
 	// check for duplicate pools
-	duplicate, duplicateName, err := poolUtil.CheckDuplicate(ctx, r.Client, pool, image)
+	duplicate, duplicateName, err := pool.CheckDuplicate(ctx, r.Client, image)
 	if err != nil {
 		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
@@ -170,7 +169,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		WithName("reconcileUpdate")
 	log.Info("pool on garm side found", "id", pool.Status.ID, "name", pool.Name)
 
-	image, err := r.getImage(ctx, pool)
+	image, err := pool.GetImageCR(ctx, r.Client)
 	if err != nil {
 		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
 		return r.handleUpdateError(ctx, pool, err, conditions.FetchingImageRefFailedReason)
@@ -460,10 +459,6 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoper
 	}
 
 	return gitHubScope.(garmoperatorv1alpha1.GitHubScope), nil
-}
-
-func (r *PoolReconciler) getImage(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (*garmoperatorv1alpha1.Image, error) {
-	return image.GetByPoolCR(ctx, r.Client, pool)
 }
 
 func (r *PoolReconciler) findPoolsForImage(ctx context.Context, obj client.Object) []reconcile.Request {
