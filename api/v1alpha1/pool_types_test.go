@@ -178,6 +178,58 @@ func TestPoolList_FilterByFields(t *testing.T) {
 			},
 			length: 2,
 		},
+		{
+			name: "duplicate pool but different name",
+			fields: fields{
+				TypeMeta: metav1.TypeMeta{},
+				ListMeta: metav1.ListMeta{},
+				Items: []Pool{
+					{
+						TypeMeta: metav1.TypeMeta{},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ubuntu-2004-large",
+							Namespace: "test",
+						},
+						Spec: PoolSpec{
+							ImageName:    "ubuntu-2004",
+							Flavor:       "large",
+							ProviderName: "openstack",
+							GitHubScopeRef: corev1.TypedLocalObjectReference{
+								Name:     "test",
+								Kind:     "Enterprise",
+								APIGroup: ptr.To[string]("github.com"),
+							},
+						},
+					},
+					{
+						TypeMeta: metav1.TypeMeta{},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ubuntu-2204-large",
+							Namespace: "test",
+						},
+						Spec: PoolSpec{
+							ImageName:    "ubuntu-2204",
+							Flavor:       "large",
+							ProviderName: "openstack",
+							GitHubScopeRef: corev1.TypedLocalObjectReference{
+								Name:     "test",
+								Kind:     "Enterprise",
+								APIGroup: ptr.To[string]("github.com"),
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				predicates: []filter.Predicate[Pool]{
+					MatchesFlavor("large"),
+					MatchesProvider("openstack"),
+					MatchesGitHubScope("test", "Enterprise"),
+					NotMatchingName("ubuntu-2004-large"),
+				},
+			},
+			length: 1,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
