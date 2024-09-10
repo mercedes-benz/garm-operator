@@ -137,7 +137,11 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	}
 
 	// update enterprise anytime
-	garmEnterprise, err = r.updateEnterprise(ctx, client, garmEnterprise.ID, webhookSecret, credentials.Name)
+	garmEnterprise, err = r.updateEnterprise(ctx, client, garmEnterprise.ID, params.UpdateEntityParams{
+		CredentialsName:  credentials.Name,
+		WebhookSecret:    webhookSecret,
+		PoolBalancerType: enterprise.Spec.PoolBalancerType,
+	})
 	if err != nil {
 		event.Error(r.Recorder, enterprise, err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
@@ -175,9 +179,10 @@ func (r *EnterpriseReconciler) createEnterprise(ctx context.Context, client garm
 	retValue, err := client.CreateEnterprise(
 		enterprises.NewCreateEnterpriseParams().
 			WithBody(params.CreateEnterpriseParams{
-				Name:            enterprise.Name,
-				CredentialsName: enterprise.GetCredentialsName(),
-				WebhookSecret:   webhookSecret, // gh hook secret
+				Name:             enterprise.Name,
+				CredentialsName:  enterprise.GetCredentialsName(),
+				WebhookSecret:    webhookSecret, // gh hook secret
+				PoolBalancerType: enterprise.Spec.PoolBalancerType,
 			}))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateEnterprise error: %s", err))
@@ -192,7 +197,7 @@ func (r *EnterpriseReconciler) createEnterprise(ctx context.Context, client garm
 	return retValue.Payload, nil
 }
 
-func (r *EnterpriseReconciler) updateEnterprise(ctx context.Context, client garmClient.EnterpriseClient, statusID, webhookSecret, credentialsName string) (params.Enterprise, error) {
+func (r *EnterpriseReconciler) updateEnterprise(ctx context.Context, client garmClient.EnterpriseClient, statusID string, updateParams params.UpdateEntityParams) (params.Enterprise, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update credentials and webhook secret in garm enterprise")
 
@@ -200,10 +205,7 @@ func (r *EnterpriseReconciler) updateEnterprise(ctx context.Context, client garm
 	retValue, err := client.UpdateEnterprise(
 		enterprises.NewUpdateEnterpriseParams().
 			WithEnterpriseID(statusID).
-			WithBody(params.UpdateEntityParams{
-				CredentialsName: credentialsName,
-				WebhookSecret:   webhookSecret, // gh hook secret
-			}))
+			WithBody(updateParams))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.UpdateEnterprise error: %s", err))
 		return params.Enterprise{}, err

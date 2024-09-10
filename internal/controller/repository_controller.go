@@ -134,7 +134,11 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	}
 
 	// update repository anytime
-	garmRepository, err = r.updateRepository(ctx, client, garmRepository.ID, webhookSecret, credentials.Name)
+	garmRepository, err = r.updateRepository(ctx, client, garmRepository.ID, params.UpdateEntityParams{
+		CredentialsName:  credentials.Name,
+		WebhookSecret:    webhookSecret,
+		PoolBalancerType: repository.Spec.PoolBalancerType,
+	})
 	if err != nil {
 		event.Error(r.Recorder, repository, err.Error())
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
@@ -173,10 +177,11 @@ func (r *RepositoryReconciler) createRepository(ctx context.Context, client garm
 	retValue, err := client.CreateRepository(
 		repositories.NewCreateRepoParams().
 			WithBody(params.CreateRepoParams{
-				Name:            repository.Name,
-				CredentialsName: repository.GetCredentialsName(),
-				Owner:           repository.Spec.Owner,
-				WebhookSecret:   webhookSecret, // gh hook secret
+				Name:             repository.Name,
+				CredentialsName:  repository.GetCredentialsName(),
+				Owner:            repository.Spec.Owner,
+				WebhookSecret:    webhookSecret, // gh hook secret
+				PoolBalancerType: repository.Spec.PoolBalancerType,
 			}))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateRepository error: %s", err))
@@ -191,7 +196,7 @@ func (r *RepositoryReconciler) createRepository(ctx context.Context, client garm
 	return retValue.Payload, nil
 }
 
-func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garmClient.RepositoryClient, statusID, webhookSecret, credentialsName string) (params.Repository, error) {
+func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garmClient.RepositoryClient, statusID string, updateParams params.UpdateEntityParams) (params.Repository, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update credentials and webhook secret in garm repository")
 
@@ -199,10 +204,7 @@ func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garm
 	retValue, err := client.UpdateRepository(
 		repositories.NewUpdateRepoParams().
 			WithRepoID(statusID).
-			WithBody(params.UpdateEntityParams{
-				CredentialsName: credentialsName,
-				WebhookSecret:   webhookSecret, // gh hook secret
-			}))
+			WithBody(updateParams))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.UpdateRepository error: %s", err))
 		return params.Repository{}, err

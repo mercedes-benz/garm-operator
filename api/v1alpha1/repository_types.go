@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	"github.com/cloudbase/garm/params"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -15,7 +16,8 @@ type RepositorySpec struct {
 	Owner          string                           `json:"owner"`
 
 	// WebhookSecretRef represents a secret that should be used for the webhook
-	WebhookSecretRef SecretRef `json:"webhookSecretRef"`
+	WebhookSecretRef SecretRef               `json:"webhookSecretRef"`
+	PoolBalancerType params.PoolBalancerType `json:"poolBalancerType,omitempty"`
 }
 
 // RepositoryStatus defines the observed state of Repository

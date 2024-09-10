@@ -87,6 +87,8 @@ spec:
                 x-kubernetes-map-type: atomic
               owner:
                 type: string
+              poolBalancerType:
+                type: string
               webhookSecretRef:
                 description: WebhookSecretRef represents a secret that should be used
                   for the webhook

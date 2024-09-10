@@ -134,7 +134,11 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	}
 
 	// update organization anytime
-	garmOrganization, err = r.updateOrganization(ctx, client, garmOrganization.ID, webhookSecret, credentials.Name)
+	garmOrganization, err = r.updateOrganization(ctx, client, garmOrganization.ID, params.UpdateEntityParams{
+		CredentialsName:  credentials.Name,
+		WebhookSecret:    webhookSecret,
+		PoolBalancerType: organization.Spec.PoolBalancerType,
+	})
 	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
@@ -173,9 +177,10 @@ func (r *OrganizationReconciler) createOrganization(ctx context.Context, client 
 	retValue, err := client.CreateOrganization(
 		organizations.NewCreateOrgParams().
 			WithBody(params.CreateOrgParams{
-				Name:            organization.Name,
-				CredentialsName: organization.GetCredentialsName(),
-				WebhookSecret:   webhookSecret, // gh hook secret
+				Name:             organization.Name,
+				CredentialsName:  organization.GetCredentialsName(),
+				WebhookSecret:    webhookSecret, // gh hook secret
+				PoolBalancerType: organization.Spec.PoolBalancerType,
 			}))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateOrganization error: %s", err))
@@ -190,7 +195,7 @@ func (r *OrganizationReconciler) createOrganization(ctx context.Context, client 
 	return retValue.Payload, nil
 }
 
-func (r *OrganizationReconciler) updateOrganization(ctx context.Context, client garmClient.OrganizationClient, statusID, webhookSecret, credentialsName string) (params.Organization, error) {
+func (r *OrganizationReconciler) updateOrganization(ctx context.Context, client garmClient.OrganizationClient, statusID string, updateParams params.UpdateEntityParams) (params.Organization, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update credentials and webhook secret in garm organization")
 
@@ -198,10 +203,7 @@ func (r *OrganizationReconciler) updateOrganization(ctx context.Context, client 
 	retValue, err := client.UpdateOrganization(
 		organizations.NewUpdateOrgParams().
 			WithOrgID(statusID).
-			WithBody(params.UpdateEntityParams{
-				CredentialsName: credentialsName,
-				WebhookSecret:   webhookSecret, // gh hook secret
-			}))
+			WithBody(updateParams))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.UpdateOrganization error: %s", err))
 		return params.Organization{}, err
