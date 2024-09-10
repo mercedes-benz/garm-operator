@@ -38,19 +38,10 @@ type GarmServerConfigReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=garmserverconfigs/finalizers,verbs=update
 
 func (r *GarmServerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	controllerClient := garmclient.NewControllerClient()
-	return r.reconcile(ctx, req, controllerClient)
-}
-
-func (r *GarmServerConfigReconciler) reconcile(ctx context.Context, req ctrl.Request, controllerClient garmclient.ControllerClient) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("Reconciling GarmServerConfig")
 
-	controllerInfo, err := r.getControllerInfo(controllerClient)
-	if err != nil {
-		log.Error(err, "Failed to get controller info")
-		return ctrl.Result{}, err
-	}
+	controllerClient := garmclient.NewControllerClient()
 
 	garmServerConfig := &garmoperatorv1alpha1.GarmServerConfig{}
 	if err := r.Get(ctx, req.NamespacedName, garmServerConfig); err != nil {
@@ -65,6 +56,18 @@ func (r *GarmServerConfigReconciler) reconcile(ctx context.Context, req ctrl.Req
 	if annotations.IsPaused(garmServerConfig) {
 		log.Info("Reconciliation is paused for GarmServerConfig")
 		return ctrl.Result{}, nil
+	}
+
+	return r.reconcileNormal(ctx, controllerClient, garmServerConfig)
+}
+
+func (r *GarmServerConfigReconciler) reconcileNormal(ctx context.Context, controllerClient garmclient.ControllerClient, garmServerConfig *garmoperatorv1alpha1.GarmServerConfig) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+
+	controllerInfo, err := r.getControllerInfo(controllerClient)
+	if err != nil {
+		log.Error(err, "Failed to get controller info")
+		return ctrl.Result{}, err
 	}
 
 	// sync applied spec with controller info in garm
