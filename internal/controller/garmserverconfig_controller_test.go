@@ -11,11 +11,9 @@ import (
 	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 	"reflect"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 )
@@ -47,7 +45,27 @@ func TestGarmServerConfig_reconcile(t *testing.T) {
 					WebhookURL:  "http://garm-server.garm-server.svc:9997/api/v1/webhook",
 				},
 			},
-			expectedObject: &garmoperatorv1alpha1.GarmServerConfig{},
+			expectedObject: &garmoperatorv1alpha1.GarmServerConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "garm-server-config",
+					Namespace: "default",
+				},
+				Spec: garmoperatorv1alpha1.GarmServerConfigSpec{
+					MetadataURL: "http://garm-server.garm-server.svc:9997/api/v1/metadata",
+					CallbackURL: "http://garm-server.garm-server.svc:9997/api/v1/callbacks",
+					WebhookURL:  "http://garm-server.garm-server.svc:9997/api/v1/webhook",
+				},
+				Status: garmoperatorv1alpha1.GarmServerConfigStatus{
+					ControllerID:         controllerId.String(),
+					Hostname:             "garm.server.com",
+					MetadataURL:          "http://garm-server.garm-server.svc:9997/api/v1/metadata",
+					CallbackURL:          "http://garm-server.garm-server.svc:9997/api/v1/callbacks",
+					WebhookURL:           "http://garm-server.garm-server.svc:9997/api/v1/webhook",
+					ControllerWebhookURL: " http://garm-server.garm-server.svc:9997/api/v1/webhook/BE4B3620-D424-43AC-8EDD-5760DBD516BF",
+					MinimumJobAgeBackoff: 30,
+					Version:              "v0.1.5",
+				},
+			},
 			runtimeObjects: []runtime.Object{},
 			wantErr:        false,
 			expectGarmRequest: func(m *mock.MockControllerClientMockRecorder) {
@@ -89,14 +107,9 @@ func TestGarmServerConfig_reconcile(t *testing.T) {
 			mockController := mock.NewMockControllerClient(mockCtrl)
 			tt.expectGarmRequest(mockController.EXPECT())
 
-			_, err = reconciler.reconcile(context.Background(), ctrl.Request{
-				NamespacedName: types.NamespacedName{
-					Namespace: tt.object.Namespace,
-					Name:      tt.object.Name,
-				},
-			}, mockController)
+			_, err = reconciler.reconcileNormal(context.Background(), mockController, garmServerConfig)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("EnterpriseReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GarmServerConfigReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
@@ -111,7 +124,7 @@ func TestGarmServerConfig_reconcile(t *testing.T) {
 			conditions.NilLastTransitionTime(garmServerConfig)
 
 			if !reflect.DeepEqual(garmServerConfig, tt.expectedObject) {
-				t.Errorf("EnterpriseReconciler.reconcileNormal() \ngot = %#v\n want %#v", garmServerConfig, tt.expectedObject)
+				t.Errorf("GarmServerConfigReconciler.reconcileNormal() \ngot = %#v\n want %#v", garmServerConfig, tt.expectedObject)
 			}
 		})
 	}
