@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
@@ -48,7 +48,7 @@ type RepositoryReconciler struct {
 func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	repository := &garmoperatorv1alpha1.Repository{}
+	repository := &garmoperatorv1beta1.Repository{}
 	err := r.Get(ctx, req.NamespacedName, repository)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -74,7 +74,7 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return r.reconcileNormal(ctx, repositoryClient, repository)
 }
 
-func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository) (ctrl.Result, error) {
+func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
@@ -167,7 +167,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
-func (r *RepositoryReconciler) createRepository(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository, webhookSecret string) (params.Repository, error) {
+func (r *RepositoryReconciler) createRepository(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository, webhookSecret string) (params.Repository, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
@@ -213,7 +213,7 @@ func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garm
 	return retValue.Payload, nil
 }
 
-func (r *RepositoryReconciler) getExistingGarmRepo(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository) (params.Repository, error) {
+func (r *RepositoryReconciler) getExistingGarmRepo(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (params.Repository, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
@@ -234,7 +234,7 @@ func (r *RepositoryReconciler) getExistingGarmRepo(ctx context.Context, client g
 	return params.Repository{}, nil
 }
 
-func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository) (ctrl.Result, error) {
+func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
@@ -273,8 +273,8 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
-func (r *RepositoryReconciler) getCredentialsRef(ctx context.Context, repository *garmoperatorv1alpha1.Repository) (*garmoperatorv1alpha1.GitHubCredentials, error) {
-	creds := &garmoperatorv1alpha1.GitHubCredentials{}
+func (r *RepositoryReconciler) getCredentialsRef(ctx context.Context, repository *garmoperatorv1beta1.Repository) (*garmoperatorv1beta1.GitHubCredentials, error) {
+	creds := &garmoperatorv1beta1.GitHubCredentials{}
 	err := r.Get(ctx, types.NamespacedName{
 		Namespace: repository.Namespace,
 		Name:      repository.Spec.CredentialsRef.Name,
@@ -285,7 +285,7 @@ func (r *RepositoryReconciler) getCredentialsRef(ctx context.Context, repository
 	return creds, nil
 }
 
-func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1alpha1.Repository) error {
+func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1beta1.Repository) error {
 	if !controllerutil.ContainsFinalizer(pool, key.RepositoryFinalizerName) {
 		controllerutil.AddFinalizer(pool, key.RepositoryFinalizerName)
 		return r.Update(ctx, pool)
@@ -294,12 +294,12 @@ func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmop
 }
 
 func (r *RepositoryReconciler) findReposForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {
-	credentials, ok := obj.(*garmoperatorv1alpha1.GitHubCredentials)
+	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredentials)
 	if !ok {
 		return nil
 	}
 
-	var repos garmoperatorv1alpha1.RepositoryList
+	var repos garmoperatorv1beta1.RepositoryList
 	if err := r.List(ctx, &repos); err != nil {
 		return nil
 	}
@@ -322,9 +322,9 @@ func (r *RepositoryReconciler) findReposForCredentials(ctx context.Context, obj 
 // SetupWithManager sets up the controller with the Manager.
 func (r *RepositoryReconciler) SetupWithManager(mgr ctrl.Manager, options controller.Options) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1alpha1.Repository{}).
+		For(&garmoperatorv1beta1.Repository{}).
 		Watches(
-			&garmoperatorv1alpha1.GitHubCredentials{},
+			&garmoperatorv1beta1.GitHubCredentials{},
 			handler.EnqueueRequestsFromMapFunc(r.findReposForCredentials),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).

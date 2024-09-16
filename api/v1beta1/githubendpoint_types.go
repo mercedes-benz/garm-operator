@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package v1alpha1
+package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +23,7 @@ type GitHubEndpointStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=githubendpoints,scope=Namespaced,categories=garm,shortName=gep
 //+kubebuilder:subresource:status
+//+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="URL",type="string",JSONPath=".spec.apiBaseUrl",description="API Base URL"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 //+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1

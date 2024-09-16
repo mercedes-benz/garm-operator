@@ -24,14 +24,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
+	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"github.com/mercedes-benz/garm-operator/pkg/secret"
 	"github.com/mercedes-benz/garm-operator/pkg/util"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
-	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 // GitHubCredentialsReconciler reconciles a GitHubCredentials object
@@ -50,7 +50,7 @@ type GitHubCredentialsReconciler struct {
 func (r *GitHubCredentialsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	credentials := &garmoperatorv1alpha1.GitHubCredentials{}
+	credentials := &garmoperatorv1beta1.GitHubCredentials{}
 	if err := r.Get(ctx, req.NamespacedName, credentials); err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Info("GitHubCredentials resource not found.")
@@ -75,7 +75,7 @@ func (r *GitHubCredentialsReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return r.reconcileNormal(ctx, credentialsClient, credentials)
 }
 
-func (r *GitHubCredentialsReconciler) reconcileNormal(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1alpha1.GitHubCredentials) (ctrl.Result, error) {
+func (r *GitHubCredentialsReconciler) reconcileNormal(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredentials) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("credentials", credentials.Name)
 
@@ -172,7 +172,7 @@ func (r *GitHubCredentialsReconciler) getExistingCredentials(client garmClient.C
 	return params.GithubCredentials{}, nil
 }
 
-func (r *GitHubCredentialsReconciler) createCredentials(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1alpha1.GitHubCredentials, endpoint, githubSecret string) (params.GithubCredentials, error) {
+func (r *GitHubCredentialsReconciler) createCredentials(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredentials, endpoint, githubSecret string) (params.GithubCredentials, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("credentials", credentials.Name)
 
@@ -211,7 +211,7 @@ func (r *GitHubCredentialsReconciler) createCredentials(ctx context.Context, cli
 	return garmCredentials.Payload, nil
 }
 
-func (r *GitHubCredentialsReconciler) updateCredentials(ctx context.Context, client garmClient.CredentialsClient, credentialsID int64, credentials *garmoperatorv1alpha1.GitHubCredentials, githubSecret string) (params.GithubCredentials, error) {
+func (r *GitHubCredentialsReconciler) updateCredentials(ctx context.Context, client garmClient.CredentialsClient, credentialsID int64, credentials *garmoperatorv1beta1.GitHubCredentials, githubSecret string) (params.GithubCredentials, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update credentials")
 
@@ -245,7 +245,7 @@ func (r *GitHubCredentialsReconciler) updateCredentials(ctx context.Context, cli
 	return retValue.Payload, nil
 }
 
-func (r *GitHubCredentialsReconciler) reconcileDelete(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1alpha1.GitHubCredentials) (ctrl.Result, error) {
+func (r *GitHubCredentialsReconciler) reconcileDelete(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredentials) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("credentials", credentials.Name)
 
@@ -281,8 +281,8 @@ func (r *GitHubCredentialsReconciler) reconcileDelete(ctx context.Context, clien
 	return ctrl.Result{}, nil
 }
 
-func (r *GitHubCredentialsReconciler) getEndpointRef(ctx context.Context, credentials *garmoperatorv1alpha1.GitHubCredentials) (*garmoperatorv1alpha1.GitHubEndpoint, error) {
-	endpoint := &garmoperatorv1alpha1.GitHubEndpoint{}
+func (r *GitHubCredentialsReconciler) getEndpointRef(ctx context.Context, credentials *garmoperatorv1beta1.GitHubCredentials) (*garmoperatorv1beta1.GitHubEndpoint, error) {
+	endpoint := &garmoperatorv1beta1.GitHubEndpoint{}
 	err := r.Get(ctx, types.NamespacedName{
 		Namespace: credentials.Namespace,
 		Name:      credentials.Spec.EndpointRef.Name,
@@ -293,7 +293,7 @@ func (r *GitHubCredentialsReconciler) getEndpointRef(ctx context.Context, creden
 	return endpoint, nil
 }
 
-func (r *GitHubCredentialsReconciler) ensureFinalizer(ctx context.Context, credentials *garmoperatorv1alpha1.GitHubCredentials) error {
+func (r *GitHubCredentialsReconciler) ensureFinalizer(ctx context.Context, credentials *garmoperatorv1beta1.GitHubCredentials) error {
 	if !controllerutil.ContainsFinalizer(credentials, key.CredentialsFinalizerName) {
 		controllerutil.AddFinalizer(credentials, key.CredentialsFinalizerName)
 		return r.Update(ctx, credentials)
@@ -307,7 +307,7 @@ func (r *GitHubCredentialsReconciler) findCredentialsForSecret(ctx context.Conte
 		return nil
 	}
 
-	var creds garmoperatorv1alpha1.GitHubCredentialsList
+	var creds garmoperatorv1beta1.GitHubCredentialsList
 	if err := r.List(ctx, &creds); err != nil {
 		return nil
 	}
@@ -330,7 +330,7 @@ func (r *GitHubCredentialsReconciler) findCredentialsForSecret(ctx context.Conte
 // SetupWithManager sets up the controller with the Manager.
 func (r *GitHubCredentialsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1alpha1.GitHubCredentials{}).
+		For(&garmoperatorv1beta1.GitHubCredentials{}).
 		Watches(
 			&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.findCredentialsForSecret),

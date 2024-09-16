@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-package v1alpha1
+package v1beta1
 
 import (
+	"github.com/cloudbase/garm/params"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
@@ -10,10 +12,11 @@ import (
 
 // EnterpriseSpec defines the desired state of Enterprise
 type EnterpriseSpec struct {
-	CredentialsName string `json:"credentialsName"`
+	CredentialsRef corev1.TypedLocalObjectReference `json:"credentialsRef"`
 
 	// WebhookSecretRef represents a secret that should be used for the webhook
-	WebhookSecretRef SecretRef `json:"webhookSecretRef"`
+	WebhookSecretRef SecretRef               `json:"webhookSecretRef"`
+	PoolBalancerType params.PoolBalancerType `json:"poolBalancerType,omitempty"`
 }
 
 // EnterpriseStatus defines the observed state of Enterprise
@@ -25,6 +28,7 @@ type EnterpriseStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=enterprises,scope=Namespaced,categories=garm,shortName=ent
 //+kubebuilder:subresource:status
+//+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Enterprise ID"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 //+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1
@@ -49,7 +53,7 @@ func (e *Enterprise) GetConditions() []metav1.Condition {
 }
 
 func (e *Enterprise) GetCredentialsName() string {
-	return e.Spec.CredentialsName
+	return e.Spec.CredentialsRef.Name
 }
 
 func (e *Enterprise) GetID() string {

@@ -19,10 +19,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
-	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 )
 
 func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
@@ -35,11 +35,11 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 		expectGarmRequest func(m *mock.MockEndpointClientMockRecorder)
 		runtimeObjects    []runtime.Object
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.GitHubEndpoint
+		expectedObject    *garmoperatorv1beta1.GitHubEndpoint
 	}{
 		{
 			name: "github-endpoint exist - update",
-			object: &garmoperatorv1alpha1.GitHubEndpoint{
+			object: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
@@ -47,7 +47,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						key.GitHubEndpointFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.GitHubEndpointSpec{
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "existing-github-endpoint",
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
@@ -56,7 +56,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			runtimeObjects: []runtime.Object{},
-			expectedObject: &garmoperatorv1alpha1.GitHubEndpoint{
+			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
@@ -64,14 +64,14 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						key.GitHubEndpointFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.GitHubEndpointSpec{
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "existing-github-endpoint",
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
 					BaseURL:       "https://github.com",
 					CACertBundle:  nil,
 				},
-				Status: garmoperatorv1alpha1.GitHubEndpointStatus{
+				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
@@ -116,7 +116,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "github-endpoint exist but spec has changed - update",
-			object: &garmoperatorv1alpha1.GitHubEndpoint{
+			object: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
@@ -124,14 +124,14 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						key.GitHubEndpointFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.GitHubEndpointSpec{
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "has-changed",
 					APIBaseURL:    "https://api.github-enterprise.com",
 					UploadBaseURL: "https://uploads.github-enterprise.com",
 					BaseURL:       "https://github-enterprise.com",
 					CACertBundle:  nil,
 				},
-				Status: garmoperatorv1alpha1.GitHubEndpointStatus{
+				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
@@ -144,7 +144,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			runtimeObjects: []runtime.Object{},
-			expectedObject: &garmoperatorv1alpha1.GitHubEndpoint{
+			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
@@ -152,14 +152,14 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						key.GitHubEndpointFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.GitHubEndpointSpec{
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "has-changed",
 					APIBaseURL:    "https://api.github-enterprise.com",
 					UploadBaseURL: "https://uploads.github-enterprise.com",
 					BaseURL:       "https://github-enterprise.com",
 					CACertBundle:  nil,
 				},
-				Status: garmoperatorv1alpha1.GitHubEndpointStatus{
+				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
@@ -206,12 +206,12 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "github-endpoint does not exist - create and update",
-			object: &garmoperatorv1alpha1.GitHubEndpoint{
+			object: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-github-endpoint",
 					Namespace: "default",
 				},
-				Spec: garmoperatorv1alpha1.GitHubEndpointSpec{
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "new github endpoint",
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
@@ -219,7 +219,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					CACertBundle:  nil,
 				},
 			},
-			expectedObject: &garmoperatorv1alpha1.GitHubEndpoint{
+			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-github-endpoint",
 					Namespace: "default",
@@ -227,14 +227,14 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						key.GitHubEndpointFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.GitHubEndpointSpec{
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "new github endpoint",
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
 					BaseURL:       "https://github.com",
 					CACertBundle:  nil,
 				},
-				Status: garmoperatorv1alpha1.GitHubEndpointStatus{
+				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
@@ -292,12 +292,12 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "github-endpoint update - bad request error",
-			object: &garmoperatorv1alpha1.GitHubEndpoint{
+			object: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
 				},
-				Spec: garmoperatorv1alpha1.GitHubEndpointSpec{
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "",
 					APIBaseURL:    "",
 					UploadBaseURL: "",
@@ -305,7 +305,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					CACertBundle:  nil,
 				},
 			},
-			expectedObject: &garmoperatorv1alpha1.GitHubEndpoint{
+			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
@@ -313,8 +313,8 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						key.GitHubEndpointFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.GitHubEndpointSpec{},
-				Status: garmoperatorv1alpha1.GitHubEndpointStatus{
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{},
+				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
@@ -355,7 +355,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			schemeBuilder := runtime.SchemeBuilder{
-				garmoperatorv1alpha1.AddToScheme,
+				garmoperatorv1beta1.AddToScheme,
 			}
 
 			err := schemeBuilder.AddToScheme(scheme.Scheme)
@@ -364,7 +364,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 			}
 			runtimeObjects := []runtime.Object{tt.object}
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.GitHubEndpoint{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1beta1.GitHubEndpoint{}).Build()
 
 			// create a fake reconciler
 			reconciler := &GitHubEndpointReconciler{
@@ -372,7 +372,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				Recorder: record.NewFakeRecorder(3),
 			}
 
-			githubEndpoint := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.GitHubEndpoint)
+			githubEndpoint := tt.object.DeepCopyObject().(*garmoperatorv1beta1.GitHubEndpoint)
 
 			mockGitHubEndpoint := mock.NewMockEndpointClient(mockCtrl)
 			tt.expectGarmRequest(mockGitHubEndpoint.EXPECT())
@@ -410,11 +410,11 @@ func TestGitHubEndpointReconciler_reconcileDelete(t *testing.T) {
 		runtimeObjects    []runtime.Object
 		expectGarmRequest func(m *mock.MockEndpointClientMockRecorder)
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.GitHubEndpoint
+		expectedObject    *garmoperatorv1beta1.GitHubEndpoint
 	}{
 		{
 			name: "delete github-endpoint",
-			object: &garmoperatorv1alpha1.GitHubEndpoint{
+			object: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
@@ -422,14 +422,14 @@ func TestGitHubEndpointReconciler_reconcileDelete(t *testing.T) {
 						key.GitHubEndpointFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.GitHubEndpointSpec{
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "existing-github-endpoint",
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
 					BaseURL:       "https://github.com",
 					CACertBundle:  []byte(""),
 				},
-				Status: garmoperatorv1alpha1.GitHubEndpointStatus{
+				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
@@ -454,7 +454,7 @@ func TestGitHubEndpointReconciler_reconcileDelete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			schemeBuilder := runtime.SchemeBuilder{
-				garmoperatorv1alpha1.AddToScheme,
+				garmoperatorv1beta1.AddToScheme,
 			}
 
 			err := schemeBuilder.AddToScheme(scheme.Scheme)
@@ -464,7 +464,7 @@ func TestGitHubEndpointReconciler_reconcileDelete(t *testing.T) {
 
 			runtimeObjects := []runtime.Object{tt.object}
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.GitHubEndpoint{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1beta1.GitHubEndpoint{}).Build()
 
 			// create a fake reconciler
 			reconciler := &GitHubEndpointReconciler{
@@ -472,7 +472,7 @@ func TestGitHubEndpointReconciler_reconcileDelete(t *testing.T) {
 				Recorder: record.NewFakeRecorder(3),
 			}
 
-			githubEndpoint := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.GitHubEndpoint)
+			githubEndpoint := tt.object.DeepCopyObject().(*garmoperatorv1beta1.GitHubEndpoint)
 
 			mockGitHubEndpoint := mock.NewMockEndpointClient(mockCtrl)
 			tt.expectGarmRequest(mockGitHubEndpoint.EXPECT())

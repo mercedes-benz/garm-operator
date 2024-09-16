@@ -17,13 +17,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
+	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"github.com/mercedes-benz/garm-operator/pkg/util"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
-	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 // GitHubEndpointReconciler reconciles a GitHubEndpoint object
@@ -42,7 +42,7 @@ type GitHubEndpointReconciler struct {
 func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	endpoint := &garmoperatorv1alpha1.GitHubEndpoint{}
+	endpoint := &garmoperatorv1beta1.GitHubEndpoint{}
 	if err := r.Get(ctx, req.NamespacedName, endpoint); err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Info("GitHubEndpoint resource not found.")
@@ -67,7 +67,7 @@ func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return r.reconcileNormal(ctx, endpointClient, endpoint)
 }
 
-func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1alpha1.GitHubEndpoint) (ctrl.Result, error) {
+func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("endpoint", endpoint.Name)
 
@@ -135,7 +135,7 @@ func (r *GitHubEndpointReconciler) getExistingEndpoint(client garmClient.Endpoin
 	return endpoint.Payload, nil
 }
 
-func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1alpha1.GitHubEndpoint) (params.GithubEndpoint, error) {
+func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint) (params.GithubEndpoint, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("endpoint", endpoint.Name)
 
@@ -163,7 +163,7 @@ func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client ga
 	return retValue.Payload, nil
 }
 
-func (r *GitHubEndpointReconciler) updateEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1alpha1.GitHubEndpoint) (params.GithubEndpoint, error) {
+func (r *GitHubEndpointReconciler) updateEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint) (params.GithubEndpoint, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update endpoint")
 
@@ -185,7 +185,7 @@ func (r *GitHubEndpointReconciler) updateEndpoint(ctx context.Context, client ga
 	return retValue.Payload, nil
 }
 
-func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1alpha1.GitHubEndpoint) (ctrl.Result, error) {
+func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("endpoint", endpoint.Name)
 
@@ -222,7 +222,7 @@ func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client g
 	return ctrl.Result{}, nil
 }
 
-func (r *GitHubEndpointReconciler) ensureFinalizer(ctx context.Context, endpoint *garmoperatorv1alpha1.GitHubEndpoint) error {
+func (r *GitHubEndpointReconciler) ensureFinalizer(ctx context.Context, endpoint *garmoperatorv1beta1.GitHubEndpoint) error {
 	if !controllerutil.ContainsFinalizer(endpoint, key.GitHubEndpointFinalizerName) {
 		controllerutil.AddFinalizer(endpoint, key.GitHubEndpointFinalizerName)
 		return r.Update(ctx, endpoint)
@@ -233,6 +233,6 @@ func (r *GitHubEndpointReconciler) ensureFinalizer(ctx context.Context, endpoint
 // SetupWithManager sets up the controller with the Manager.
 func (r *GitHubEndpointReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1alpha1.GitHubEndpoint{}).
+		For(&garmoperatorv1beta1.GitHubEndpoint{}).
 		Complete(r)
 }

@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
@@ -49,7 +49,7 @@ type EnterpriseReconciler struct {
 func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	enterprise := &garmoperatorv1alpha1.Enterprise{}
+	enterprise := &garmoperatorv1beta1.Enterprise{}
 	err := r.Get(ctx, req.NamespacedName, enterprise)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -75,7 +75,7 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return r.reconcileNormal(ctx, enterpriseClient, enterprise)
 }
 
-func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (ctrl.Result, error) {
+func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1beta1.Enterprise) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("enterprise", enterprise.Name)
 
@@ -169,7 +169,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
-func (r *EnterpriseReconciler) createEnterprise(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise, webhookSecret string) (params.Enterprise, error) {
+func (r *EnterpriseReconciler) createEnterprise(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1beta1.Enterprise, webhookSecret string) (params.Enterprise, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("enterprise", enterprise.Name)
 
@@ -214,7 +214,7 @@ func (r *EnterpriseReconciler) updateEnterprise(ctx context.Context, client garm
 	return retValue.Payload, nil
 }
 
-func (r *EnterpriseReconciler) getExistingGarmEnterprise(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (params.Enterprise, error) {
+func (r *EnterpriseReconciler) getExistingGarmEnterprise(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1beta1.Enterprise) (params.Enterprise, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("enterprise", enterprise.Name)
 
@@ -235,7 +235,7 @@ func (r *EnterpriseReconciler) getExistingGarmEnterprise(ctx context.Context, cl
 	return params.Enterprise{}, nil
 }
 
-func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1alpha1.Enterprise) (ctrl.Result, error) {
+func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1beta1.Enterprise) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("enterprise", enterprise.Name)
 
@@ -274,8 +274,8 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
-func (r *EnterpriseReconciler) getCredentialsRef(ctx context.Context, enterprise *garmoperatorv1alpha1.Enterprise) (*garmoperatorv1alpha1.GitHubCredentials, error) {
-	creds := &garmoperatorv1alpha1.GitHubCredentials{}
+func (r *EnterpriseReconciler) getCredentialsRef(ctx context.Context, enterprise *garmoperatorv1beta1.Enterprise) (*garmoperatorv1beta1.GitHubCredentials, error) {
+	creds := &garmoperatorv1beta1.GitHubCredentials{}
 	err := r.Get(ctx, types.NamespacedName{
 		Namespace: enterprise.Namespace,
 		Name:      enterprise.Spec.CredentialsRef.Name,
@@ -286,7 +286,7 @@ func (r *EnterpriseReconciler) getCredentialsRef(ctx context.Context, enterprise
 	return creds, nil
 }
 
-func (r *EnterpriseReconciler) ensureFinalizer(ctx context.Context, enterprise *garmoperatorv1alpha1.Enterprise) error {
+func (r *EnterpriseReconciler) ensureFinalizer(ctx context.Context, enterprise *garmoperatorv1beta1.Enterprise) error {
 	if !controllerutil.ContainsFinalizer(enterprise, key.EnterpriseFinalizerName) {
 		controllerutil.AddFinalizer(enterprise, key.EnterpriseFinalizerName)
 		return r.Update(ctx, enterprise)
@@ -295,12 +295,12 @@ func (r *EnterpriseReconciler) ensureFinalizer(ctx context.Context, enterprise *
 }
 
 func (r *EnterpriseReconciler) findEnterprisesForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {
-	credentials, ok := obj.(*garmoperatorv1alpha1.GitHubCredentials)
+	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredentials)
 	if !ok {
 		return nil
 	}
 
-	var enterprises garmoperatorv1alpha1.EnterpriseList
+	var enterprises garmoperatorv1beta1.EnterpriseList
 	if err := r.List(ctx, &enterprises); err != nil {
 		return nil
 	}
@@ -323,9 +323,9 @@ func (r *EnterpriseReconciler) findEnterprisesForCredentials(ctx context.Context
 // SetupWithManager sets up the controller with the Manager.
 func (r *EnterpriseReconciler) SetupWithManager(mgr ctrl.Manager, options controller.Options) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1alpha1.Enterprise{}).
+		For(&garmoperatorv1beta1.Enterprise{}).
 		Watches(
-			&garmoperatorv1alpha1.GitHubCredentials{},
+			&garmoperatorv1beta1.GitHubCredentials{},
 			handler.EnqueueRequestsFromMapFunc(r.findEnterprisesForCredentials),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).

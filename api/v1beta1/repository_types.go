@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-package v1alpha1
+package v1beta1
 
 import (
+	"github.com/cloudbase/garm/params"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
@@ -10,11 +12,12 @@ import (
 
 // RepositorySpec defines the desired state of Repository
 type RepositorySpec struct {
-	CredentialsName string `json:"credentialsName"`
-	Owner           string `json:"owner"`
+	CredentialsRef corev1.TypedLocalObjectReference `json:"credentialsRef"`
+	Owner          string                           `json:"owner"`
 
 	// WebhookSecretRef represents a secret that should be used for the webhook
-	WebhookSecretRef SecretRef `json:"webhookSecretRef"`
+	WebhookSecretRef SecretRef               `json:"webhookSecretRef"`
+	PoolBalancerType params.PoolBalancerType `json:"poolBalancerType,omitempty"`
 }
 
 // RepositoryStatus defines the observed state of Repository
@@ -26,6 +29,7 @@ type RepositoryStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=repositories,scope=Namespaced,categories=garm,shortName=repo
 //+kubebuilder:subresource:status
+//+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Repository ID"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 //+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1
@@ -50,7 +54,7 @@ func (r *Repository) GetConditions() []metav1.Condition {
 }
 
 func (r *Repository) GetCredentialsName() string {
-	return r.Spec.CredentialsName
+	return r.Spec.CredentialsRef.Name
 }
 
 func (r *Repository) GetID() string {

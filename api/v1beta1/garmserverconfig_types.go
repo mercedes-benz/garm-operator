@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package v1alpha1
+package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +29,7 @@ type GarmServerConfigStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=garmserverconfigs,scope=Namespaced,categories=garm,shortName=server
 //+kubebuilder:subresource:status
+//+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.controllerId",description="Controller ID"
 //+kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Garm Version"
 //+kubebuilder:printcolumn:name="MetadataURL",type="string",JSONPath=".status.metadataUrl",description="MetadataURL",priority=1
