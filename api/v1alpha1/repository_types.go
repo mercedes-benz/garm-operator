@@ -3,8 +3,6 @@
 package v1alpha1
 
 import (
-	"github.com/cloudbase/garm/params"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
@@ -12,12 +10,11 @@ import (
 
 // RepositorySpec defines the desired state of Repository
 type RepositorySpec struct {
-	CredentialsRef corev1.TypedLocalObjectReference `json:"credentialsRef"`
-	Owner          string                           `json:"owner"`
+	CredentialsName string `json:"credentialsName"`
+	Owner           string `json:"owner"`
 
 	// WebhookSecretRef represents a secret that should be used for the webhook
-	WebhookSecretRef SecretRef               `json:"webhookSecretRef"`
-	PoolBalancerType params.PoolBalancerType `json:"poolBalancerType,omitempty"`
+	WebhookSecretRef SecretRef `json:"webhookSecretRef"`
 }
 
 // RepositoryStatus defines the observed state of Repository
@@ -53,7 +50,7 @@ func (r *Repository) GetConditions() []metav1.Condition {
 }
 
 func (r *Repository) GetCredentialsName() string {
-	return r.Spec.CredentialsRef.Name
+	return r.Spec.CredentialsName
 }
 
 func (r *Repository) GetID() string {

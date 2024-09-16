@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package v1alpha1
+package v1beta1
 
 import (
 	"github.com/cloudbase/garm/params"
@@ -37,6 +37,7 @@ type GitHubCredentialsStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=githubcredentials,scope=Namespaced,categories=garm,shortName=creds
 //+kubebuilder:subresource:status
+//+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Credentials ID"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 //+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1

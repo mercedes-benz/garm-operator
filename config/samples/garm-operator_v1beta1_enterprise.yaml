@@ -1,12 +1,12 @@
-apiVersion: garm-operator.mercedes-benz.com/v1alpha1
-kind: Controller
+apiVersion: garm-operator.mercedes-benz.com/v1beta1
+kind: Enterprise
 metadata:
   labels:
-    app.kubernetes.io/name: controller
-    app.kubernetes.io/instance: controller-sample
+    app.kubernetes.io/name: enterprise
+    app.kubernetes.io/instance: enterprise-sample
     app.kubernetes.io/part-of: garm-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: garm-operator
-  name: controller-sample
+  name: enterprise-sample
 spec:
   # TODO(user): Add fields here

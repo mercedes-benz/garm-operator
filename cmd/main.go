@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	garmcontroller "github.com/mercedes-benz/garm-operator/internal/controller"
 	"github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
@@ -37,6 +38,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(garmoperatorv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(garmoperatorv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -71,7 +73,7 @@ func run() error {
 		return nil
 	}
 
-	ctrl.SetLogger(textlogger.NewLogger((textlogger.NewConfig(textlogger.Verbosity(config.Config.Operator.LogVerbosityLevel)))))
+	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(config.Config.Operator.LogVerbosityLevel))))
 
 	var watchNamespaces map[string]cache.Config
 	if config.Config.Operator.WatchNamespace != "" {

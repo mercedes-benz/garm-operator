@@ -3,8 +3,6 @@
 package v1alpha1
 
 import (
-	"github.com/cloudbase/garm/params"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
@@ -12,11 +10,10 @@ import (
 
 // OrganizationSpec defines the desired state of Organization
 type OrganizationSpec struct {
-	CredentialsRef corev1.TypedLocalObjectReference `json:"credentialsRef"`
+	CredentialsName string `json:"credentialsName"`
 
 	// WebhookSecretRef represents a secret that should be used for the webhook
-	WebhookSecretRef SecretRef               `json:"webhookSecretRef"`
-	PoolBalancerType params.PoolBalancerType `json:"poolBalancerType,omitempty"`
+	WebhookSecretRef SecretRef `json:"webhookSecretRef"`
 }
 
 // OrganizationStatus defines the observed state of Organization
@@ -52,7 +49,7 @@ func (o *Organization) GetConditions() []metav1.Condition {
 }
 
 func (o *Organization) GetCredentialsName() string {
-	return o.Spec.CredentialsRef.Name
+	return o.Spec.CredentialsName
 }
 
 func (o *Organization) GetID() string {
