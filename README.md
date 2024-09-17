@@ -3,6 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/mercedes-benz/garm-operator)](https://goreportcard.com/report/github.com/mercedes-benz/garm-operator) 
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mercedes-benz/garm-operator?sort=semver)
 [![build](https://github.com/mercedes-benz/garm-operator/actions/workflows/build.yml/badge.svg)](https://github.com/mercedes-benz/garm-operator/actions/workflows/build.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mercedes-benz/garm-operator/badge)](https://scorecard.dev/viewer/?uri=github.com/mercedes-benz/garm-operator)
 
 # garm-operator 
 
