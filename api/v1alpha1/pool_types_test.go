@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
-	"github.com/mercedes-benz/garm-operator/pkg/util/filter"
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
 
 func TestPoolList_FilterByFields(t *testing.T) {

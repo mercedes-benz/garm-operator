@@ -28,8 +28,8 @@ import (
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
-	"github.com/mercedes-benz/garm-operator/pkg/util/filter"
-	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/util/runners"
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
+	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/runners"
 )
 
 // RunnerReconciler reconciles a Runner object

@@ -20,12 +20,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"github.com/mercedes-benz/garm-operator/pkg/secret"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
-	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
 )
 
 // OrganizationReconciler reconciles a Organization object
