@@ -117,12 +117,23 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	log.Info("Pool doesn't exist on garm side. Creating new pool in garm")
 
 	// get image cr object by name
-	image, err := r.getImage(ctx, pool)
+	image, err := pool.GetImageCR(ctx, r.Client)
 	if err != nil {
 		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
 		return r.handleUpdateError(ctx, pool, err, conditions.FetchingImageRefFailedReason)
 	}
 	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
+
+	// check for duplicate pools
+	duplicate, duplicateName, err := pool.CheckDuplicate(ctx, r.Client, image)
+	if err != nil {
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
+	}
+
+	if duplicate {
+		err := fmt.Errorf("pool with same image, flavor, provider and github scope already exists: %s", duplicateName)
+		return r.handleUpdateError(ctx, pool, err, conditions.DuplicatePoolReason)
+	}
 
 	// check if there is already a pool with the same spec on garm side
 	matchingGarmPool, err := poolUtil.GetGarmPoolBySpecs(ctx, garmClient, pool, image, gitHubScopeRef)
@@ -158,7 +169,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		WithName("reconcileUpdate")
 	log.Info("pool on garm side found", "id", pool.Status.ID, "name", pool.Name)
 
-	image, err := r.getImage(ctx, pool)
+	image, err := pool.GetImageCR(ctx, r.Client)
 	if err != nil {
 		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
 		return r.handleUpdateError(ctx, pool, err, conditions.FetchingImageRefFailedReason)
@@ -448,16 +459,6 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoper
 	}
 
 	return gitHubScope.(garmoperatorv1alpha1.GitHubScope), nil
-}
-
-func (r *PoolReconciler) getImage(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (*garmoperatorv1alpha1.Image, error) {
-	image := &garmoperatorv1alpha1.Image{}
-	if pool.Spec.ImageName != "" {
-		if err := r.Get(ctx, types.NamespacedName{Name: pool.Spec.ImageName, Namespace: pool.Namespace}, image); err != nil {
-			return nil, err
-		}
-	}
-	return image, nil
 }
 
 func (r *PoolReconciler) findPoolsForImage(ctx context.Context, obj client.Object) []reconcile.Request {
