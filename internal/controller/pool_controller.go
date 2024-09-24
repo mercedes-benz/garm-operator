@@ -28,13 +28,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
-	"github.com/mercedes-benz/garm-operator/pkg/util/annotations"
-	"github.com/mercedes-benz/garm-operator/pkg/util/conditions"
-	poolUtil "github.com/mercedes-benz/garm-operator/pkg/util/pool"
+	poolUtil "github.com/mercedes-benz/garm-operator/pkg/pools"
+	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/runners"
+	"github.com/mercedes-benz/garm-operator/pkg/tags"
 )
 
 // PoolReconciler reconciles a Pool object
@@ -115,12 +117,23 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	log.Info("Pool doesn't exist on garm side. Creating new pool in garm")
 
 	// get image cr object by name
-	image, err := r.getImage(ctx, pool)
+	image, err := pool.GetImageCR(ctx, r.Client)
 	if err != nil {
 		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
 		return r.handleUpdateError(ctx, pool, err, conditions.FetchingImageRefFailedReason)
 	}
 	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
+
+	// check for duplicate pools
+	duplicate, duplicateName, err := pool.CheckDuplicate(ctx, r.Client, image)
+	if err != nil {
+		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
+	}
+
+	if duplicate {
+		err := fmt.Errorf("pool with same image, flavor, provider and github scope already exists: %s", duplicateName)
+		return r.handleUpdateError(ctx, pool, err, conditions.DuplicatePoolReason)
+	}
 
 	// check if there is already a pool with the same spec on garm side
 	matchingGarmPool, err := poolUtil.GetGarmPoolBySpecs(ctx, garmClient, pool, image, gitHubScopeRef)
@@ -156,7 +169,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		WithName("reconcileUpdate")
 	log.Info("pool on garm side found", "id", pool.Status.ID, "name", pool.Name)
 
-	image, err := r.getImage(ctx, pool)
+	image, err := pool.GetImageCR(ctx, r.Client)
 	if err != nil {
 		conditions.MarkFalse(pool, conditions.ImageReference, conditions.FetchingImageRefFailedReason, err.Error())
 		return r.handleUpdateError(ctx, pool, err, conditions.FetchingImageRefFailedReason)
@@ -178,7 +191,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		}
 	}
 
-	longRunningIdleRunnersCount := len(poolUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, idleRunners))
+	longRunningIdleRunnersCount := len(runnerUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, idleRunners))
 
 	switch {
 	case pool.Spec.MinIdleRunners == 0:
@@ -188,7 +201,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		log.Info("Scaling pool", "pool", pool.Name)
 		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
 
-		runners := poolUtil.DeletableRunners(ctx, idleRunners)
+		runners := runnerUtil.DeletableRunners(ctx, idleRunners)
 		for _, runner := range runners {
 			if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
 				log.Error(err, "unable to delete runner", "runner", runner.Name)
@@ -200,13 +213,13 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		// the spec, we delete old idle runners
 
 		// get all idle runners that are older than minRunnerAge
-		longRunningIdleRunners := poolUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, idleRunners)
+		longRunningIdleRunners := runnerUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, idleRunners)
 
 		// calculate how many old runners need to be deleted to match the desired minIdleRunners
-		alignedRunners := poolUtil.AlignIdleRunners(int(pool.Spec.MinIdleRunners), longRunningIdleRunners)
+		alignedRunners := runnerUtil.AlignIdleRunners(int(pool.Spec.MinIdleRunners), longRunningIdleRunners)
 
 		// extract runners which are deletable
-		runners := poolUtil.DeletableRunners(ctx, alignedRunners)
+		runners := runnerUtil.DeletableRunners(ctx, alignedRunners)
 		for _, runner := range runners {
 			log.Info("Scaling pool", "pool", pool.Name)
 			event.Scaling(r.Recorder, pool, fmt.Sprintf("scale long running idle runners down to %d", pool.Spec.MinIdleRunners))
@@ -259,13 +272,13 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	}
 
 	// get all runners
-	runners, err := poolUtil.GetAllRunners(ctx, pool, instanceClient)
+	runners, err := runnerUtil.GetRunnersByPoolID(ctx, pool, instanceClient)
 	if err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 	}
 
 	// get a list of all idle runners to trigger deletion
-	deletableRunners := poolUtil.DeletableRunners(ctx, runners)
+	deletableRunners := runnerUtil.DeletableRunners(ctx, runners)
 	if err != nil {
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
 	}
@@ -355,7 +368,7 @@ func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperato
 
 	// as there are some "special" tags, which aren't set by the user and aren't part of the pool spec
 	// we need to "discover" them and add them to the pool spec before comparing
-	poolTags, err := poolUtil.CreateComparableRunnerTags(pool.Spec.Tags, pool.Spec.OSArch, pool.Spec.OSType)
+	poolTags, err := tags.CreateComparableRunnerTags(pool.Spec.Tags, pool.Spec.OSArch, pool.Spec.OSType)
 	if err != nil {
 		return false, []params.Instance{}, err
 	}
@@ -406,7 +419,7 @@ func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperato
 	}
 
 	// we are only interested in IdleRunners
-	idleInstances := poolUtil.IdleRunners(ctx, garmPool.Payload.Instances)
+	idleInstances := runnerUtil.IdleRunners(ctx, garmPool.Payload.Instances)
 
 	// empty instances for comparison
 	garmPool.Payload.Instances = nil
@@ -446,16 +459,6 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoper
 	}
 
 	return gitHubScope.(garmoperatorv1alpha1.GitHubScope), nil
-}
-
-func (r *PoolReconciler) getImage(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (*garmoperatorv1alpha1.Image, error) {
-	image := &garmoperatorv1alpha1.Image{}
-	if pool.Spec.ImageName != "" {
-		if err := r.Get(ctx, types.NamespacedName{Name: pool.Spec.ImageName, Namespace: pool.Namespace}, image); err != nil {
-			return nil, err
-		}
-	}
-	return image, nil
 }
 
 func (r *PoolReconciler) findPoolsForImage(ctx context.Context, obj client.Object) []reconcile.Request {

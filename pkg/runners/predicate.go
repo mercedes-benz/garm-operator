@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package instance
+package runners
 
 import (
 	"strings"

@@ -25,10 +25,10 @@ var (
 	c       client.Client
 )
 
-func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (p *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	c = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+		For(p).
 		Complete()
 }
 
@@ -37,46 +37,40 @@ func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 var _ webhook.Validator = &Pool{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Pool) ValidateCreate() (admission.Warnings, error) {
-	poollog.Info("validate create", "name", r.Name)
+func (p *Pool) ValidateCreate() (admission.Warnings, error) {
+	poollog.Info("validate create", "name", p.Name)
 	ctx := context.TODO()
 
-	if err := r.validateExtraSpec(); err != nil {
+	if err := p.validateExtraSpec(); err != nil {
 		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-			r.Name,
+			p.Name,
 			field.ErrorList{err},
 		)
 	}
 
-	listOpts := &client.ListOptions{
-		Namespace: r.Namespace,
+	poolImage, err := p.GetImageCR(ctx, c)
+	if err != nil {
+		poollog.Error(err, "cannot fetch Image", "error", err)
+		return nil, nil
 	}
 
-	poolList := &PoolList{}
-	if err := c.List(ctx, poolList, listOpts); err != nil {
-		poollog.Error(err, "cannot fetch Pools", "error", err)
-		return nil, err
+	duplicate, duplicateName, err := p.CheckDuplicate(ctx, c, poolImage)
+	if err != nil {
+		poollog.Error(err, "error checking for duplicate", "error", err)
+		return nil, nil
 	}
 
-	poolList.FilterByFields(
-		MatchesFlavor(r.Spec.Flavor),
-		MatchesImage(r.Spec.ImageName),
-		MatchesProvider(r.Spec.ProviderName),
-		MatchesGitHubScope(r.Spec.GitHubScopeRef.Name, r.Spec.GitHubScopeRef.Kind),
-	)
-
-	if len(poolList.Items) > 0 {
-		existing := poolList.Items[0]
-		return nil, apierrors.NewBadRequest(
-			fmt.Sprintf("can not create pool, pool=%s with same image=%s, flavor=%s and provider=%s already exists for specified GitHubScope=%s", existing.Name, existing.Spec.ImageName, existing.Spec.Flavor, existing.Spec.ProviderName, existing.Spec.GitHubScopeRef.Name))
+	if duplicate {
+		err := fmt.Sprintf("pool with same image, flavor, provider and github scope already exists: %s", duplicateName)
+		return nil, apierrors.NewBadRequest(err)
 	}
 
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	poollog.Info("validate update", "name", r.Name, "namespace", r.Namespace)
+func (p *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+	poollog.Info("validate update", "name", p.Name, "namespace", p.Namespace)
 
 	oldCRD, ok := old.(*Pool)
 	if !ok {
@@ -84,26 +78,26 @@ func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	}
 
 	// if the object is being deleted, skip validation
-	if r.GetDeletionTimestamp() == nil {
-		if err := r.validateExtraSpec(); err != nil {
+	if p.GetDeletionTimestamp() == nil {
+		if err := p.validateExtraSpec(); err != nil {
 			return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-				r.Name,
+				p.Name,
 				field.ErrorList{err},
 			)
 		}
 
-		if err := r.validateProviderName(oldCRD); err != nil {
+		if err := p.validateProviderName(oldCRD); err != nil {
 			return nil, apierrors.NewInvalid(
 				schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-				r.Name,
+				p.Name,
 				field.ErrorList{err},
 			)
 		}
 
-		if err := r.validateGitHubScope(oldCRD); err != nil {
+		if err := p.validateGitHubScope(oldCRD); err != nil {
 			return nil, apierrors.NewInvalid(
 				schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-				r.Name,
+				p.Name,
 				field.ErrorList{err},
 			)
 		}
@@ -112,29 +106,29 @@ func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
-func (r *Pool) validateProviderName(old *Pool) *field.Error {
-	poollog.Info("validate spec.providerName", "spec.providerName", r.Spec.ProviderName)
+func (p *Pool) validateProviderName(old *Pool) *field.Error {
+	poollog.Info("validate spec.providerName", "spec.providerName", p.Spec.ProviderName)
 	fieldPath := field.NewPath("spec").Child("providerName")
-	n := r.Spec.ProviderName
+	n := p.Spec.ProviderName
 	o := old.Spec.ProviderName
 	if n != o {
 		return field.Invalid(
 			fieldPath,
-			r.Spec.ProviderName,
+			p.Spec.ProviderName,
 			fmt.Errorf("can not change provider of an existing pool. Old name: %s, new name:  %s", o, n).Error(),
 		)
 	}
 	return nil
 }
 
-func (r *Pool) validateExtraSpec() *field.Error {
+func (p *Pool) validateExtraSpec() *field.Error {
 	extraSpecs := json.RawMessage([]byte{})
 	fieldPath := field.NewPath("spec").Child("extraSpecs")
-	err := json.Unmarshal([]byte(r.Spec.ExtraSpecs), &extraSpecs)
+	err := json.Unmarshal([]byte(p.Spec.ExtraSpecs), &extraSpecs)
 	if err != nil {
 		return field.Invalid(
 			fieldPath,
-			r.Spec.ExtraSpecs,
+			p.Spec.ExtraSpecs,
 			fmt.Errorf("can not unmarshal extraSpecs: %s", err.Error()).Error(),
 		)
 	}
@@ -142,15 +136,15 @@ func (r *Pool) validateExtraSpec() *field.Error {
 	return nil
 }
 
-func (r *Pool) validateGitHubScope(old *Pool) *field.Error {
-	poollog.Info("validate spec.githubScopeRef", "spec.githubScopeRef", r.Spec.GitHubScopeRef)
+func (p *Pool) validateGitHubScope(old *Pool) *field.Error {
+	poollog.Info("validate spec.githubScopeRef", "spec.githubScopeRef", p.Spec.GitHubScopeRef)
 	fieldPath := field.NewPath("spec").Child("githubScopeRef")
-	n := r.Spec.GitHubScopeRef
+	n := p.Spec.GitHubScopeRef
 	o := old.Spec.GitHubScopeRef
 	if !reflect.DeepEqual(n, o) {
 		return field.Invalid(
 			fieldPath,
-			r.Spec.ProviderName,
+			p.Spec.ProviderName,
 			fmt.Errorf("can not change githubScopeRef of an existing pool. Old name: %+v, new name:  %+v", o, n).Error(),
 		)
 	}
@@ -158,7 +152,7 @@ func (r *Pool) validateGitHubScope(old *Pool) *field.Error {
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Pool) ValidateDelete() (admission.Warnings, error) {
-	poollog.Info("validate delete", "name", r.Name)
+func (p *Pool) ValidateDelete() (admission.Warnings, error) {
+	poollog.Info("validate delete", "name", p.Name)
 	return nil, nil
 }

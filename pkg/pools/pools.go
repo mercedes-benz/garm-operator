@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package pool
+package pools
 
 import (
 	"context"
@@ -18,7 +18,6 @@ import (
 	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
-	poolfilter "github.com/mercedes-benz/garm-operator/pkg/filter/pool"
 )
 
 func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (*params.Pool, error) {
@@ -38,10 +37,10 @@ func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, p
 	}
 
 	filteredGarmPools := filter.Match(garmPools.Payload,
-		poolfilter.MatchesImage(image.Spec.Tag),
-		poolfilter.MatchesFlavor(pool.Spec.Flavor),
-		poolfilter.MatchesProvider(pool.Spec.ProviderName),
-		poolfilter.MatchesGitHubScope(scope, githubScopeRefID),
+		MatchesImage(image.Spec.Tag),
+		MatchesFlavor(pool.Spec.Flavor),
+		MatchesProvider(pool.Spec.ProviderName),
+		MatchesGitHubScope(scope, githubScopeRefID),
 	)
 
 	log.WithValues("image", image.Spec.Tag,

@@ -8,6 +8,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
 
 func TestPoolList_FilterByFields(t *testing.T) {
@@ -17,7 +19,7 @@ func TestPoolList_FilterByFields(t *testing.T) {
 		Items    []Pool
 	}
 	type args struct {
-		predicates []Predicate
+		predicates []filter.Predicate[Pool]
 	}
 	tests := []struct {
 		name   string
@@ -68,7 +70,7 @@ func TestPoolList_FilterByFields(t *testing.T) {
 				},
 			},
 			args: args{
-				predicates: []Predicate{
+				predicates: []filter.Predicate[Pool]{
 					MatchesImage("ubuntu-2204"),
 					MatchesFlavor("large"),
 					MatchesProvider("openstack"),
@@ -120,7 +122,7 @@ func TestPoolList_FilterByFields(t *testing.T) {
 				},
 			},
 			args: args{
-				predicates: []Predicate{
+				predicates: []filter.Predicate[Pool]{
 					MatchesImage("ubuntu-2404"),
 					MatchesFlavor("large"),
 					MatchesProvider("openstack"),
@@ -128,6 +130,105 @@ func TestPoolList_FilterByFields(t *testing.T) {
 				},
 			},
 			length: 0,
+		},
+		{
+			name: "no predicates provided",
+			fields: fields{
+				TypeMeta: metav1.TypeMeta{},
+				ListMeta: metav1.ListMeta{},
+				Items: []Pool{
+					{
+						TypeMeta: metav1.TypeMeta{},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ubuntu-2004-large",
+							Namespace: "test",
+						},
+						Spec: PoolSpec{
+							ImageName:    "ubuntu-2004",
+							Flavor:       "large",
+							ProviderName: "openstack",
+							GitHubScopeRef: corev1.TypedLocalObjectReference{
+								Name:     "test",
+								Kind:     "Enterprise",
+								APIGroup: ptr.To[string]("github.com"),
+							},
+						},
+					},
+					{
+						TypeMeta: metav1.TypeMeta{},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ubuntu-2204-large",
+							Namespace: "test",
+						},
+						Spec: PoolSpec{
+							ImageName:    "ubuntu-2204",
+							Flavor:       "large",
+							ProviderName: "openstack",
+							GitHubScopeRef: corev1.TypedLocalObjectReference{
+								Name:     "test",
+								Kind:     "Enterprise",
+								APIGroup: ptr.To[string]("github.com"),
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				predicates: []filter.Predicate[Pool]{},
+			},
+			length: 2,
+		},
+		{
+			name: "duplicate pool but different name",
+			fields: fields{
+				TypeMeta: metav1.TypeMeta{},
+				ListMeta: metav1.ListMeta{},
+				Items: []Pool{
+					{
+						TypeMeta: metav1.TypeMeta{},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ubuntu-2004-large",
+							Namespace: "test",
+						},
+						Spec: PoolSpec{
+							ImageName:    "ubuntu-2004",
+							Flavor:       "large",
+							ProviderName: "openstack",
+							GitHubScopeRef: corev1.TypedLocalObjectReference{
+								Name:     "test",
+								Kind:     "Enterprise",
+								APIGroup: ptr.To[string]("github.com"),
+							},
+						},
+					},
+					{
+						TypeMeta: metav1.TypeMeta{},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ubuntu-2204-large",
+							Namespace: "test",
+						},
+						Spec: PoolSpec{
+							ImageName:    "ubuntu-2204",
+							Flavor:       "large",
+							ProviderName: "openstack",
+							GitHubScopeRef: corev1.TypedLocalObjectReference{
+								Name:     "test",
+								Kind:     "Enterprise",
+								APIGroup: ptr.To[string]("github.com"),
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				predicates: []filter.Predicate[Pool]{
+					MatchesFlavor("large"),
+					MatchesProvider("openstack"),
+					MatchesGitHubScope("test", "Enterprise"),
+					NotMatchingName("ubuntu-2004-large"),
+				},
+			},
+			length: 1,
 		},
 	}
 	for _, tt := range tests {
@@ -138,10 +239,10 @@ func TestPoolList_FilterByFields(t *testing.T) {
 				Items:    tt.fields.Items,
 			}
 
-			p.FilterByFields(tt.args.predicates...)
+			filteredPools := filter.Match(p.Items, tt.args.predicates...)
 
-			if len(p.Items) != tt.length {
-				t.Errorf("FilterByFields() = %v, want %v", len(p.Items), tt.length)
+			if len(filteredPools) != tt.length {
+				t.Errorf("FilterByFields() = %v, want %v", len(filteredPools), tt.length)
 			}
 		})
 	}
