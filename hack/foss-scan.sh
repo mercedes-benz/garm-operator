@@ -89,9 +89,16 @@ bash <(curl -s -L https://detect.synopsys.com/detect8.sh) \
     --detect.cleanup=false \
     --detect.risk.report.pdf=true \
     --detect.risk.report.pdf.path=tmp/ \
-    --detect.notices.report=true \
-    --detect.notices.report.path=tmp/ \
+    --detect.wait.for.results=true \
     --insecure
+
+chmod +x ./hack/generate-notices-file.sh
+
+if ! ./hack/generate-notices-file.sh; then
+  echo "Error: generate-notices-file.sh execution failed!"
+  exit 1
+fi
+
 RC=$?
 
 # Delete the scan if it completed successfully.
@@ -101,7 +108,6 @@ fi
 set -e
 
 mv tmp/*BlackDuck_RiskReport.pdf tmp/BlackDuck_RiskReport.pdf
-mv tmp/*Black_Duck_Notices_Report.txt tmp/Black_Duck_Notices_Report.txt
 
 exit $RC
 

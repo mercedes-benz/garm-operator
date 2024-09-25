@@ -2,6 +2,7 @@
 # Jobs to run Blackduck based FOSS scan
 name: FOSS Scan
 on:
+  workflow_dispatch: {}
   push:
     branches:
     - main
@@ -20,7 +21,7 @@ jobs:
       id: go
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
     - name: Synopsys Detect
       run: |
@@ -38,13 +39,13 @@ jobs:
         BLACKDUCK_TOKEN: ${{ secrets.BLACKDUCK_TOKEN }}
 
     - name: Archive foss scan notices report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
       with:
         name: 3RD_PARTY_LICENSES.txt
         path: tmp/Black_Duck_Notices_Report.txt
 
     - name: Archive foss scan risk report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
       with:
         name: foss-scan-risk-report
         path: tmp/BlackDuck_RiskReport.pdf
