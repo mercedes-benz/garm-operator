@@ -45,16 +45,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*EnterpriseSpec)(nil), (*v1beta1.EnterpriseSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_EnterpriseSpec_To_v1beta1_EnterpriseSpec(a.(*EnterpriseSpec), b.(*v1beta1.EnterpriseSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta1.EnterpriseSpec)(nil), (*EnterpriseSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_EnterpriseSpec_To_v1alpha1_EnterpriseSpec(a.(*v1beta1.EnterpriseSpec), b.(*EnterpriseSpec), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*EnterpriseStatus)(nil), (*v1beta1.EnterpriseStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_EnterpriseStatus_To_v1beta1_EnterpriseStatus(a.(*EnterpriseStatus), b.(*v1beta1.EnterpriseStatus), scope)
 	}); err != nil {
@@ -122,11 +112,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*v1beta1.OrganizationList)(nil), (*OrganizationList)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_OrganizationList_To_v1alpha1_OrganizationList(a.(*v1beta1.OrganizationList), b.(*OrganizationList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta1.OrganizationSpec)(nil), (*OrganizationSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_OrganizationSpec_To_v1alpha1_OrganizationSpec(a.(*v1beta1.OrganizationSpec), b.(*OrganizationSpec), scope)
 	}); err != nil {
 		return err
 	}
@@ -200,16 +185,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*RepositorySpec)(nil), (*v1beta1.RepositorySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_RepositorySpec_To_v1beta1_RepositorySpec(a.(*RepositorySpec), b.(*v1beta1.RepositorySpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta1.RepositorySpec)(nil), (*RepositorySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_RepositorySpec_To_v1alpha1_RepositorySpec(a.(*v1beta1.RepositorySpec), b.(*RepositorySpec), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*RepositoryStatus)(nil), (*v1beta1.RepositoryStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_RepositoryStatus_To_v1beta1_RepositoryStatus(a.(*RepositoryStatus), b.(*v1beta1.RepositoryStatus), scope)
 	}); err != nil {
@@ -270,8 +245,33 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*EnterpriseSpec)(nil), (*v1beta1.EnterpriseSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_EnterpriseSpec_To_v1beta1_EnterpriseSpec(a.(*EnterpriseSpec), b.(*v1beta1.EnterpriseSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddConversionFunc((*OrganizationSpec)(nil), (*v1beta1.OrganizationSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_OrganizationSpec_To_v1beta1_OrganizationSpec(a.(*OrganizationSpec), b.(*v1beta1.OrganizationSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*RepositorySpec)(nil), (*v1beta1.RepositorySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_RepositorySpec_To_v1beta1_RepositorySpec(a.(*RepositorySpec), b.(*v1beta1.RepositorySpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta1.EnterpriseSpec)(nil), (*EnterpriseSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_EnterpriseSpec_To_v1alpha1_EnterpriseSpec(a.(*v1beta1.EnterpriseSpec), b.(*EnterpriseSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta1.OrganizationSpec)(nil), (*OrganizationSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_OrganizationSpec_To_v1alpha1_OrganizationSpec(a.(*v1beta1.OrganizationSpec), b.(*OrganizationSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta1.RepositorySpec)(nil), (*RepositorySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_RepositorySpec_To_v1alpha1_RepositorySpec(a.(*v1beta1.RepositorySpec), b.(*RepositorySpec), scope)
 	}); err != nil {
 		return err
 	}
