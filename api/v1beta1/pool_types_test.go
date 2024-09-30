@@ -3,6 +3,7 @@
 package v1beta1
 
 import (
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -17,7 +18,7 @@ func TestPoolList_FilterByFields(t *testing.T) {
 		Items    []Pool
 	}
 	type args struct {
-		predicates []Predicate
+		predicates []filter.Predicate[Pool]
 	}
 	tests := []struct {
 		name   string
@@ -68,7 +69,7 @@ func TestPoolList_FilterByFields(t *testing.T) {
 				},
 			},
 			args: args{
-				predicates: []Predicate{
+				predicates: []filter.Predicate[Pool]{
 					MatchesImage("ubuntu-2204"),
 					MatchesFlavor("large"),
 					MatchesProvider("openstack"),
@@ -120,7 +121,7 @@ func TestPoolList_FilterByFields(t *testing.T) {
 				},
 			},
 			args: args{
-				predicates: []Predicate{
+				predicates: []filter.Predicate[Pool]{
 					MatchesImage("ubuntu-2404"),
 					MatchesFlavor("large"),
 					MatchesProvider("openstack"),
@@ -138,9 +139,9 @@ func TestPoolList_FilterByFields(t *testing.T) {
 				Items:    tt.fields.Items,
 			}
 
-			p.FilterByFields(tt.args.predicates...)
+			filteredItems := filter.Match(p.Items, tt.args.predicates...)
 
-			if len(p.Items) != tt.length {
+			if len(filteredItems) != tt.length {
 				t.Errorf("FilterByFields() = %v, want %v", len(p.Items), tt.length)
 			}
 		})
