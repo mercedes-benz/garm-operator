@@ -124,22 +124,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	}
 	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
 
-	// check if there is already a pool with the same spec on garm side
-	matchingGarmPool, err := poolUtil.GetGarmPoolBySpecs(ctx, garmClient, pool, image, gitHubScopeRef)
-	if err != nil {
-		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
-	}
-
-	if matchingGarmPool != nil {
-		log.Info("Found garm pool with matching specs, syncing IDs", "garmID", matchingGarmPool.ID)
-		event.Creating(r.Recorder, pool, fmt.Sprintf("found garm pool with matching specs, syncing IDs: %s", matchingGarmPool.ID))
-
-		pool.Status.ID = matchingGarmPool.ID
-		pool.Status.LongRunningIdleRunners = matchingGarmPool.MinIdleRunners
-		return r.handleSuccessfulUpdate(ctx, pool)
-	}
-
-	// create new pool in garm
+	// always create new pool in garm
 	garmPool, err := poolUtil.CreatePool(ctx, garmClient, pool, image, gitHubScopeRef)
 	if err != nil {
 		return r.handleUpdateError(ctx, pool, fmt.Errorf("failed creating pool %s: %s", pool.Name, err.Error()), conditions.ReconcileErrorReason)
