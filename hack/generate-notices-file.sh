@@ -140,10 +140,8 @@ echo "Got Report Download URL: ${report_download_url}"
 curl -s -S -X GET ${report_download_url} \
   -H "Accept: */*" \
   -H "Authorization: Bearer ${bearer_token}" \
-  -o ${BLACKDUCK_PROJECT_NAME}-licenses.zip
+  -o tmp/${BLACKDUCK_PROJECT_NAME}-licenses.zip
 
-mv ${BLACKDUCK_PROJECT_NAME}-licenses.zip tmp/
-
-unzip -j tmp/${BLACKDUCK_PROJECT_NAME}-licenses.zip
+unzip -j tmp/${BLACKDUCK_PROJECT_NAME}-licenses.zip -d tmp/
 
 mv tmp/version-license_*.txt tmp/Black_Duck_Notices_Report.txt
