@@ -18,3 +18,9 @@ package mock
 //go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt repository.go > _repository.go && mv _repository.go repository.go"
 //go:generate ../../../bin/mockgen -package mock -destination=client.go -source=../client.go GarmClient
 //go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt client.go > _client.go && mv _client.go client.go"
+//go:generate ../../../bin/mockgen -package mock -destination=endpoint.go -source=../endpoint.go Endpoint
+//go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt endpoint.go > _endpoint.go && mv _endpoint.go endpoint.go"
+//go:generate ../../../bin/mockgen -package mock -destination=credentials.go -source=../credentials.go GithubCredentials
+//go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt credentials.go > _credentials.go && mv _credentials.go credentials.go"
+//go:generate ../../../bin/mockgen -package mock -destination=controller.go -source=../controller.go GarmServerConfig
+//go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt controller.go > _controller.go && mv _controller.go controller.go"
