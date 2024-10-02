@@ -142,6 +142,8 @@ curl -s -S -X GET ${report_download_url} \
   -H "Authorization: Bearer ${bearer_token}" \
   -o ${BLACKDUCK_PROJECT_NAME}-licenses.zip
 
-unzip -j ${BLACKDUCK_PROJECT_NAME}-licenses.zip
+mv ${BLACKDUCK_PROJECT_NAME}-licenses.zip tmp/
 
-mv version-license_*.txt tmp/Black_Duck_Notices_Report.txt
+unzip -j tmp/${BLACKDUCK_PROJECT_NAME}-licenses.zip
+
+mv tmp/version-license_*.txt tmp/Black_Duck_Notices_Report.txt
