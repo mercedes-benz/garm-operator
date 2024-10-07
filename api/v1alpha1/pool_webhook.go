@@ -3,7 +3,6 @@
 package v1alpha1
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -39,30 +38,12 @@ var _ webhook.Validator = &Pool{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (p *Pool) ValidateCreate() (admission.Warnings, error) {
 	poollog.Info("validate create", "name", p.Name)
-	ctx := context.TODO()
 
 	if err := p.validateExtraSpec(); err != nil {
 		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
 			p.Name,
 			field.ErrorList{err},
 		)
-	}
-
-	poolImage, err := p.GetImageCR(ctx, c)
-	if err != nil {
-		poollog.Error(err, "cannot fetch Image", "error", err)
-		return nil, nil
-	}
-
-	duplicate, duplicateName, err := p.CheckDuplicate(ctx, c, poolImage)
-	if err != nil {
-		poollog.Error(err, "error checking for duplicate", "error", err)
-		return nil, nil
-	}
-
-	if duplicate {
-		err := fmt.Sprintf("pool with same image, flavor, provider and github scope already exists: %s", duplicateName)
-		return nil, apierrors.NewBadRequest(err)
 	}
 
 	return nil, nil
