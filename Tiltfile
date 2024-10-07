@@ -10,7 +10,7 @@ allow_k8s_contexts('kind-garm-operator')
 # as the plugin has already well written readiness checks we can use it to wait for
 deploy_cert_manager(
     kind_cluster_name='garm-operator', # just for security reasons ;-)
-    version='v1.12.0' # the version of cert-manager to deploy
+    version='v1.15.3' # the version of cert-manager to deploy
 )
 
 # mode could be either 'local' or 'debug'

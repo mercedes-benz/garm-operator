@@ -3,9 +3,8 @@
 package v1alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EnterpriseSpec defines the desired state of Enterprise
