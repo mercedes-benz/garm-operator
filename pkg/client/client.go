@@ -227,7 +227,7 @@ func extractJWTTokenExp(ctx context.Context, tokenString string) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		if exp, ok := claims["exp"].(float64); ok {
 			expTime := time.Unix(int64(exp), 0)
-			log.Info(fmt.Sprintf("new token expires on " + expTime.Format(time.UnixDate)))
+			log.Info(fmt.Sprintf("new token expires on %s", expTime.Format(time.UnixDate)))
 			metrics.GarmJwtExpiresAt.Set(exp)
 		}
 	}

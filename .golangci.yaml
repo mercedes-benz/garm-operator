@@ -61,3 +61,7 @@ linters-settings:
     zap: false
     require-string-key: true
     no-printf-like: true
+
+  gosec:
+    excludes:
+      - G115 # Potential integer overflow when converting between integer types
