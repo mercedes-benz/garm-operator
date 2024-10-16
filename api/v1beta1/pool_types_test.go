@@ -3,12 +3,13 @@
 package v1beta1
 
 import (
-	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
+	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
 
 func TestPoolList_FilterByFields(t *testing.T) {

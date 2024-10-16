@@ -5,11 +5,12 @@ package secret
 import (
 	"context"
 	"fmt"
-	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 )
 
 // FetchRef fetches a secret for a given garmoperatorv1alpha1.SecretRef and namespace

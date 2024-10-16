@@ -1,8 +1,9 @@
 package v1alpha1
 
 import (
-	"github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
+
+	"github.com/mercedes-benz/garm-operator/api/v1beta1"
 )
 
 var _ conversion.Convertible = &Image{}

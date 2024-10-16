@@ -8,18 +8,19 @@ import (
 	"github.com/cloudbase/garm/client/controller_info"
 	"github.com/cloudbase/garm/params"
 	"github.com/google/uuid"
-	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
-	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
-	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
+	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 )
 
-var controllerId = uuid.New()
+var controllerID = uuid.New()
 
 func TestGarmServerConfig_reconcile(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
@@ -57,7 +58,7 @@ func TestGarmServerConfig_reconcile(t *testing.T) {
 					WebhookURL:  "http://garm-server.garm-server.svc:9997/api/v1/webhook",
 				},
 				Status: garmoperatorv1beta1.GarmServerConfigStatus{
-					ControllerID:         controllerId.String(),
+					ControllerID:         controllerID.String(),
 					Hostname:             "garm.server.com",
 					MetadataURL:          "http://garm-server.garm-server.svc:9997/api/v1/metadata",
 					CallbackURL:          "http://garm-server.garm-server.svc:9997/api/v1/callbacks",
@@ -71,7 +72,7 @@ func TestGarmServerConfig_reconcile(t *testing.T) {
 			wantErr:        false,
 			expectGarmRequest: func(m *mock.MockControllerClientMockRecorder) {
 				m.GetControllerInfo().Return(&controller_info.ControllerInfoOK{Payload: params.ControllerInfo{
-					ControllerID:         controllerId,
+					ControllerID:         controllerID,
 					Hostname:             "garm.server.com",
 					MetadataURL:          "http://garm-server.garm-server.svc:9997/api/v1/metadata",
 					CallbackURL:          "http://garm-server.garm-server.svc:9997/api/v1/callbacks",

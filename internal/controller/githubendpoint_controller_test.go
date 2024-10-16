@@ -4,12 +4,11 @@ package controller
 
 import (
 	"context"
-	"github.com/cloudbase/garm/client/endpoints"
-	"github.com/mercedes-benz/garm-operator/pkg/util"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/cloudbase/garm/client/endpoints"
 	"github.com/cloudbase/garm/params"
 	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +22,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
+	"github.com/mercedes-benz/garm-operator/pkg/util"
 )
 
 func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
@@ -84,14 +84,15 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEndpointClientMockRecorder) {
-				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().WithName("existing-github-endpoint")).Return(&endpoints.GetGithubEndpointOK{Payload: params.GithubEndpoint{
-					Name:          "existing-github-endpoint",
-					Description:   "existing-github-endpoint",
-					APIBaseURL:    "https://api.github.com",
-					UploadBaseURL: "https://uploads.github.com",
-					BaseURL:       "https://github.com",
-					CACertBundle:  nil,
-				},
+				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().WithName("existing-github-endpoint")).Return(&endpoints.GetGithubEndpointOK{
+					Payload: params.GithubEndpoint{
+						Name:          "existing-github-endpoint",
+						Description:   "existing-github-endpoint",
+						APIBaseURL:    "https://api.github.com",
+						UploadBaseURL: "https://uploads.github.com",
+						BaseURL:       "https://github.com",
+						CACertBundle:  nil,
+					},
 				}, nil)
 				m.UpdateEndpoint(endpoints.NewUpdateGithubEndpointParams().
 					WithName("existing-github-endpoint").
@@ -174,14 +175,15 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 			expectGarmRequest: func(m *mock.MockEndpointClientMockRecorder) {
 				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().
 					WithName("existing-github-endpoint")).
-					Return(&endpoints.GetGithubEndpointOK{Payload: params.GithubEndpoint{
-						Name:          "existing-github-endpoint",
-						Description:   "existing-github-endpoint",
-						APIBaseURL:    "https://api.github.com",
-						UploadBaseURL: "https://uploads.github.com",
-						BaseURL:       "https://github.com",
-						CACertBundle:  nil,
-					},
+					Return(&endpoints.GetGithubEndpointOK{
+						Payload: params.GithubEndpoint{
+							Name:          "existing-github-endpoint",
+							Description:   "existing-github-endpoint",
+							APIBaseURL:    "https://api.github.com",
+							UploadBaseURL: "https://uploads.github.com",
+							BaseURL:       "https://github.com",
+							CACertBundle:  nil,
+						},
 					}, nil)
 				m.UpdateEndpoint(endpoints.NewUpdateGithubEndpointParams().
 					WithName("existing-github-endpoint").
@@ -330,14 +332,15 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 			expectGarmRequest: func(m *mock.MockEndpointClientMockRecorder) {
 				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().
 					WithName("existing-github-endpoint")).
-					Return(&endpoints.GetGithubEndpointOK{Payload: params.GithubEndpoint{
-						Name:          "existing-github-endpoint",
-						Description:   "existing-github-endpoint",
-						APIBaseURL:    "https://api.github.com",
-						UploadBaseURL: "https://uploads.github.com",
-						BaseURL:       "https://github.com",
-						CACertBundle:  nil,
-					},
+					Return(&endpoints.GetGithubEndpointOK{
+						Payload: params.GithubEndpoint{
+							Name:          "existing-github-endpoint",
+							Description:   "existing-github-endpoint",
+							APIBaseURL:    "https://api.github.com",
+							UploadBaseURL: "https://uploads.github.com",
+							BaseURL:       "https://github.com",
+							CACertBundle:  nil,
+						},
 					}, nil)
 				m.UpdateEndpoint(endpoints.NewUpdateGithubEndpointParams().
 					WithName("existing-github-endpoint").
