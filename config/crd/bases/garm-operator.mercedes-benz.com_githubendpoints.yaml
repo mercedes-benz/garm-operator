@@ -64,6 +64,7 @@ spec:
               baseUrl:
                 type: string
               caCertBundle:
+                description: 'TODO: This should be a secret reference'
                 format: byte
                 type: string
               description:
