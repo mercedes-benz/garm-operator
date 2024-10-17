@@ -5,17 +5,12 @@ resources:
   - garm-operator_v1alpha1_organization.yaml
   - garm-operator_v1alpha1_image.yaml
   - garm-operator_v1alpha1_repository.yaml
-  - garm-operator_v1alpha1_runner.yaml
-  - garm-operator_v1alpha1_garmserverconfig.yaml
-  - garm-operator_v1alpha1_githubendpoint.yaml
-  - garm-operator_v1alpha1_githubcredentials.yaml
-- garm-operator_v1beta1_enterprise.yaml
-- garm-operator_v1beta1_organization.yaml
-- garm-operator_v1beta1_repository.yaml
-- garm-operator_v1beta1_pool.yaml
-- garm-operator_v1beta1_runner.yaml
-- garm-operator_v1beta1_image.yaml
-- garm-operator_v1beta1_githubendpoint.yaml
-- garm-operator_v1beta1_githubcredentials.yaml
-- garm-operator_v1beta1_garmserverconfig.yaml
-#+kubebuilder:scaffold:manifestskustomizesamples
+  - garm-operator_v1beta1_enterprise.yaml
+  - garm-operator_v1beta1_organization.yaml
+  - garm-operator_v1beta1_repository.yaml
+  - garm-operator_v1beta1_pool.yaml
+  - garm-operator_v1beta1_image.yaml
+  - garm-operator_v1beta1_githubendpoint.yaml
+  - garm-operator_v1beta1_githubcredentials.yaml
+  - garm-operator_v1beta1_garmserverconfig.yaml
+  #+kubebuilder:scaffold:manifestskustomizesamples

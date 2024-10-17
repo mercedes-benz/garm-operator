@@ -4,184 +4,157 @@
 # More info: https://book.kubebuilder.io/reference/project-config.html
 domain: mercedes-benz.com
 layout:
-- go.kubebuilder.io/v4
+  - go.kubebuilder.io/v4
 projectName: garm-operator
 repo: github.com/mercedes-benz/garm-operator
 resources:
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Enterprise
-  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
-  version: v1alpha1
-  webhooks:
-    conversion: true
-    webhookVersion: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Pool
-  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
-  version: v1alpha1
-  webhooks:
-    conversion: true
-    defaulting: true
-    validation: true
-    webhookVersion: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Organization
-  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
-  version: v1alpha1
-  webhooks:
-    conversion: true
-    webhookVersion: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Image
-  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
-  version: v1alpha1
-  webhooks:
-    conversion: true
-    defaulting: true
-    validation: true
-    webhookVersion: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Repository
-  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
-  version: v1alpha1
-  webhooks:
-    conversion: true
-    defaulting: true
-    validation: true
-    webhookVersion: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Runner
-  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
-  version: v1alpha1
-  webhooks:
-    conversion: true
-    webhookVersion: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: GarmServerConfig
-  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
-  version: v1alpha1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: GitHubEndpoint
-  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
-  version: v1alpha1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: GitHubCredentials
-  path: github.com/mercedes-benz/garm-operator/api/v1alpha1
-  version: v1alpha1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Enterprise
-  path: github.com/mercedes-benz/garm-operator/api/v1beta1
-  version: v1beta1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Organization
-  path: github.com/mercedes-benz/garm-operator/api/v1beta1
-  version: v1beta1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Repository
-  path: github.com/mercedes-benz/garm-operator/api/v1beta1
-  version: v1beta1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Pool
-  path: github.com/mercedes-benz/garm-operator/api/v1beta1
-  version: v1beta1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Runner
-  path: github.com/mercedes-benz/garm-operator/api/v1beta1
-  version: v1beta1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: Image
-  path: github.com/mercedes-benz/garm-operator/api/v1beta1
-  version: v1beta1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: GitHubEndpoint
-  path: github.com/mercedes-benz/garm-operator/api/v1beta1
-  version: v1beta1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: GitHubCredentials
-  path: github.com/mercedes-benz/garm-operator/api/v1beta1
-  version: v1beta1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: mercedes-benz.com
-  group: garm-operator
-  kind: GarmServerConfig
-  path: github.com/mercedes-benz/garm-operator/api/v1beta1
-  version: v1beta1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    controller: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Enterprise
+    path: github.com/mercedes-benz/garm-operator/api/v1alpha1
+    version: v1alpha1
+    webhooks:
+      conversion: true
+      webhookVersion: v1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    controller: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Pool
+    path: github.com/mercedes-benz/garm-operator/api/v1alpha1
+    version: v1alpha1
+    webhooks:
+      conversion: true
+      defaulting: true
+      validation: true
+      webhookVersion: v1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    controller: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Organization
+    path: github.com/mercedes-benz/garm-operator/api/v1alpha1
+    version: v1alpha1
+    webhooks:
+      conversion: true
+      webhookVersion: v1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Image
+    path: github.com/mercedes-benz/garm-operator/api/v1alpha1
+    version: v1alpha1
+    webhooks:
+      conversion: true
+      defaulting: true
+      validation: true
+      webhookVersion: v1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    controller: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Repository
+    path: github.com/mercedes-benz/garm-operator/api/v1alpha1
+    version: v1alpha1
+    webhooks:
+      conversion: true
+      defaulting: true
+      validation: true
+      webhookVersion: v1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    controller: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Runner
+    path: github.com/mercedes-benz/garm-operator/api/v1alpha1
+    version: v1alpha1
+    webhooks:
+      conversion: true
+      webhookVersion: v1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Enterprise
+    path: github.com/mercedes-benz/garm-operator/api/v1beta1
+    version: v1beta1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Organization
+    path: github.com/mercedes-benz/garm-operator/api/v1beta1
+    version: v1beta1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Repository
+    path: github.com/mercedes-benz/garm-operator/api/v1beta1
+    version: v1beta1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Pool
+    path: github.com/mercedes-benz/garm-operator/api/v1beta1
+    version: v1beta1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Runner
+    path: github.com/mercedes-benz/garm-operator/api/v1beta1
+    version: v1beta1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: Image
+    path: github.com/mercedes-benz/garm-operator/api/v1beta1
+    version: v1beta1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: GitHubEndpoint
+    path: github.com/mercedes-benz/garm-operator/api/v1beta1
+    version: v1beta1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: GitHubCredentials
+    path: github.com/mercedes-benz/garm-operator/api/v1beta1
+    version: v1beta1
+  - api:
+      crdVersion: v1
+      namespaced: true
+    domain: mercedes-benz.com
+    group: garm-operator
+    kind: GarmServerConfig
+    path: github.com/mercedes-benz/garm-operator/api/v1beta1
+    version: v1beta1
 version: "3"
