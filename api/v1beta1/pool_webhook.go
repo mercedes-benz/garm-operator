@@ -37,7 +37,7 @@ var _ webhook.Validator = &Pool{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Pool) ValidateCreate() (admission.Warnings, error) {
-	poollog.Info("validate create", "name", r.Name)
+	poollog.Info("validate create request", "name", r.Name, "namespace", r.Namespace)
 
 	if err := r.validateExtraSpec(); err != nil {
 		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
@@ -134,6 +134,6 @@ func (r *Pool) validateGitHubScope(old *Pool) *field.Error {
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Pool) ValidateDelete() (admission.Warnings, error) {
-	poollog.Info("validate delete", "name", r.Name)
+	poollog.Info("validate delete", "name", r.Name, "namespace", r.Namespace)
 	return nil, nil
 }

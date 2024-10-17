@@ -30,13 +30,13 @@ var _ webhook.Validator = &Repository{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Repository) ValidateCreate() (admission.Warnings, error) {
-	repositorylog.Info("validate create", "name", r.Name)
+	repositorylog.Info("validate create", "name", r.Name, "namespace", r.Namespace)
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Repository) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	repositorylog.Info("validate update", "name", r.Name)
+	repositorylog.Info("validate update", "name", r.Name, "namespace", r.Namespace)
 
 	oldCRD, ok := old.(*Repository)
 	if !ok {
@@ -70,6 +70,6 @@ func (r *Repository) validateRepoOwnerName(old *Repository) *field.Error {
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Repository) ValidateDelete() (admission.Warnings, error) {
-	repositorylog.Info("validate delete", "name", r.Name)
+	repositorylog.Info("validate delete", "name", r.Name, "namespace", r.Namespace)
 	return nil, nil
 }

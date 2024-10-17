@@ -30,19 +30,19 @@ var _ webhook.Validator = &Image{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (i *Image) ValidateCreate() (admission.Warnings, error) {
-	imagelog.Info("validate create", "name", i.Name)
+	imagelog.Info("validate create", "name", i.Name, "namespace", i.Namespace)
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (i *Image) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
-	imagelog.Info("validate update", "name", i.Name)
+	imagelog.Info("validate update", "name", i.Name, "namespace", i.Namespace)
 	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (i *Image) ValidateDelete() (admission.Warnings, error) {
-	imagelog.Info("validate delete", "name", i.Name)
+	imagelog.Info("validate delete", "name", i.Name, "namespace", i.Namespace)
 	var msg string
 
 	pools, err := i.attachedPools(context.Background())
