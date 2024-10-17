@@ -65,3 +65,11 @@ linters-settings:
   gosec:
     excludes:
       - G115 # Potential integer overflow when converting between integer types
+
+issues:
+  exclude-rules:
+    # exclude revive warnings for generated code
+    - linters:
+        - revive
+      path: 'api/v1alpha1/(.+)_conversion\.go'
+      text: "var-naming: don't use underscores in Go names; func (.+)"

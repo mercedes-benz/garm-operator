@@ -49,8 +49,12 @@ help: ## Display this help.
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
+.PHONY: conversion
+conversion: conversion-gen
+	$(CONVERSION_GEN) --go-header-file hack/boilerplate.go.txt --output-file zz_generated.conversion.go github.com/mercedes-benz/garm-operator/api/v1alpha1
+
 .PHONY: generate
-generate: controller-gen mockgen ## Generate mock client and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: controller-gen conversion mockgen ## Generate mock client and code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 	go generate ./...
 
@@ -162,6 +166,7 @@ $(LOCALBIN):
 KUBECTL ?= kubectl
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
+CONVERSION_GEN ?= $(LOCALBIN)/conversion-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 MOCKGEN ?= $(LOCALBIN)/mockgen
@@ -176,7 +181,8 @@ KIND ?= $(LOCALBIN)/kind
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
 CONTROLLER_TOOLS_VERSION ?= v0.15.0
-GOLANGCI_LINT_VERSION ?= v1.61.0
+CONVERSION_GEN_VERSION ?= v0.30.5
+GOLANGCI_LINT_VERSION ?= v1.59.1
 MOCKGEN_VERSION ?= v0.4.0
 GORELEASER_VERSION ?= v1.21.0
 MDTOC_VERSION ?= v1.1.0
@@ -199,6 +205,12 @@ controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessar
 $(CONTROLLER_GEN): $(LOCALBIN)
 	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+
+.PHONY: conversion-gen
+conversion-gen: $(CONVERSION_GEN) ## Download conversion-gen locally if necessary. If wrong version is installed, it will be overwritten.
+$(CONVERSION_GEN): $(LOCALBIN)
+	test -s $(LOCALBIN)/conversion-gen || \
+	GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/conversion-gen@$(CONVERSION_GEN_VERSION)
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.

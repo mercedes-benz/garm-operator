@@ -15,18 +15,18 @@ import (
 	"github.com/cloudbase/garm/params"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
 
-func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (*params.Pool, error) {
+func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool, image *garmoperatorv1beta1.Image, gitHubScopeRef garmoperatorv1beta1.GitHubScope) (*params.Pool, error) {
 	log := log.FromContext(ctx)
 	log.Info("Getting existing garm pools by pool.spec")
 
 	githubScopeRefID := gitHubScopeRef.GetID()
 	githubScopeRefName := gitHubScopeRef.GetName()
-	scope, err := garmoperatorv1alpha1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
+	scope, err := garmoperatorv1beta1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, p
 	return nil, nil
 }
 
-func UpdatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image) error {
+func UpdatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool, image *garmoperatorv1beta1.Image) error {
 	log := log.FromContext(ctx).
 		WithName("UpdatePool")
 
@@ -100,7 +100,7 @@ func UpdatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 	return nil
 }
 
-func CreatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, image *garmoperatorv1alpha1.Image, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (params.Pool, error) {
+func CreatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool, image *garmoperatorv1beta1.Image, gitHubScopeRef garmoperatorv1beta1.GitHubScope) (params.Pool, error) {
 	log := log.FromContext(ctx).
 		WithName("CreatePool")
 	log.Info("creating pool", "pool", pool.Name)
@@ -108,7 +108,7 @@ func CreatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 	poolResult := params.Pool{}
 
 	id := gitHubScopeRef.GetID()
-	scope, err := garmoperatorv1alpha1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
+	scope, err := garmoperatorv1beta1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
 	if err != nil {
 		return poolResult, err
 	}
@@ -140,7 +140,7 @@ func CreatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 	}
 
 	switch scope {
-	case garmoperatorv1alpha1.EnterpriseScope:
+	case garmoperatorv1beta1.EnterpriseScope:
 		result, err := garmClient.CreateEnterprisePool(
 			enterprises.NewCreateEnterprisePoolParams().
 				WithEnterpriseID(id).
@@ -150,7 +150,7 @@ func CreatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 		}
 
 		poolResult = result.Payload
-	case garmoperatorv1alpha1.OrganizationScope:
+	case garmoperatorv1beta1.OrganizationScope:
 		result, err := garmClient.CreateOrgPool(
 			organizations.NewCreateOrgPoolParams().
 				WithOrgID(id).
@@ -159,7 +159,7 @@ func CreatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 			return params.Pool{}, err
 		}
 		poolResult = result.Payload
-	case garmoperatorv1alpha1.RepositoryScope:
+	case garmoperatorv1beta1.RepositoryScope:
 		result, err := garmClient.CreateRepoPool(
 			repositories.NewCreateRepoPoolParams().
 				WithRepoID(id).
@@ -176,7 +176,7 @@ func CreatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 	return poolResult, nil
 }
 
-func GarmPoolExists(garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool) bool {
+func GarmPoolExists(garmClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool) bool {
 	result, err := garmClient.GetPool(pools.NewGetPoolParams().WithPoolID(pool.Status.ID))
 	if err != nil {
 		return false
