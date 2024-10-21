@@ -34,26 +34,26 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/util"
 )
 
-// GitHubCredentialsReconciler reconciles a GitHubCredentials object
-type GitHubCredentialsReconciler struct {
+// GitHubCredentialReconciler reconciles a GitHubCredential object
+type GitHubCredentialReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
-//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=githubcredentials,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=githubcredentials/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=githubcredentials/finalizers,verbs=update
+//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=githubcredential,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=githubcredential/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=githubcredential/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",namespace=xxxxx,resources=secrets,verbs=get;list;watch;
 
-func (r *GitHubCredentialsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GitHubCredentialReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	credentials := &garmoperatorv1beta1.GitHubCredentials{}
+	credentials := &garmoperatorv1beta1.GitHubCredential{}
 	if err := r.Get(ctx, req.NamespacedName, credentials); err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Info("GitHubCredentials resource not found.")
+			log.Info("GitHubCredential resource not found.")
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
@@ -75,11 +75,11 @@ func (r *GitHubCredentialsReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return r.reconcileNormal(ctx, credentialsClient, credentials)
 }
 
-func (r *GitHubCredentialsReconciler) reconcileNormal(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredentials) (ctrl.Result, error) {
+func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredential) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("credentials", credentials.Name)
 
-	// If the GitHubCredentials doesn't have our finalizer, add it.
+	// If the GitHubCredential doesn't have our finalizer, add it.
 	if err := r.ensureFinalizer(ctx, credentials); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -157,7 +157,7 @@ func (r *GitHubCredentialsReconciler) reconcileNormal(ctx context.Context, clien
 	return ctrl.Result{}, nil
 }
 
-func (r *GitHubCredentialsReconciler) getExistingCredentials(client garmClient.CredentialsClient, name string) (params.GithubCredentials, error) {
+func (r *GitHubCredentialReconciler) getExistingCredentials(client garmClient.CredentialsClient, name string) (params.GithubCredentials, error) {
 	credentials, err := client.ListCredentials(garmcredentials.NewListCredentialsParams())
 	if err != nil {
 		return params.GithubCredentials{}, err
@@ -172,11 +172,11 @@ func (r *GitHubCredentialsReconciler) getExistingCredentials(client garmClient.C
 	return params.GithubCredentials{}, nil
 }
 
-func (r *GitHubCredentialsReconciler) createCredentials(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredentials, endpoint, githubSecret string) (params.GithubCredentials, error) {
+func (r *GitHubCredentialReconciler) createCredentials(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredential, endpoint, githubSecret string) (params.GithubCredentials, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("credentials", credentials.Name)
 
-	log.Info("GitHubCredentials doesn't exist on garm side. Creating new credentials in garm.")
+	log.Info("GitHubCredential doesn't exist on garm side. Creating new credentials in garm.")
 	event.Creating(r.Recorder, credentials, "credentials doesn't exist on garm side")
 
 	req := params.CreateGithubCredentialsParams{
@@ -211,7 +211,7 @@ func (r *GitHubCredentialsReconciler) createCredentials(ctx context.Context, cli
 	return garmCredentials.Payload, nil
 }
 
-func (r *GitHubCredentialsReconciler) updateCredentials(ctx context.Context, client garmClient.CredentialsClient, credentialsID int64, credentials *garmoperatorv1beta1.GitHubCredentials, githubSecret string) (params.GithubCredentials, error) {
+func (r *GitHubCredentialReconciler) updateCredentials(ctx context.Context, client garmClient.CredentialsClient, credentialsID int64, credentials *garmoperatorv1beta1.GitHubCredential, githubSecret string) (params.GithubCredentials, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update credentials")
 
@@ -245,7 +245,7 @@ func (r *GitHubCredentialsReconciler) updateCredentials(ctx context.Context, cli
 	return retValue.Payload, nil
 }
 
-func (r *GitHubCredentialsReconciler) reconcileDelete(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredentials) (ctrl.Result, error) {
+func (r *GitHubCredentialReconciler) reconcileDelete(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredential) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("credentials", credentials.Name)
 
@@ -281,7 +281,7 @@ func (r *GitHubCredentialsReconciler) reconcileDelete(ctx context.Context, clien
 	return ctrl.Result{}, nil
 }
 
-func (r *GitHubCredentialsReconciler) getEndpointRef(ctx context.Context, credentials *garmoperatorv1beta1.GitHubCredentials) (*garmoperatorv1beta1.GitHubEndpoint, error) {
+func (r *GitHubCredentialReconciler) getEndpointRef(ctx context.Context, credentials *garmoperatorv1beta1.GitHubCredential) (*garmoperatorv1beta1.GitHubEndpoint, error) {
 	endpoint := &garmoperatorv1beta1.GitHubEndpoint{}
 	err := r.Get(ctx, types.NamespacedName{
 		Namespace: credentials.Namespace,
@@ -293,7 +293,7 @@ func (r *GitHubCredentialsReconciler) getEndpointRef(ctx context.Context, creden
 	return endpoint, nil
 }
 
-func (r *GitHubCredentialsReconciler) ensureFinalizer(ctx context.Context, credentials *garmoperatorv1beta1.GitHubCredentials) error {
+func (r *GitHubCredentialReconciler) ensureFinalizer(ctx context.Context, credentials *garmoperatorv1beta1.GitHubCredential) error {
 	if !controllerutil.ContainsFinalizer(credentials, key.CredentialsFinalizerName) {
 		controllerutil.AddFinalizer(credentials, key.CredentialsFinalizerName)
 		return r.Update(ctx, credentials)
@@ -301,13 +301,13 @@ func (r *GitHubCredentialsReconciler) ensureFinalizer(ctx context.Context, crede
 	return nil
 }
 
-func (r *GitHubCredentialsReconciler) findCredentialsForSecret(ctx context.Context, obj client.Object) []reconcile.Request {
+func (r *GitHubCredentialReconciler) findCredentialsForSecret(ctx context.Context, obj client.Object) []reconcile.Request {
 	secret, ok := obj.(*corev1.Secret)
 	if !ok {
 		return nil
 	}
 
-	var creds garmoperatorv1beta1.GitHubCredentialsList
+	var creds garmoperatorv1beta1.GitHubCredentialList
 	if err := r.List(ctx, &creds); err != nil {
 		return nil
 	}
@@ -328,9 +328,9 @@ func (r *GitHubCredentialsReconciler) findCredentialsForSecret(ctx context.Conte
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GitHubCredentialsReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *GitHubCredentialReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1beta1.GitHubCredentials{}).
+		For(&garmoperatorv1beta1.GitHubCredential{}).
 		Watches(
 			&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.findCredentialsForSecret),

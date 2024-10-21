@@ -273,8 +273,8 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
-func (r *RepositoryReconciler) getCredentialsRef(ctx context.Context, repository *garmoperatorv1beta1.Repository) (*garmoperatorv1beta1.GitHubCredentials, error) {
-	creds := &garmoperatorv1beta1.GitHubCredentials{}
+func (r *RepositoryReconciler) getCredentialsRef(ctx context.Context, repository *garmoperatorv1beta1.Repository) (*garmoperatorv1beta1.GitHubCredential, error) {
+	creds := &garmoperatorv1beta1.GitHubCredential{}
 	err := r.Get(ctx, types.NamespacedName{
 		Namespace: repository.Namespace,
 		Name:      repository.Spec.CredentialsRef.Name,
@@ -294,7 +294,7 @@ func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmop
 }
 
 func (r *RepositoryReconciler) findReposForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {
-	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredentials)
+	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredential)
 	if !ok {
 		return nil
 	}
@@ -324,7 +324,7 @@ func (r *RepositoryReconciler) SetupWithManager(mgr ctrl.Manager, options contro
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&garmoperatorv1beta1.Repository{}).
 		Watches(
-			&garmoperatorv1beta1.GitHubCredentials{},
+			&garmoperatorv1beta1.GitHubCredential{},
 			handler.EnqueueRequestsFromMapFunc(r.findReposForCredentials),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).

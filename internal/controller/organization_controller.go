@@ -272,8 +272,8 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client gar
 	return ctrl.Result{}, nil
 }
 
-func (r *OrganizationReconciler) getCredentialsRef(ctx context.Context, org *garmoperatorv1beta1.Organization) (*garmoperatorv1beta1.GitHubCredentials, error) {
-	creds := &garmoperatorv1beta1.GitHubCredentials{}
+func (r *OrganizationReconciler) getCredentialsRef(ctx context.Context, org *garmoperatorv1beta1.Organization) (*garmoperatorv1beta1.GitHubCredential, error) {
+	creds := &garmoperatorv1beta1.GitHubCredential{}
 	err := r.Get(ctx, types.NamespacedName{
 		Namespace: org.Namespace,
 		Name:      org.Spec.CredentialsRef.Name,
@@ -293,7 +293,7 @@ func (r *OrganizationReconciler) ensureFinalizer(ctx context.Context, org *garmo
 }
 
 func (r *OrganizationReconciler) findOrgsForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {
-	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredentials)
+	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredential)
 	if !ok {
 		return nil
 	}
@@ -323,7 +323,7 @@ func (r *OrganizationReconciler) SetupWithManager(mgr ctrl.Manager, options cont
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&garmoperatorv1beta1.Organization{}).
 		Watches(
-			&garmoperatorv1beta1.GitHubCredentials{},
+			&garmoperatorv1beta1.GitHubCredential{},
 			handler.EnqueueRequestsFromMapFunc(r.findOrgsForCredentials),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).

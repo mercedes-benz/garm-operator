@@ -274,8 +274,8 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
-func (r *EnterpriseReconciler) getCredentialsRef(ctx context.Context, enterprise *garmoperatorv1beta1.Enterprise) (*garmoperatorv1beta1.GitHubCredentials, error) {
-	creds := &garmoperatorv1beta1.GitHubCredentials{}
+func (r *EnterpriseReconciler) getCredentialsRef(ctx context.Context, enterprise *garmoperatorv1beta1.Enterprise) (*garmoperatorv1beta1.GitHubCredential, error) {
+	creds := &garmoperatorv1beta1.GitHubCredential{}
 	err := r.Get(ctx, types.NamespacedName{
 		Namespace: enterprise.Namespace,
 		Name:      enterprise.Spec.CredentialsRef.Name,
@@ -295,7 +295,7 @@ func (r *EnterpriseReconciler) ensureFinalizer(ctx context.Context, enterprise *
 }
 
 func (r *EnterpriseReconciler) findEnterprisesForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {
-	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredentials)
+	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredential)
 	if !ok {
 		return nil
 	}
@@ -325,7 +325,7 @@ func (r *EnterpriseReconciler) SetupWithManager(mgr ctrl.Manager, options contro
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&garmoperatorv1beta1.Enterprise{}).
 		Watches(
-			&garmoperatorv1beta1.GitHubCredentials{},
+			&garmoperatorv1beta1.GitHubCredential{},
 			handler.EnqueueRequestsFromMapFunc(r.findEnterprisesForCredentials),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).

@@ -50,7 +50,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -73,12 +73,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
-				&garmoperatorv1beta1.GitHubCredentials{
+				&garmoperatorv1beta1.GitHubCredential{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "github-creds",
 						Namespace: "default",
 					},
-					Spec: garmoperatorv1beta1.GitHubCredentialsSpec{
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 						Description: "github-creds",
 						EndpointRef: corev1.TypedLocalObjectReference{},
 						AuthType:    "pat",
@@ -100,7 +100,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -182,7 +182,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "has-changed",
 					},
 					Owner: "test-repo",
@@ -205,12 +205,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("has-changed"),
 					},
 				},
-				&garmoperatorv1beta1.GitHubCredentials{
+				&garmoperatorv1beta1.GitHubCredential{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "has-changed",
 						Namespace: "default",
 					},
-					Spec: garmoperatorv1beta1.GitHubCredentialsSpec{
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 						Description: "github-creds",
 						EndpointRef: corev1.TypedLocalObjectReference{},
 						AuthType:    "pat",
@@ -232,7 +232,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "has-changed",
 					},
 					Owner: "test-repo",
@@ -314,7 +314,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -337,12 +337,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
-				&garmoperatorv1beta1.GitHubCredentials{
+				&garmoperatorv1beta1.GitHubCredential{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "github-creds",
 						Namespace: "default",
 					},
-					Spec: garmoperatorv1beta1.GitHubCredentialsSpec{
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 						Description: "github-creds",
 						EndpointRef: corev1.TypedLocalObjectReference{},
 						AuthType:    "pat",
@@ -364,7 +364,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -447,7 +447,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -467,12 +467,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
-				&garmoperatorv1beta1.GitHubCredentials{
+				&garmoperatorv1beta1.GitHubCredential{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "github-creds",
 						Namespace: "default",
 					},
-					Spec: garmoperatorv1beta1.GitHubCredentialsSpec{
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 						Description: "github-creds",
 						EndpointRef: corev1.TypedLocalObjectReference{},
 						AuthType:    "pat",
@@ -494,7 +494,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -588,7 +588,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -608,12 +608,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
-				&garmoperatorv1beta1.GitHubCredentials{
+				&garmoperatorv1beta1.GitHubCredential{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "github-creds",
 						Namespace: "default",
 					},
-					Spec: garmoperatorv1beta1.GitHubCredentialsSpec{
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 						Description: "github-creds",
 						EndpointRef: corev1.TypedLocalObjectReference{},
 						AuthType:    "pat",
@@ -635,7 +635,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -716,7 +716,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -739,12 +739,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
-				&garmoperatorv1beta1.GitHubCredentials{
+				&garmoperatorv1beta1.GitHubCredential{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "github-creds",
 						Namespace: "default",
 					},
-					Spec: garmoperatorv1beta1.GitHubCredentialsSpec{
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 						Description: "github-creds",
 						EndpointRef: corev1.TypedLocalObjectReference{},
 						AuthType:    "pat",
@@ -766,7 +766,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					Owner: "test-repo",
@@ -857,7 +857,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
@@ -879,7 +879,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
@@ -997,7 +997,7 @@ func TestRepositoryReconciler_reconcileDelete(t *testing.T) {
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
 						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
-						Kind:     "GitHubCredentials",
+						Kind:     "GitHubCredential",
 						Name:     "github-creds",
 					},
 					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
@@ -1019,12 +1019,12 @@ func TestRepositoryReconciler_reconcileDelete(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
-				&garmoperatorv1beta1.GitHubCredentials{
+				&garmoperatorv1beta1.GitHubCredential{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "github-creds",
 						Namespace: "default",
 					},
-					Spec: garmoperatorv1beta1.GitHubCredentialsSpec{
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 						Description: "github-creds",
 						EndpointRef: corev1.TypedLocalObjectReference{},
 						AuthType:    "pat",

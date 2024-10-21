@@ -20,7 +20,7 @@ func (o *Organization) ConvertFrom(dstRaw conversion.Hub) error {
 func Convert_v1alpha1_OrganizationSpec_To_v1beta1_OrganizationSpec(in *OrganizationSpec, out *v1beta1.OrganizationSpec, s apiconversion.Scope) error {
 	out.CredentialsRef = corev1.TypedLocalObjectReference{
 		Name:     in.CredentialsName,
-		Kind:     "GitHubCredentials",
+		Kind:     "GitHubCredential",
 		APIGroup: &v1beta1.GroupVersion.Group,
 	}
 

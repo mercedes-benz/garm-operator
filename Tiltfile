@@ -37,7 +37,7 @@ k8s_resource(
         'runners.garm-operator.mercedes-benz.com:customresourcedefinition',
         'repositories.garm-operator.mercedes-benz.com:customresourcedefinition',
         'garmserverconfigs.garm-operator.mercedes-benz.com:customresourcedefinition',
-        'githubcredentials.garm-operator.mercedes-benz.com:customresourcedefinition',
+        'githubcredential.garm-operator.mercedes-benz.com:customresourcedefinition',
         'githubendpoints.garm-operator.mercedes-benz.com:customresourcedefinition',
         'garm-operator-controller-manager:serviceaccount',
         'garm-operator-leader-election-role:role',

@@ -8,8 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// GitHubCredentialsSpec defines the desired state of GitHubCredentials
-type GitHubCredentialsSpec struct {
+// GitHubCredentialSpec defines the desired state of GitHubCredential
+type GitHubCredentialSpec struct {
 	Description string                           `json:"description"`
 	EndpointRef corev1.TypedLocalObjectReference `json:"endpointRef"`
 
@@ -24,8 +24,8 @@ type GitHubCredentialsSpec struct {
 	SecretRef SecretRef `json:"secretRef,omitempty"`
 }
 
-// GitHubCredentialsStatus defines the observed state of GitHubCredentials
-type GitHubCredentialsStatus struct {
+// GitHubCredentialStatus defines the observed state of GitHubCredential
+type GitHubCredentialStatus struct {
 	ID            int64  `json:"id"`
 	APIBaseURL    string `json:"apiBaseUrl"`
 	UploadBaseURL string `json:"uploadBaseUrl"`
@@ -35,7 +35,7 @@ type GitHubCredentialsStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=githubcredentials,scope=Namespaced,categories=garm,shortName=creds
+//+kubebuilder:resource:path=githubcredential,scope=Namespaced,categories=garm,shortName=creds
 //+kubebuilder:subresource:status
 //+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Credentials ID"
@@ -43,34 +43,34 @@ type GitHubCredentialsStatus struct {
 //+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1
 //+kubebuilder:printcolumn:name="AuthType",type="string",JSONPath=`.spec.authType`,description="Authentication type"
 //+kubebuilder:printcolumn:name="GitHubEndpoint",type="string",JSONPath=`.spec.endpointRef.name`,description="GitHubEndpoint name these credentials are tied to"
-//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of GitHubCredentials"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of GitHubCredential"
 
-// GitHubCredentials is the Schema for the githubcredentials API
-type GitHubCredentials struct {
+// GitHubCredential is the Schema for the githubcredential API
+type GitHubCredential struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GitHubCredentialsSpec   `json:"spec,omitempty"`
-	Status GitHubCredentialsStatus `json:"status,omitempty"`
+	Spec   GitHubCredentialSpec   `json:"spec,omitempty"`
+	Status GitHubCredentialStatus `json:"status,omitempty"`
 }
 
-func (g *GitHubCredentials) SetConditions(conditions []metav1.Condition) {
+func (g *GitHubCredential) SetConditions(conditions []metav1.Condition) {
 	g.Status.Conditions = conditions
 }
 
-func (g *GitHubCredentials) GetConditions() []metav1.Condition {
+func (g *GitHubCredential) GetConditions() []metav1.Condition {
 	return g.Status.Conditions
 }
 
 //+kubebuilder:object:root=true
 
-// GitHubCredentialsList contains a list of GitHubCredentials
-type GitHubCredentialsList struct {
+// GitHubCredentialList contains a list of GitHubCredential
+type GitHubCredentialList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []GitHubCredentials `json:"items"`
+	Items           []GitHubCredential `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&GitHubCredentials{}, &GitHubCredentialsList{})
+	SchemeBuilder.Register(&GitHubCredential{}, &GitHubCredentialList{})
 }

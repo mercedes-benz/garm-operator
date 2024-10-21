@@ -215,12 +215,12 @@ func run() error {
 		return fmt.Errorf("unable to create controller GitHubEndpoint: %w", err)
 	}
 
-	if err = (&garmcontroller.GitHubCredentialsReconciler{
+	if err = (&garmcontroller.GitHubCredentialReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("github-credentials-controller"),
 	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create controller GitHubCredentials: %w", err)
+		return fmt.Errorf("unable to create controller GitHubCredential: %w", err)
 	}
 
 	// webhooks

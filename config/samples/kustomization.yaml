@@ -11,6 +11,6 @@ resources:
   - garm-operator_v1beta1_pool.yaml
   - garm-operator_v1beta1_image.yaml
   - garm-operator_v1beta1_githubendpoint.yaml
-  - garm-operator_v1beta1_githubcredentials.yaml
+  - garm-operator_v1beta1_githubcredential.yaml
   - garm-operator_v1beta1_garmserverconfig.yaml
   #+kubebuilder:scaffold:manifestskustomizesamples

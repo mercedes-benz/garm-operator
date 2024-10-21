@@ -146,7 +146,7 @@ resources:
       namespaced: true
     domain: mercedes-benz.com
     group: garm-operator
-    kind: GitHubCredentials
+    kind: GitHubCredential
     path: github.com/mercedes-benz/garm-operator/api/v1beta1
     version: v1beta1
   - api:
