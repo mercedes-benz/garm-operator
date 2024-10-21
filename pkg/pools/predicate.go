@@ -5,21 +5,21 @@ package pools
 import (
 	"github.com/cloudbase/garm/params"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
 
-func MatchesGitHubScope(scope garmoperatorv1alpha1.GitHubScopeKind, id string) filter.Predicate[params.Pool] {
+func MatchesGitHubScope(scope garmoperatorv1beta1.GitHubScopeKind, id string) filter.Predicate[params.Pool] {
 	return func(p params.Pool) bool {
-		if scope == garmoperatorv1alpha1.EnterpriseScope {
+		if scope == garmoperatorv1beta1.EnterpriseScope {
 			return p.EnterpriseID == id
 		}
 
-		if scope == garmoperatorv1alpha1.OrganizationScope {
+		if scope == garmoperatorv1beta1.OrganizationScope {
 			return p.OrgID == id
 		}
 
-		if scope == garmoperatorv1alpha1.RepositoryScope {
+		if scope == garmoperatorv1beta1.RepositoryScope {
 			return p.RepoID == id
 		}
 		return false

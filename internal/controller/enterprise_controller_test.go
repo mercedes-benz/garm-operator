@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
@@ -35,11 +35,11 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
 		runtimeObjects    []runtime.Object
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Enterprise
+		expectedObject    *garmoperatorv1beta1.Enterprise
 	}{
 		{
 			name: "enterprise exist - update",
-			object: &garmoperatorv1alpha1.Enterprise{
+			object: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
@@ -47,14 +47,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
@@ -68,8 +72,23 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
+			expectedObject: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
@@ -77,14 +96,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 					Conditions: []metav1.Condition{
 						{
@@ -92,6 +115,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							Reason:             string(conditions.PoolManagerFailureReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "Pool Manager is not running",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
@@ -116,20 +146,20 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}}, nil)
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
 					Payload: params.Enterprise{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -137,7 +167,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "enterprise exist but spec has changed - update",
-			object: &garmoperatorv1alpha1.Enterprise{
+			object: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
@@ -145,14 +175,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "has-changed",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "has-changed",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
@@ -166,8 +200,23 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("has-changed"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "has-changed",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
+			expectedObject: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
@@ -175,14 +224,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "has-changed",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "has-changed",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 					Conditions: []metav1.Condition{
 						{
@@ -190,6 +243,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							Reason:             string(conditions.PoolManagerFailureReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "Pool Manager is not running",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
@@ -214,7 +274,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}}, nil)
@@ -235,7 +295,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "enterprise exist but pool status has changed - update",
-			object: &garmoperatorv1alpha1.Enterprise{
+			object: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
@@ -243,18 +303,22 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
+			expectedObject: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
@@ -262,14 +326,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 					Conditions: []metav1.Condition{
 						{
@@ -277,6 +345,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							Reason:             string(conditions.PoolManagerFailureReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "Pool Manager is not running",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
@@ -306,26 +381,41 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
 				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}}, nil)
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
 					Payload: params.Enterprise{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						PoolManagerStatus: params.PoolManagerStatus{
 							IsRunning:     false,
@@ -337,20 +427,24 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "enterprise does not exist - create and update",
-			object: &garmoperatorv1alpha1.Enterprise{
+			object: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
+			expectedObject: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
@@ -358,14 +452,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
 					Conditions: []metav1.Condition{
 						{
@@ -376,6 +474,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
 							Type:               string(conditions.PoolManager),
 							Reason:             string(conditions.PoolManagerFailureReason),
 							Status:             metav1.ConditionFalse,
@@ -402,39 +507,54 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
 				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}}, nil)
 				m.CreateEnterprise(enterprises.NewCreateEnterpriseParams().WithBody(
 					params.CreateEnterpriseParams{
 						Name:            "new-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.CreateEnterpriseOK{
 					Payload: params.Enterprise{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "new-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("9e0da3cb-130b-428d-aa8a-e314d955060e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
 					Payload: params.Enterprise{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "new-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -442,20 +562,24 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "enterprise already exist in garm - update",
-			object: &garmoperatorv1alpha1.Enterprise{
+			object: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "totally-insecure",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
+			expectedObject: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
@@ -463,14 +587,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "totally-insecure",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
 					Conditions: []metav1.Condition{
 						{
@@ -481,6 +609,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
 							Type:               string(conditions.PoolManager),
 							Reason:             string(conditions.PoolManagerFailureReason),
 							Status:             metav1.ConditionFalse,
@@ -505,6 +640,21 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 					Data: map[string][]byte{
 						"webhookSecret": []byte("foobar"),
+					},
+				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
 					},
 				},
 			},
@@ -519,13 +669,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-12345").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "totally-insecure",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
 					Payload: params.Enterprise{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-enterprise",
-						CredentialsName: "totally-insecure",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -533,7 +683,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "enterprise does not exist in garm - create update",
-			object: &garmoperatorv1alpha1.Enterprise{
+			object: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
@@ -541,14 +691,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
@@ -562,8 +716,23 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
+			expectedObject: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-enterprise",
 					Namespace: "default",
@@ -571,14 +740,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
 					Conditions: []metav1.Condition{
 						{
@@ -586,6 +759,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							Reason:             string(conditions.PoolManagerFailureReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "Pool Manager is not running",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
@@ -612,12 +792,12 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				m.CreateEnterprise(enterprises.NewCreateEnterpriseParams().WithBody(
 					params.CreateEnterpriseParams{
 						Name:            "existing-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.CreateEnterpriseOK{
 					Payload: params.Enterprise{
 						Name:            "existing-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 					},
@@ -625,13 +805,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("9e0da3cb-130b-428d-aa8a-e314d955060e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
 					Payload: params.Enterprise{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "existing-enterprise",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -639,7 +819,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "secret ref not found condition",
-			object: &garmoperatorv1alpha1.Enterprise{
+			object: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
@@ -647,17 +827,21 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{},
+				Status: garmoperatorv1beta1.EnterpriseStatus{},
 			},
 			runtimeObjects: []runtime.Object{},
-			expectedObject: &garmoperatorv1alpha1.Enterprise{
+			expectedObject: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
@@ -665,14 +849,18 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
@@ -682,10 +870,17 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.UnknownReason),
+							Status:             metav1.ConditionUnknown,
+							Message:            conditions.CredentialsNotReconciledYetMsg,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
 							Type:               string(conditions.PoolManager),
 							Reason:             string(conditions.UnknownReason),
 							Status:             metav1.ConditionUnknown,
-							Message:            "GARM server not reconciled yet",
+							Message:            conditions.GarmServerNotReconciledYetMsg,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
@@ -705,7 +900,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			schemeBuilder := runtime.SchemeBuilder{
-				garmoperatorv1alpha1.AddToScheme,
+				garmoperatorv1beta1.AddToScheme,
 			}
 
 			err := schemeBuilder.AddToScheme(scheme.Scheme)
@@ -714,7 +909,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			}
 			runtimeObjects := []runtime.Object{tt.object}
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1beta1.Enterprise{}).Build()
 
 			// create a fake reconciler
 			reconciler := &EnterpriseReconciler{
@@ -722,7 +917,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				Recorder: record.NewFakeRecorder(3),
 			}
 
-			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Enterprise)
+			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Enterprise)
 
 			mockEnterprise := mock.NewMockEnterpriseClient(mockCtrl)
 			tt.expectGarmRequest(mockEnterprise.EXPECT())
@@ -760,11 +955,11 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 		runtimeObjects    []runtime.Object
 		expectGarmRequest func(m *mock.MockEnterpriseClientMockRecorder)
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Enterprise
+		expectedObject    *garmoperatorv1beta1.Enterprise
 	}{
 		{
 			name: "delete enterprise",
-			object: &garmoperatorv1alpha1.Enterprise{
+			object: &garmoperatorv1beta1.Enterprise{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "delete-enterprise",
 					Namespace: "default",
@@ -772,14 +967,18 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 						key.EnterpriseFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.EnterpriseSpec{
-					CredentialsName: "totally-insecure",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.EnterpriseSpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.EnterpriseStatus{
+				Status: garmoperatorv1beta1.EnterpriseStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
 				},
 			},
@@ -791,6 +990,21 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 					},
 					Data: map[string][]byte{
 						"webhookSecret": []byte("foobar"),
+					},
+				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
 					},
 				},
 			},
@@ -805,7 +1019,7 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			schemeBuilder := runtime.SchemeBuilder{
-				garmoperatorv1alpha1.AddToScheme,
+				garmoperatorv1beta1.AddToScheme,
 			}
 
 			err := schemeBuilder.AddToScheme(scheme.Scheme)
@@ -815,7 +1029,7 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 
 			runtimeObjects := []runtime.Object{tt.object}
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Enterprise{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1beta1.Enterprise{}).Build()
 
 			// create a fake reconciler
 			reconciler := &EnterpriseReconciler{
@@ -823,7 +1037,7 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 				Recorder: record.NewFakeRecorder(3),
 			}
 
-			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Enterprise)
+			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Enterprise)
 
 			mockEnterprise := mock.NewMockEnterpriseClient(mockCtrl)
 			tt.expectGarmRequest(mockEnterprise.EXPECT())

@@ -11,11 +11,11 @@ import (
 	"github.com/cloudbase/garm/params"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 )
 
-func GetRunnersByPoolID(ctx context.Context, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) ([]params.Instance, error) {
+func GetRunnersByPoolID(ctx context.Context, pool *garmoperatorv1beta1.Pool, instanceClient garmClient.InstanceClient) ([]params.Instance, error) {
 	log := log.FromContext(ctx)
 	log.Info("discover idle runners", "pool", pool.Name)
 

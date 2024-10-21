@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
@@ -58,7 +58,7 @@ const (
 func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	pool := &garmoperatorv1alpha1.Pool{}
+	pool := &garmoperatorv1beta1.Pool{}
 	if err := r.Get(ctx, req.NamespacedName, pool); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -85,7 +85,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	return r.reconcileNormal(ctx, poolClient, pool, instanceClient)
 }
 
-func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
 	gitHubScopeRef, err := r.fetchGitHubScopeCRD(ctx, pool)
 	if err != nil {
 		conditions.MarkFalse(pool, conditions.ScopeReference, conditions.FetchingScopeRefFailedReason, err.Error())
@@ -112,7 +112,7 @@ func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmCli
 	return r.reconcileCreate(ctx, poolClient, pool, gitHubScopeRef)
 }
 
-func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, gitHubScopeRef garmoperatorv1alpha1.GitHubScope) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool, gitHubScopeRef garmoperatorv1beta1.GitHubScope) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("Pool doesn't exist on garm side. Creating new pool in garm")
 
@@ -124,33 +124,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	}
 	conditions.MarkTrue(pool, conditions.ImageReference, conditions.FetchingImageRefSuccessReason, "Successfully fetched Image CR Ref")
 
-	// check for duplicate pools
-	duplicate, duplicateName, err := pool.CheckDuplicate(ctx, r.Client, image)
-	if err != nil {
-		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
-	}
-
-	if duplicate {
-		err := fmt.Errorf("pool with same image, flavor, provider and github scope already exists: %s", duplicateName)
-		return r.handleUpdateError(ctx, pool, err, conditions.DuplicatePoolReason)
-	}
-
-	// check if there is already a pool with the same spec on garm side
-	matchingGarmPool, err := poolUtil.GetGarmPoolBySpecs(ctx, garmClient, pool, image, gitHubScopeRef)
-	if err != nil {
-		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
-	}
-
-	if matchingGarmPool != nil {
-		log.Info("Found garm pool with matching specs, syncing IDs", "garmID", matchingGarmPool.ID)
-		event.Creating(r.Recorder, pool, fmt.Sprintf("found garm pool with matching specs, syncing IDs: %s", matchingGarmPool.ID))
-
-		pool.Status.ID = matchingGarmPool.ID
-		pool.Status.LongRunningIdleRunners = matchingGarmPool.MinIdleRunners
-		return r.handleSuccessfulUpdate(ctx, pool)
-	}
-
-	// create new pool in garm
+	// always create new pool in garm
 	garmPool, err := poolUtil.CreatePool(ctx, garmClient, pool, image, gitHubScopeRef)
 	if err != nil {
 		return r.handleUpdateError(ctx, pool, fmt.Errorf("failed creating pool %s: %s", pool.Name, err.Error()), conditions.ReconcileErrorReason)
@@ -164,7 +138,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	return r.handleSuccessfulUpdate(ctx, pool)
 }
 
-func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
 	log := log.FromContext(ctx).
 		WithName("reconcileUpdate")
 	log.Info("pool on garm side found", "id", pool.Status.ID, "name", pool.Name)
@@ -239,7 +213,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 	return r.handleSuccessfulUpdate(ctx, pool)
 }
 
-func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1alpha1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
+func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool, instanceClient garmClient.InstanceClient) (ctrl.Result, error) {
 	// pool does not exist in garm database yet as ID in Status is empty, so we can safely delete it
 	log := log.FromContext(ctx)
 	log.Info("Deleting Pool", "pool", pool.Name)
@@ -311,7 +285,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	return ctrl.Result{}, nil
 }
 
-func (r *PoolReconciler) updatePoolCRStatus(ctx context.Context, pool *garmoperatorv1alpha1.Pool) error {
+func (r *PoolReconciler) updatePoolCRStatus(ctx context.Context, pool *garmoperatorv1beta1.Pool) error {
 	log := log.FromContext(ctx)
 	if err := r.Status().Update(ctx, pool); err != nil {
 		log.Error(err, "unable to update Pool status")
@@ -320,7 +294,7 @@ func (r *PoolReconciler) updatePoolCRStatus(ctx context.Context, pool *garmopera
 	return nil
 }
 
-func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperatorv1alpha1.Pool, err error, conditionReason conditions.ConditionReason) (ctrl.Result, error) {
+func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperatorv1beta1.Pool, err error, conditionReason conditions.ConditionReason) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
 	log.Error(err, "error")
@@ -338,7 +312,7 @@ func (r *PoolReconciler) handleUpdateError(ctx context.Context, pool *garmoperat
 	return ctrl.Result{}, err
 }
 
-func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (ctrl.Result, error) {
+func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmoperatorv1beta1.Pool) (ctrl.Result, error) {
 	conditions.MarkTrue(pool, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
 
 	if err := r.updatePoolCRStatus(ctx, pool); err != nil {
@@ -348,7 +322,7 @@ func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmo
 	return ctrl.Result{}, nil
 }
 
-func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1alpha1.Pool) error {
+func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1beta1.Pool) error {
 	if !controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) {
 		controllerutil.AddFinalizer(pool, key.PoolFinalizerName)
 		return r.Update(ctx, pool)
@@ -356,7 +330,7 @@ func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperator
 	return nil
 }
 
-func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1alpha1.Pool, imageTag string, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {
+func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1beta1.Pool, imageTag string, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {
 	log := log.FromContext(ctx).
 		WithName("comparePoolSpecs")
 
@@ -407,13 +381,13 @@ func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperato
 	}
 
 	switch gitHubScopeRef.GetKind() {
-	case string(garmoperatorv1alpha1.EnterpriseScope):
+	case string(garmoperatorv1beta1.EnterpriseScope):
 		tmpGarmPool.EnterpriseID = gitHubScopeRef.GetID()
 		tmpGarmPool.EnterpriseName = gitHubScopeRef.GetName()
-	case string(garmoperatorv1alpha1.OrganizationScope):
+	case string(garmoperatorv1beta1.OrganizationScope):
 		tmpGarmPool.OrgID = gitHubScopeRef.GetID()
 		tmpGarmPool.OrgName = gitHubScopeRef.GetName()
-	case string(garmoperatorv1alpha1.RepositoryScope):
+	case string(garmoperatorv1beta1.RepositoryScope):
 		tmpGarmPool.RepoID = gitHubScopeRef.GetID()
 		tmpGarmPool.RepoName = gitHubScopeRef.GetName()
 	}
@@ -427,7 +401,7 @@ func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperato
 	return reflect.DeepEqual(tmpGarmPool, garmPool.Payload), idleInstances, nil
 }
 
-func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoperatorv1alpha1.Pool) (garmoperatorv1alpha1.GitHubScope, error) {
+func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoperatorv1beta1.Pool) (garmoperatorv1beta1.GitHubScope, error) {
 	gitHubScopeNamespacedName := types.NamespacedName{
 		Namespace: pool.Namespace,
 		Name:      pool.Spec.GitHubScopeRef.Name,
@@ -436,20 +410,20 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoper
 	var gitHubScope client.Object
 
 	switch pool.Spec.GitHubScopeRef.Kind {
-	case string(garmoperatorv1alpha1.EnterpriseScope):
-		gitHubScope = &garmoperatorv1alpha1.Enterprise{}
+	case string(garmoperatorv1beta1.EnterpriseScope):
+		gitHubScope = &garmoperatorv1beta1.Enterprise{}
 		if err := r.Get(ctx, gitHubScopeNamespacedName, gitHubScope); err != nil {
 			return nil, err
 		}
 
-	case string(garmoperatorv1alpha1.OrganizationScope):
-		gitHubScope = &garmoperatorv1alpha1.Organization{}
+	case string(garmoperatorv1beta1.OrganizationScope):
+		gitHubScope = &garmoperatorv1beta1.Organization{}
 		if err := r.Get(ctx, gitHubScopeNamespacedName, gitHubScope); err != nil {
 			return nil, err
 		}
 
-	case string(garmoperatorv1alpha1.RepositoryScope):
-		gitHubScope = &garmoperatorv1alpha1.Repository{}
+	case string(garmoperatorv1beta1.RepositoryScope):
+		gitHubScope = &garmoperatorv1beta1.Repository{}
 		if err := r.Get(ctx, gitHubScopeNamespacedName, gitHubScope); err != nil {
 			return nil, err
 		}
@@ -458,16 +432,16 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoper
 		return nil, fmt.Errorf("unsupported GitHubScopeRef kind: %s", pool.Spec.GitHubScopeRef.Kind)
 	}
 
-	return gitHubScope.(garmoperatorv1alpha1.GitHubScope), nil
+	return gitHubScope.(garmoperatorv1beta1.GitHubScope), nil
 }
 
 func (r *PoolReconciler) findPoolsForImage(ctx context.Context, obj client.Object) []reconcile.Request {
-	image, ok := obj.(*garmoperatorv1alpha1.Image)
+	image, ok := obj.(*garmoperatorv1beta1.Image)
 	if !ok {
 		return nil
 	}
 
-	var pools garmoperatorv1alpha1.PoolList
+	var pools garmoperatorv1beta1.PoolList
 	if err := r.List(ctx, &pools); err != nil {
 		return nil
 	}
@@ -490,8 +464,8 @@ func (r *PoolReconciler) findPoolsForImage(ctx context.Context, obj client.Objec
 // SetupWithManager sets up the controller with the Manager.
 func (r *PoolReconciler) SetupWithManager(mgr ctrl.Manager, options controller.Options) error {
 	// setup index for image
-	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &garmoperatorv1alpha1.Pool{}, imageField, func(rawObj client.Object) []string {
-		pool := rawObj.(*garmoperatorv1alpha1.Pool)
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &garmoperatorv1beta1.Pool{}, imageField, func(rawObj client.Object) []string {
+		pool := rawObj.(*garmoperatorv1beta1.Pool)
 		if pool.Spec.ImageName == "" {
 			return nil
 		}
@@ -501,9 +475,9 @@ func (r *PoolReconciler) SetupWithManager(mgr ctrl.Manager, options controller.O
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1alpha1.Pool{}).
+		For(&garmoperatorv1beta1.Pool{}).
 		Watches(
-			&garmoperatorv1alpha1.Image{},
+			&garmoperatorv1beta1.Image{},
 			handler.EnqueueRequestsFromMapFunc(r.findPoolsForImage),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).

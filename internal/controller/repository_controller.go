@@ -12,14 +12,19 @@ import (
 	"github.com/cloudbase/garm/params"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
@@ -43,7 +48,7 @@ type RepositoryReconciler struct {
 func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	repository := &garmoperatorv1alpha1.Repository{}
+	repository := &garmoperatorv1beta1.Repository{}
 	err := r.Get(ctx, req.NamespacedName, repository)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -69,7 +74,7 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return r.reconcileNormal(ctx, repositoryClient, repository)
 }
 
-func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository) (ctrl.Result, error) {
+func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
@@ -83,12 +88,27 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(repository, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkUnknown(repository, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+		conditions.MarkUnknown(repository, conditions.CredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
 		if err := r.Status().Update(ctx, repository); err != nil {
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, err
 	}
 	conditions.MarkTrue(repository, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+
+	credentials, err := r.getCredentialsRef(ctx, repository)
+	if err != nil {
+		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(repository, conditions.CredentialsReference, conditions.FetchingCredentialsRefFailedReason, err.Error())
+		if conditions.Get(repository, conditions.PoolManager) == nil {
+			conditions.MarkUnknown(repository, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+		}
+		if err := r.Status().Update(ctx, repository); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
+	}
+	conditions.MarkTrue(repository, conditions.CredentialsReference, conditions.FetchingCredentialsRefSuccessReason, "")
 
 	garmRepository, err := r.getExistingGarmRepo(ctx, client, repository)
 	if err != nil {
@@ -114,7 +134,11 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	}
 
 	// update repository anytime
-	garmRepository, err = r.updateRepository(ctx, client, garmRepository.ID, webhookSecret, repository.Spec.CredentialsName)
+	garmRepository, err = r.updateRepository(ctx, client, garmRepository.ID, params.UpdateEntityParams{
+		CredentialsName:  credentials.Name,
+		WebhookSecret:    webhookSecret,
+		PoolBalancerType: repository.Spec.PoolBalancerType,
+	})
 	if err != nil {
 		event.Error(r.Recorder, repository, err.Error())
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
@@ -143,7 +167,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
-func (r *RepositoryReconciler) createRepository(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository, webhookSecret string) (params.Repository, error) {
+func (r *RepositoryReconciler) createRepository(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository, webhookSecret string) (params.Repository, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
@@ -153,10 +177,11 @@ func (r *RepositoryReconciler) createRepository(ctx context.Context, client garm
 	retValue, err := client.CreateRepository(
 		repositories.NewCreateRepoParams().
 			WithBody(params.CreateRepoParams{
-				Name:            repository.Name,
-				CredentialsName: repository.Spec.CredentialsName,
-				Owner:           repository.Spec.Owner,
-				WebhookSecret:   webhookSecret, // gh hook secret
+				Name:             repository.Name,
+				CredentialsName:  repository.GetCredentialsName(),
+				Owner:            repository.Spec.Owner,
+				WebhookSecret:    webhookSecret, // gh hook secret
+				PoolBalancerType: repository.Spec.PoolBalancerType,
 			}))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateRepository error: %s", err))
@@ -171,7 +196,7 @@ func (r *RepositoryReconciler) createRepository(ctx context.Context, client garm
 	return retValue.Payload, nil
 }
 
-func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garmClient.RepositoryClient, statusID, webhookSecret, credentialsName string) (params.Repository, error) {
+func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garmClient.RepositoryClient, statusID string, updateParams params.UpdateEntityParams) (params.Repository, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update credentials and webhook secret in garm repository")
 
@@ -179,10 +204,7 @@ func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garm
 	retValue, err := client.UpdateRepository(
 		repositories.NewUpdateRepoParams().
 			WithRepoID(statusID).
-			WithBody(params.UpdateEntityParams{
-				CredentialsName: credentialsName,
-				WebhookSecret:   webhookSecret, // gh hook secret
-			}))
+			WithBody(updateParams))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.UpdateRepository error: %s", err))
 		return params.Repository{}, err
@@ -191,7 +213,7 @@ func (r *RepositoryReconciler) updateRepository(ctx context.Context, client garm
 	return retValue.Payload, nil
 }
 
-func (r *RepositoryReconciler) getExistingGarmRepo(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository) (params.Repository, error) {
+func (r *RepositoryReconciler) getExistingGarmRepo(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (params.Repository, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
@@ -212,7 +234,7 @@ func (r *RepositoryReconciler) getExistingGarmRepo(ctx context.Context, client g
 	return params.Repository{}, nil
 }
 
-func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1alpha1.Repository) (ctrl.Result, error) {
+func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
 
@@ -251,7 +273,19 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmC
 	return ctrl.Result{}, nil
 }
 
-func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1alpha1.Repository) error {
+func (r *RepositoryReconciler) getCredentialsRef(ctx context.Context, repository *garmoperatorv1beta1.Repository) (*garmoperatorv1beta1.GitHubCredential, error) {
+	creds := &garmoperatorv1beta1.GitHubCredential{}
+	err := r.Get(ctx, types.NamespacedName{
+		Namespace: repository.Namespace,
+		Name:      repository.Spec.CredentialsRef.Name,
+	}, creds)
+	if err != nil {
+		return creds, err
+	}
+	return creds, nil
+}
+
+func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1beta1.Repository) error {
 	if !controllerutil.ContainsFinalizer(pool, key.RepositoryFinalizerName) {
 		controllerutil.AddFinalizer(pool, key.RepositoryFinalizerName)
 		return r.Update(ctx, pool)
@@ -259,10 +293,41 @@ func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmop
 	return nil
 }
 
+func (r *RepositoryReconciler) findReposForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {
+	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredential)
+	if !ok {
+		return nil
+	}
+
+	var repos garmoperatorv1beta1.RepositoryList
+	if err := r.List(ctx, &repos); err != nil {
+		return nil
+	}
+
+	var requests []reconcile.Request
+	for _, repo := range repos.Items {
+		if repo.GetCredentialsName() == credentials.Name {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: repo.Namespace,
+					Name:      repo.Name,
+				},
+			})
+		}
+	}
+
+	return requests
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *RepositoryReconciler) SetupWithManager(mgr ctrl.Manager, options controller.Options) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1alpha1.Repository{}).
+		For(&garmoperatorv1beta1.Repository{}).
+		Watches(
+			&garmoperatorv1beta1.GitHubCredential{},
+			handler.EnqueueRequestsFromMapFunc(r.findReposForCredentials),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
 		WithOptions(options).
 		Complete(r)
 }

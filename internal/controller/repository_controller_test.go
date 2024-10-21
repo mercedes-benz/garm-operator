@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
@@ -35,11 +35,11 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 		runtimeObjects    []runtime.Object
 		expectGarmRequest func(m *mock.MockRepositoryClientMockRecorder)
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Repository
+		expectedObject    *garmoperatorv1beta1.Repository
 	}{
 		{
 			name: "repository exist - update",
-			object: &garmoperatorv1alpha1.Repository{
+			object: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
 					Namespace: "default",
@@ -47,15 +47,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
@@ -69,8 +73,23 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Repository{
+			expectedObject: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
 					Namespace: "default",
@@ -78,15 +97,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 					Conditions: []metav1.Condition{
 						{
@@ -95,6 +118,13 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -119,21 +149,21 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -141,7 +171,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "repository exist but spec has changed - update",
-			object: &garmoperatorv1alpha1.Repository{
+			object: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
 					Namespace: "default",
@@ -149,15 +179,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "has-changed",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "has-changed",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
@@ -171,8 +205,23 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("has-changed"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "has-changed",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Repository{
+			expectedObject: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
 					Namespace: "default",
@@ -180,15 +229,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "has-changed",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "has-changed",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 					Conditions: []metav1.Condition{
 						{
@@ -197,6 +250,13 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -221,7 +281,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}}, nil)
@@ -243,7 +303,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "repository exist but pool status has changed - update",
-			object: &garmoperatorv1alpha1.Repository{
+			object: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
 					Namespace: "default",
@@ -251,15 +311,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
@@ -273,8 +337,23 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Repository{
+			expectedObject: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
 					Namespace: "default",
@@ -282,15 +361,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 					Conditions: []metav1.Condition{
 						{
@@ -299,6 +382,13 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -323,21 +413,21 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						PoolManagerStatus: params.PoolManagerStatus{
 							IsRunning:     false,
@@ -349,15 +439,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "repository does not exist - create and update",
-			object: &garmoperatorv1alpha1.Repository{
+			object: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
 					Namespace: "default",
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
@@ -373,8 +467,23 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Repository{
+			expectedObject: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
 					Namespace: "default",
@@ -382,15 +491,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
 					Conditions: []metav1.Condition{
 						{
@@ -399,6 +512,13 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -423,14 +543,14 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}}, nil)
 				m.CreateRepository(repositories.NewCreateRepoParams().WithBody(
 					params.CreateRepoParams{
 						Name:            "new-repository",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						Owner:           "test-repo",
 					})).Return(&repositories.CreateRepoOK{
@@ -438,21 +558,21 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						Name:            "new-repository",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("9e0da3cb-130b-428d-aa8a-e314d955060e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
 					Payload: params.Repository{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "new-repository",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -460,15 +580,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "repository already exist in garm - update",
-			object: &garmoperatorv1alpha1.Repository{
+			object: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
 					Namespace: "default",
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
@@ -484,8 +608,23 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Repository{
+			expectedObject: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
 					Namespace: "default",
@@ -493,15 +632,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
 					Conditions: []metav1.Condition{
 						{
@@ -510,6 +653,13 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -540,14 +690,14 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-12345").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-repository",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -555,7 +705,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "repository does not exist in garm - create and update",
-			object: &garmoperatorv1alpha1.Repository{
+			object: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
 					Namespace: "default",
@@ -563,15 +713,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 				},
 			},
@@ -585,8 +739,23 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						"webhookSecret": []byte("foobar"),
 					},
 				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
+					},
+				},
 			},
-			expectedObject: &garmoperatorv1alpha1.Repository{
+			expectedObject: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-repository",
 					Namespace: "default",
@@ -594,15 +763,19 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					Owner:           "test-repo",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					Owner: "test-repo",
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "9e0da3cb-130b-428d-aa8a-e314d955060e",
 					Conditions: []metav1.Condition{
 						{
@@ -611,6 +784,13 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 							Status:             metav1.ConditionFalse,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 							Message:            "Pool Manager is not running",
+						},
+						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
@@ -636,7 +816,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				m.CreateRepository(repositories.NewCreateRepoParams().WithBody(
 					params.CreateRepoParams{
 						Name:            "existing-repository",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						Owner:           "test-repo",
 					})).Return(&repositories.CreateRepoOK{
@@ -644,21 +824,21 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						Name:            "existing-repository",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("9e0da3cb-130b-428d-aa8a-e314d955060e").
 					WithBody(params.UpdateEntityParams{
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
 					Payload: params.Repository{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "existing-repository",
 						Owner:           "test-repo",
-						CredentialsName: "foobar",
+						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					},
 				}, nil)
@@ -666,7 +846,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 		},
 		{
 			name: "secret ref not found condition",
-			object: &garmoperatorv1alpha1.Repository{
+			object: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
 					Namespace: "default",
@@ -674,17 +854,21 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{},
+				Status: garmoperatorv1beta1.RepositoryStatus{},
 			},
 			runtimeObjects: []runtime.Object{},
-			expectedObject: &garmoperatorv1alpha1.Repository{
+			expectedObject: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
 					Namespace: "default",
@@ -692,14 +876,18 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "foobar",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
@@ -709,10 +897,17 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
+							Type:               string(conditions.CredentialsReference),
+							Reason:             string(conditions.UnknownReason),
+							Status:             metav1.ConditionUnknown,
+							Message:            conditions.CredentialsNotReconciledYetMsg,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
 							Type:               string(conditions.PoolManager),
 							Reason:             string(conditions.UnknownReason),
 							Status:             metav1.ConditionUnknown,
-							Message:            "GARM server not reconciled yet",
+							Message:            conditions.GarmServerNotReconciledYetMsg,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
@@ -732,7 +927,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			schemeBuilder := runtime.SchemeBuilder{
-				garmoperatorv1alpha1.AddToScheme,
+				garmoperatorv1beta1.AddToScheme,
 			}
 
 			err := schemeBuilder.AddToScheme(scheme.Scheme)
@@ -741,7 +936,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			}
 			runtimeObjects := []runtime.Object{tt.object}
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Repository{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1beta1.Repository{}).Build()
 
 			// create a fake reconciler
 			reconciler := &RepositoryReconciler{
@@ -749,7 +944,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				Recorder: record.NewFakeRecorder(3),
 			}
 
-			repository := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Repository)
+			repository := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Repository)
 
 			mockRepository := mock.NewMockRepositoryClient(mockCtrl)
 			tt.expectGarmRequest(mockRepository.EXPECT())
@@ -787,11 +982,11 @@ func TestRepositoryReconciler_reconcileDelete(t *testing.T) {
 		runtimeObjects    []runtime.Object
 		expectGarmRequest func(m *mock.MockRepositoryClientMockRecorder)
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Repository
+		expectedObject    *garmoperatorv1beta1.Repository
 	}{
 		{
 			name: "delete repository",
-			object: &garmoperatorv1alpha1.Repository{
+			object: &garmoperatorv1beta1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "delete-repository",
 					Namespace: "default",
@@ -799,14 +994,18 @@ func TestRepositoryReconciler_reconcileDelete(t *testing.T) {
 						key.RepositoryFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RepositorySpec{
-					CredentialsName: "totally-insecure",
-					WebhookSecretRef: garmoperatorv1alpha1.SecretRef{
+				Spec: garmoperatorv1beta1.RepositorySpec{
+					CredentialsRef: corev1.TypedLocalObjectReference{
+						APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+						Kind:     "GitHubCredential",
+						Name:     "github-creds",
+					},
+					WebhookSecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "my-webhook-secret",
 						Key:  "webhookSecret",
 					},
 				},
-				Status: garmoperatorv1alpha1.RepositoryStatus{
+				Status: garmoperatorv1beta1.RepositoryStatus{
 					ID: "e1dbf9a6-a9f6-4594-a5ac-12345",
 				},
 			},
@@ -818,6 +1017,21 @@ func TestRepositoryReconciler_reconcileDelete(t *testing.T) {
 					},
 					Data: map[string][]byte{
 						"webhookSecret": []byte("foobar"),
+					},
+				},
+				&garmoperatorv1beta1.GitHubCredential{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "github-creds",
+						Namespace: "default",
+					},
+					Spec: garmoperatorv1beta1.GitHubCredentialSpec{
+						Description: "github-creds",
+						EndpointRef: corev1.TypedLocalObjectReference{},
+						AuthType:    "pat",
+						SecretRef: garmoperatorv1beta1.SecretRef{
+							Name: "github-secret",
+							Key:  "token",
+						},
 					},
 				},
 			},
@@ -832,7 +1046,7 @@ func TestRepositoryReconciler_reconcileDelete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			schemeBuilder := runtime.SchemeBuilder{
-				garmoperatorv1alpha1.AddToScheme,
+				garmoperatorv1beta1.AddToScheme,
 			}
 
 			err := schemeBuilder.AddToScheme(scheme.Scheme)
@@ -841,7 +1055,7 @@ func TestRepositoryReconciler_reconcileDelete(t *testing.T) {
 			}
 			runtimeObjects := []runtime.Object{tt.object}
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Repository{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1beta1.Repository{}).Build()
 
 			// create a fake reconciler
 			reconciler := &RepositoryReconciler{
@@ -849,7 +1063,7 @@ func TestRepositoryReconciler_reconcileDelete(t *testing.T) {
 				Recorder: record.NewFakeRecorder(3),
 			}
 
-			repository := tt.object.DeepCopyObject().(*garmoperatorv1alpha1.Repository)
+			repository := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Repository)
 
 			mockRepository := mock.NewMockRepositoryClient(mockCtrl)
 			tt.expectGarmRequest(mockRepository.EXPECT())

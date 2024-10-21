@@ -12,14 +12,19 @@ import (
 	"github.com/cloudbase/garm/params"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
@@ -43,7 +48,7 @@ type OrganizationReconciler struct {
 func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	organization := &garmoperatorv1alpha1.Organization{}
+	organization := &garmoperatorv1beta1.Organization{}
 	err := r.Get(ctx, req.NamespacedName, organization)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -69,7 +74,7 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	return r.reconcileNormal(ctx, organizationClient, organization)
 }
 
-func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (ctrl.Result, error) {
+func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1beta1.Organization) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("organization", organization.Name)
 
@@ -83,12 +88,27 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(organization, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkUnknown(organization, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+		conditions.MarkUnknown(organization, conditions.CredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
 		if err := r.Status().Update(ctx, organization); err != nil {
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, err
 	}
 	conditions.MarkTrue(organization, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+
+	credentials, err := r.getCredentialsRef(ctx, organization)
+	if err != nil {
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(organization, conditions.CredentialsReference, conditions.FetchingCredentialsRefFailedReason, err.Error())
+		if conditions.Get(organization, conditions.PoolManager) == nil {
+			conditions.MarkUnknown(organization, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+		}
+		if err := r.Status().Update(ctx, organization); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
+	}
+	conditions.MarkTrue(organization, conditions.CredentialsReference, conditions.FetchingCredentialsRefSuccessReason, "")
 
 	garmOrganization, err := r.getExistingGarmOrg(ctx, client, organization)
 	if err != nil {
@@ -114,7 +134,11 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	}
 
 	// update organization anytime
-	garmOrganization, err = r.updateOrganization(ctx, client, garmOrganization.ID, webhookSecret, organization.Spec.CredentialsName)
+	garmOrganization, err = r.updateOrganization(ctx, client, garmOrganization.ID, params.UpdateEntityParams{
+		CredentialsName:  credentials.Name,
+		WebhookSecret:    webhookSecret,
+		PoolBalancerType: organization.Spec.PoolBalancerType,
+	})
 	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
@@ -143,7 +167,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	return ctrl.Result{}, nil
 }
 
-func (r *OrganizationReconciler) createOrganization(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization, webhookSecret string) (params.Organization, error) {
+func (r *OrganizationReconciler) createOrganization(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1beta1.Organization, webhookSecret string) (params.Organization, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("organization", organization.Name)
 
@@ -153,9 +177,10 @@ func (r *OrganizationReconciler) createOrganization(ctx context.Context, client 
 	retValue, err := client.CreateOrganization(
 		organizations.NewCreateOrgParams().
 			WithBody(params.CreateOrgParams{
-				Name:            organization.Name,
-				CredentialsName: organization.Spec.CredentialsName,
-				WebhookSecret:   webhookSecret, // gh hook secret
+				Name:             organization.Name,
+				CredentialsName:  organization.GetCredentialsName(),
+				WebhookSecret:    webhookSecret, // gh hook secret
+				PoolBalancerType: organization.Spec.PoolBalancerType,
 			}))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateOrganization error: %s", err))
@@ -170,7 +195,7 @@ func (r *OrganizationReconciler) createOrganization(ctx context.Context, client 
 	return retValue.Payload, nil
 }
 
-func (r *OrganizationReconciler) updateOrganization(ctx context.Context, client garmClient.OrganizationClient, statusID, webhookSecret, credentialsName string) (params.Organization, error) {
+func (r *OrganizationReconciler) updateOrganization(ctx context.Context, client garmClient.OrganizationClient, statusID string, updateParams params.UpdateEntityParams) (params.Organization, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update credentials and webhook secret in garm organization")
 
@@ -178,10 +203,7 @@ func (r *OrganizationReconciler) updateOrganization(ctx context.Context, client 
 	retValue, err := client.UpdateOrganization(
 		organizations.NewUpdateOrgParams().
 			WithOrgID(statusID).
-			WithBody(params.UpdateEntityParams{
-				CredentialsName: credentialsName,
-				WebhookSecret:   webhookSecret, // gh hook secret
-			}))
+			WithBody(updateParams))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.UpdateOrganization error: %s", err))
 		return params.Organization{}, err
@@ -190,7 +212,7 @@ func (r *OrganizationReconciler) updateOrganization(ctx context.Context, client 
 	return retValue.Payload, nil
 }
 
-func (r *OrganizationReconciler) getExistingGarmOrg(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (params.Organization, error) {
+func (r *OrganizationReconciler) getExistingGarmOrg(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1beta1.Organization) (params.Organization, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("organization", organization.Name)
 
@@ -211,7 +233,7 @@ func (r *OrganizationReconciler) getExistingGarmOrg(ctx context.Context, client 
 	return params.Organization{}, nil
 }
 
-func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1alpha1.Organization) (ctrl.Result, error) {
+func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1beta1.Organization) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("organization", organization.Name)
 
@@ -250,18 +272,61 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client gar
 	return ctrl.Result{}, nil
 }
 
-func (r *OrganizationReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1alpha1.Organization) error {
-	if !controllerutil.ContainsFinalizer(pool, key.OrganizationFinalizerName) {
-		controllerutil.AddFinalizer(pool, key.OrganizationFinalizerName)
-		return r.Update(ctx, pool)
+func (r *OrganizationReconciler) getCredentialsRef(ctx context.Context, org *garmoperatorv1beta1.Organization) (*garmoperatorv1beta1.GitHubCredential, error) {
+	creds := &garmoperatorv1beta1.GitHubCredential{}
+	err := r.Get(ctx, types.NamespacedName{
+		Namespace: org.Namespace,
+		Name:      org.Spec.CredentialsRef.Name,
+	}, creds)
+	if err != nil {
+		return creds, err
+	}
+	return creds, nil
+}
+
+func (r *OrganizationReconciler) ensureFinalizer(ctx context.Context, org *garmoperatorv1beta1.Organization) error {
+	if !controllerutil.ContainsFinalizer(org, key.OrganizationFinalizerName) {
+		controllerutil.AddFinalizer(org, key.OrganizationFinalizerName)
+		return r.Update(ctx, org)
 	}
 	return nil
+}
+
+func (r *OrganizationReconciler) findOrgsForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {
+	credentials, ok := obj.(*garmoperatorv1beta1.GitHubCredential)
+	if !ok {
+		return nil
+	}
+
+	var orgs garmoperatorv1beta1.OrganizationList
+	if err := r.List(ctx, &orgs); err != nil {
+		return nil
+	}
+
+	var requests []reconcile.Request
+	for _, org := range orgs.Items {
+		if org.GetCredentialsName() == credentials.Name {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: org.Namespace,
+					Name:      org.Name,
+				},
+			})
+		}
+	}
+
+	return requests
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OrganizationReconciler) SetupWithManager(mgr ctrl.Manager, options controller.Options) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&garmoperatorv1alpha1.Organization{}).
+		For(&garmoperatorv1beta1.Organization{}).
+		Watches(
+			&garmoperatorv1beta1.GitHubCredential{},
+			handler.EnqueueRequestsFromMapFunc(r.findOrgsForCredentials),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
 		WithOptions(options).
 		Complete(r)
 }

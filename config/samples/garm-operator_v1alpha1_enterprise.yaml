@@ -10,7 +10,10 @@ metadata:
   name: enterprise-sample
   namespace: garm-operator-system
 spec:
-  credentialsName: GitHub-Actions
+  credentialsRef:
+    apiGroup: garm-operator.mercedes-benz.com
+    kind: GitHubCredentials
+    name: github-pat
   webhookSecretRef:
     key: "webhookSecret"
     name: "enterprise-webhook-secret"

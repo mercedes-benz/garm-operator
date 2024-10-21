@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
-	garmoperatorv1alpha1 "github.com/mercedes-benz/garm-operator/api/v1alpha1"
+	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
@@ -40,7 +40,7 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 		runtimeObjects    []runtime.Object
 		expectGarmRequest func(m *mock.MockInstanceClientMockRecorder)
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Runner
+		expectedObject    *garmoperatorv1beta1.Runner
 	}{
 		{
 			name: "Create Runner CR",
@@ -69,7 +69,7 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 				m.ListInstances(instances.NewListInstancesParams()).Return(&instances.ListInstancesOK{Payload: response}, nil)
 			},
 			wantErr: false,
-			expectedObject: &garmoperatorv1alpha1.Runner{
+			expectedObject: &garmoperatorv1beta1.Runner{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "road-runner-k8s-fy5snjcv5dzn",
 					Namespace: "runner",
@@ -77,8 +77,8 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 						key.RunnerFinalizerName,
 					},
 				},
-				Spec: garmoperatorv1alpha1.RunnerSpec{},
-				Status: garmoperatorv1alpha1.RunnerStatus{
+				Spec: garmoperatorv1beta1.RunnerSpec{},
+				Status: garmoperatorv1beta1.RunnerStatus{
 					Name:           "road-runner-k8s-FY5snJcv5dzn",
 					AgentID:        120,
 					ID:             "8215f6c6-486e-4893-84df-3231b185a148",
@@ -96,7 +96,7 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			schemeBuilder := runtime.SchemeBuilder{
-				garmoperatorv1alpha1.AddToScheme,
+				garmoperatorv1beta1.AddToScheme,
 			}
 
 			err := schemeBuilder.AddToScheme(scheme.Scheme)
@@ -105,7 +105,7 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 			}
 			var runtimeObjects []runtime.Object
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Runner{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1beta1.Runner{}).Build()
 
 			// create a fake reconciler
 			reconciler := &RunnerReconciler{
@@ -122,7 +122,7 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 				return
 			}
 
-			runner := &garmoperatorv1alpha1.Runner{}
+			runner := &garmoperatorv1beta1.Runner{}
 			err = client.Get(context.Background(), types.NamespacedName{Namespace: tt.req.Namespace, Name: strings.ToLower(tt.req.Name)}, runner)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RunnerReconciler.reconcile() error = %v, wantErr %v", err, tt.wantErr)
@@ -153,7 +153,7 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 		runtimeObjects    []runtime.Object
 		expectGarmRequest func(m *mock.MockInstanceClientMockRecorder)
 		wantErr           bool
-		expectedObject    *garmoperatorv1alpha1.Runner
+		expectedObject    *garmoperatorv1beta1.Runner
 	}{
 		{
 			name: "Delete Runner in Garm DB, when Runner CR is marked with deletion timestamp",
@@ -164,10 +164,10 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 				},
 			},
 			runtimeObjects: []runtime.Object{
-				&garmoperatorv1alpha1.Runner{
+				&garmoperatorv1beta1.Runner{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Runner",
-						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+						APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "road-runner-k8s-fy5snjcv5dzn",
@@ -177,8 +177,8 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 						},
 						DeletionTimestamp: &now,
 					},
-					Spec: garmoperatorv1alpha1.RunnerSpec{},
-					Status: garmoperatorv1alpha1.RunnerStatus{
+					Spec: garmoperatorv1beta1.RunnerSpec{},
+					Status: garmoperatorv1beta1.RunnerStatus{
 						Name:           "road-runner-k8s-FY5snJcv5dzn",
 						AgentID:        120,
 						ID:             "8215f6c6-486e-4893-84df-3231b185a148",
@@ -211,7 +211,7 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 				m.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName("road-runner-k8s-FY5snJcv5dzn")).Return(nil)
 			},
 			wantErr: false,
-			expectedObject: &garmoperatorv1alpha1.Runner{
+			expectedObject: &garmoperatorv1beta1.Runner{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "road-runner-k8s-fy5snjcv5dzn",
 					Namespace: "runner",
@@ -220,8 +220,8 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 					},
 					DeletionTimestamp: &now,
 				},
-				Spec: garmoperatorv1alpha1.RunnerSpec{},
-				Status: garmoperatorv1alpha1.RunnerStatus{
+				Spec: garmoperatorv1beta1.RunnerSpec{},
+				Status: garmoperatorv1beta1.RunnerStatus{
 					Name:           "road-runner-k8s-FY5snJcv5dzn",
 					AgentID:        120,
 					ID:             "8215f6c6-486e-4893-84df-3231b185a148",
@@ -239,7 +239,7 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			schemeBuilder := runtime.SchemeBuilder{
-				garmoperatorv1alpha1.AddToScheme,
+				garmoperatorv1beta1.AddToScheme,
 			}
 
 			err := schemeBuilder.AddToScheme(scheme.Scheme)
@@ -248,7 +248,7 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 			}
 			var runtimeObjects []runtime.Object
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Runner{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1beta1.Runner{}).Build()
 
 			// create a fake reconciler
 			reconciler := &RunnerReconciler{
@@ -265,7 +265,7 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 				return
 			}
 
-			runner := &garmoperatorv1alpha1.Runner{}
+			runner := &garmoperatorv1beta1.Runner{}
 			err = client.Get(context.Background(), types.NamespacedName{Namespace: tt.req.Namespace, Name: strings.ToLower(tt.req.Name)}, runner)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RunnerReconciler.reconcile() error = %v, wantErr %v", err, tt.wantErr)
@@ -298,10 +298,10 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 				},
 			},
 			runtimeObjects: []runtime.Object{
-				&garmoperatorv1alpha1.Runner{
+				&garmoperatorv1beta1.Runner{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Runner",
-						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+						APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "road-runner-k8s-fy5snjcv5dzn",
@@ -310,8 +310,8 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 							key.RunnerFinalizerName,
 						},
 					},
-					Spec: garmoperatorv1alpha1.RunnerSpec{},
-					Status: garmoperatorv1alpha1.RunnerStatus{
+					Spec: garmoperatorv1beta1.RunnerSpec{},
+					Status: garmoperatorv1beta1.RunnerStatus{
 						Name:           "road-runner-k8s-FY5snJcv5dzn",
 						AgentID:        120,
 						ID:             "8215f6c6-486e-4893-84df-3231b185a148",
@@ -323,10 +323,10 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						InstanceStatus: params.RunnerIdle,
 					},
 				},
-				&garmoperatorv1alpha1.Runner{
+				&garmoperatorv1beta1.Runner{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Runner",
-						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+						APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "road-runner-k8s-n6kq2mt3k4qr",
@@ -335,8 +335,8 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 							key.RunnerFinalizerName,
 						},
 					},
-					Spec: garmoperatorv1alpha1.RunnerSpec{},
-					Status: garmoperatorv1alpha1.RunnerStatus{
+					Spec: garmoperatorv1beta1.RunnerSpec{},
+					Status: garmoperatorv1beta1.RunnerStatus{
 						Name:           "road-runner-k8s-n6KQ2Mt3k4qr",
 						AgentID:        130,
 						ID:             "13d31cad-588b-4ea8-8015-052a76ad3dd3",
@@ -348,19 +348,19 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						InstanceStatus: params.RunnerIdle,
 					},
 				},
-				&garmoperatorv1alpha1.Pool{
+				&garmoperatorv1beta1.Pool{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "Pool",
-						APIVersion: garmoperatorv1alpha1.GroupVersion.Group + "/" + garmoperatorv1alpha1.GroupVersion.Version,
+						APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "my-enterprise-pool",
 						Namespace: "test-namespace",
 					},
-					Spec: garmoperatorv1alpha1.PoolSpec{
+					Spec: garmoperatorv1beta1.PoolSpec{
 						GitHubScopeRef: corev1.TypedLocalObjectReference{
-							APIGroup: &garmoperatorv1alpha1.GroupVersion.Group,
-							Kind:     string(garmoperatorv1alpha1.EnterpriseScope),
+							APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+							Kind:     string(garmoperatorv1beta1.EnterpriseScope),
 							Name:     "my-enterprise",
 						},
 						ProviderName:           "kubernetes_external",
@@ -376,7 +376,7 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						ExtraSpecs:             "",
 						GitHubRunnerGroup:      "",
 					},
-					Status: garmoperatorv1alpha1.PoolStatus{
+					Status: garmoperatorv1beta1.PoolStatus{
 						ID: "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
 					},
 				},
@@ -400,7 +400,7 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 			wantErr: false,
 			expectedEvents: []event.GenericEvent{
 				{
-					Object: &garmoperatorv1alpha1.Runner{
+					Object: &garmoperatorv1beta1.Runner{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:      "road-runner-k8s-fy5snjcv5dzn",
 							Namespace: "test-namespace",
@@ -414,7 +414,7 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			schemeBuilder := runtime.SchemeBuilder{
-				garmoperatorv1alpha1.AddToScheme,
+				garmoperatorv1beta1.AddToScheme,
 			}
 
 			err := schemeBuilder.AddToScheme(scheme.Scheme)
@@ -423,7 +423,7 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 			}
 			var runtimeObjects []runtime.Object
 			runtimeObjects = append(runtimeObjects, tt.runtimeObjects...)
-			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1alpha1.Runner{}).Build()
+			client := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(runtimeObjects...).WithStatusSubresource(&garmoperatorv1beta1.Runner{}).Build()
 
 			// create a fake reconciler
 			reconciler := &RunnerReconciler{

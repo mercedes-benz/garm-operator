@@ -237,6 +237,234 @@ spec:
             type: object
         type: object
     served: true
+    storage: false
+    subresources:
+      scale:
+        labelSelectorPath: .status.selector
+        specReplicasPath: .spec.minIdleRunners
+        statusReplicasPath: .status.longRunningIdleRunners
+      status: {}
+  - additionalPrinterColumns:
+    - jsonPath: .status.id
+      name: ID
+      type: string
+    - jsonPath: .spec.minIdleRunners
+      name: MinIdleRunners
+      type: string
+    - jsonPath: .spec.maxRunners
+      name: MaxRunners
+      type: string
+    - jsonPath: .spec.imageName
+      name: ImageName
+      priority: 1
+      type: string
+    - jsonPath: .spec.flavor
+      name: Flavor
+      priority: 1
+      type: string
+    - jsonPath: .spec.providerName
+      name: Provider
+      priority: 1
+      type: string
+    - jsonPath: .spec.githubScopeRef.kind
+      name: ScopeType
+      priority: 1
+      type: string
+    - jsonPath: .spec.githubScopeRef.name
+      name: ScopeName
+      priority: 1
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
+      name: Error
+      priority: 1
+      type: string
+    - jsonPath: .spec.enabled
+      name: Enabled
+      priority: 1
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: Pool is the Schema for the pools API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              enabled:
+                type: boolean
+              extraSpecs:
+                type: string
+              flavor:
+                type: string
+              githubRunnerGroup:
+                type: string
+              githubScopeRef:
+                description: Defines in which Scope Runners a registered. Has a reference
+                  to either an Enterprise, Org or Repo CRD
+                properties:
+                  apiGroup:
+                    description: |-
+                      APIGroup is the group for the resource being referenced.
+                      If APIGroup is not specified, the specified Kind must be in the core API group.
+                      For any other third-party types, APIGroup is required.
+                    type: string
+                  kind:
+                    description: Kind is the type of resource being referenced
+                    type: string
+                  name:
+                    description: Name is the name of resource being referenced
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+                x-kubernetes-map-type: atomic
+              imageName:
+                description: The name of the image resource, this image resource must
+                  exists in the same namespace as the pool
+                type: string
+              maxRunners:
+                type: integer
+              minIdleRunners:
+                default: 0
+                type: integer
+              osArch:
+                type: string
+              osType:
+                type: string
+              providerName:
+                type: string
+              runnerBootstrapTimeout:
+                type: integer
+              runnerPrefix:
+                type: string
+              tags:
+                items:
+                  type: string
+                type: array
+            required:
+            - enabled
+            - flavor
+            - githubScopeRef
+            - imageName
+            - maxRunners
+            - minIdleRunners
+            - osArch
+            - osType
+            - providerName
+            - runnerBootstrapTimeout
+            - tags
+            type: object
+            x-kubernetes-validations:
+            - message: minIdleRunners must be less than or equal to maxRunners
+              rule: self.minIdleRunners <= self.maxRunners
+          status:
+            description: PoolStatus defines the observed state of Pool
+            properties:
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource.\n---\nThis struct is intended for
+                    direct use as an array at the field path .status.conditions.  For
+                    example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
+                    observations of a foo's current state.\n\t    // Known .status.conditions.type
+                    are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
+                    +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
+                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
+                    \   // other fields\n\t}"
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        ---
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+                        useful (see .node.status.conditions), the ability to deconflict is important.
+                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              id:
+                type: string
+              longRunningIdleRunners:
+                type: integer
+              selector:
+                type: string
+            required:
+            - id
+            - longRunningIdleRunners
+            - selector
+            type: object
+        type: object
+    served: true
     storage: true
     subresources:
       scale:
