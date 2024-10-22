@@ -31,6 +31,7 @@ type GitHubEndpointStatus struct {
 //+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of GitHubEndpoint"
 
+// +kubebuilder:validation:XValidation:rule="self.metadata.name != 'github.com'",message="github.com is not allowed as name as GARM ships with a default github.com configuration."
 // GitHubEndpoint is the Schema for the githubendpoints API
 type GitHubEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`

@@ -146,6 +146,10 @@ spec:
                 type: array
             type: object
         type: object
+        x-kubernetes-validations:
+        - message: github.com is not allowed as name as GARM ships with a default
+            github.com configuration.
+          rule: self.metadata.name != 'github.com'
     served: true
     storage: true
     subresources:
