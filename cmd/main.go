@@ -27,6 +27,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/flags"
+	"github.com/mercedes-benz/garm-operator/pkg/version"
 )
 
 var (
@@ -127,6 +128,20 @@ func run() error {
 		Email:    config.Config.Garm.Email,
 	}); err != nil {
 		return fmt.Errorf("unable to setup garm: %w", err)
+	}
+
+	// create a controller client to get controller info
+	// for the version check
+	controllerClient := client.NewControllerClient()
+	controllerInfo, err := controllerClient.GetControllerInfo()
+	if err != nil {
+		return fmt.Errorf("unable to get controller info: %w", err)
+	}
+
+	// if the version of the controller is not compatible with the Garm version
+	// return an error and stop the operator
+	if !version.EnsureMinimalVersion(controllerInfo.Payload.Version) {
+		return fmt.Errorf("garm-operator is not compatible with Garm version %s. Minimal required version is %s", controllerInfo.Payload.Version, version.MinVersion)
 	}
 
 	if err = (&garmcontroller.EnterpriseReconciler{
@@ -273,5 +288,6 @@ func run() error {
 	if err := mgr.Start(ctx); err != nil {
 		return fmt.Errorf("unable to start manager: %w", err)
 	}
+
 	return nil
 }
