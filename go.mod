@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 module github.com/mercedes-benz/garm-operator
 
-go 1.22.5
+go 1.23.2
 
 require (
 	github.com/cloudbase/garm v0.1.5
