@@ -143,11 +143,21 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 		return ctrl.Result{}, err
 	}
 
+	// get detailed credentials, as update or list methods on garm client do not join repo, org and enterprise fields
+	res, err := client.GetCredentials(garmcredentials.NewGetCredentialsParams().WithID(int64(garmGitHubCreds.ID)))
+	garmGitHubCreds = res.Payload
+
 	// set and update credentials status
 	credentials.Status.ID = int64(garmGitHubCreds.ID)
 	credentials.Status.BaseURL = garmGitHubCreds.BaseURL
 	credentials.Status.APIBaseURL = garmGitHubCreds.APIBaseURL
 	credentials.Status.UploadBaseURL = garmGitHubCreds.UploadBaseURL
+
+	repos, orgs, enterprises := getRepoOrgEnterpriseNames(garmGitHubCreds)
+	credentials.Status.Repositories = repos
+	credentials.Status.Organizations = orgs
+	credentials.Status.Enterprises = enterprises
+
 	conditions.MarkTrue(credentials, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
 	if err := r.Status().Update(ctx, credentials); err != nil {
 		return ctrl.Result{}, err
@@ -325,6 +335,20 @@ func (r *GitHubCredentialReconciler) findCredentialsForSecret(ctx context.Contex
 	}
 
 	return requests
+}
+
+func getRepoOrgEnterpriseNames(creds params.GithubCredentials) ([]string, []string, []string) {
+	var repos, orgs, enterprises []string
+	for _, repo := range creds.Repositories {
+		repos = append(repos, repo.Name)
+	}
+	for _, org := range creds.Organizations {
+		orgs = append(orgs, org.Name)
+	}
+	for _, ent := range creds.Enterprises {
+		enterprises = append(enterprises, ent.Name)
+	}
+	return repos, orgs, enterprises
 }
 
 // SetupWithManager sets up the controller with the Manager.
