@@ -145,6 +145,14 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 
 	// get detailed credentials, as update or list methods on garm client do not join repo, org and enterprise fields
 	res, err := client.GetCredentials(garmcredentials.NewGetCredentialsParams().WithID(int64(garmGitHubCreds.ID)))
+	if err != nil {
+		event.Error(r.Recorder, credentials, err.Error())
+		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
+		if err := r.Status().Update(ctx, credentials); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
+	}
 	garmGitHubCreds = res.Payload
 
 	// set and update credentials status
