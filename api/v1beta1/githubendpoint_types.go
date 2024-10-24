@@ -8,13 +8,11 @@ import (
 
 // GitHubEndpointSpec defines the desired state of GitHubEndpoint
 type GitHubEndpointSpec struct {
-	Description   string `json:"description,omitempty"`
-	APIBaseURL    string `json:"apiBaseUrl,omitempty"`
-	UploadBaseURL string `json:"uploadBaseUrl,omitempty"`
-	BaseURL       string `json:"baseUrl,omitempty"`
-	//nolint:godox
-	// TODO: This should be a secret reference
-	CACertBundle []byte `json:"caCertBundle,omitempty"`
+	Description           string    `json:"description,omitempty"`
+	APIBaseURL            string    `json:"apiBaseUrl,omitempty"`
+	UploadBaseURL         string    `json:"uploadBaseUrl,omitempty"`
+	BaseURL               string    `json:"baseUrl,omitempty"`
+	CACertBundleSecretRef SecretRef `json:"caCertBundle,omitempty"`
 }
 
 // GitHubEndpointStatus defines the observed state of GitHubEndpoint
