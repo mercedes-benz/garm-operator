@@ -63,10 +63,19 @@ spec:
                 type: string
               baseUrl:
                 type: string
-              caCertBundle:
-                description: 'TODO: This should be a secret reference'
-                format: byte
-                type: string
+              caCertBundleSecretRef:
+                properties:
+                  key:
+                    description: Key is the key in the secret's data map for this
+                      value
+                    type: string
+                  name:
+                    description: Name of the kubernetes secret to use
+                    type: string
+                required:
+                - key
+                - name
+                type: object
               description:
                 type: string
               uploadBaseUrl:

@@ -9,13 +9,19 @@ import (
 
 	"github.com/cloudbase/garm/client/endpoints"
 	"github.com/cloudbase/garm/params"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/annotations"
@@ -23,6 +29,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
+	"github.com/mercedes-benz/garm-operator/pkg/secret"
 	"github.com/mercedes-benz/garm-operator/pkg/util"
 )
 
@@ -76,6 +83,12 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 		return ctrl.Result{}, err
 	}
 
+	// fetch CACertbundle from secret
+	caCertBundleSecret, err := r.handleCaCertBundleSecret(ctx, endpoint)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// get endpoint in garm db with resource name
 	garmEndpoint, err := r.getExistingEndpoint(client, endpoint.Name)
 	if err != nil {
@@ -89,7 +102,7 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 
 	// if not found, create endpoint in garm db
 	if reflect.ValueOf(garmEndpoint).IsZero() {
-		garmEndpoint, err = r.createEndpoint(ctx, client, endpoint) // nolint:wastedassign
+		garmEndpoint, err = r.createEndpoint(ctx, client, endpoint, caCertBundleSecret) // nolint:wastedassign
 		if err != nil {
 			event.Error(r.Recorder, endpoint, err.Error())
 			conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
@@ -101,7 +114,7 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 	}
 
 	// update endpoint cr anytime the endpoint in garm db changes
-	garmEndpoint, err = r.updateEndpoint(ctx, client, endpoint)
+	garmEndpoint, err = r.updateEndpoint(ctx, client, endpoint, caCertBundleSecret)
 	if err != nil {
 		event.Error(r.Recorder, endpoint, err.Error())
 		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
@@ -135,7 +148,7 @@ func (r *GitHubEndpointReconciler) getExistingEndpoint(client garmClient.Endpoin
 	return endpoint.Payload, nil
 }
 
-func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint) (params.GithubEndpoint, error) {
+func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint, caCertBundleSecret string) (params.GithubEndpoint, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("endpoint", endpoint.Name)
 
@@ -148,7 +161,7 @@ func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client ga
 		APIBaseURL:    endpoint.Spec.APIBaseURL,
 		UploadBaseURL: endpoint.Spec.UploadBaseURL,
 		BaseURL:       endpoint.Spec.BaseURL,
-		CACertBundle:  endpoint.Spec.CACertBundle,
+		CACertBundle:  []byte(caCertBundleSecret),
 	}))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateEndpoint error: %s", err))
@@ -163,7 +176,7 @@ func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client ga
 	return retValue.Payload, nil
 }
 
-func (r *GitHubEndpointReconciler) updateEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint) (params.GithubEndpoint, error) {
+func (r *GitHubEndpointReconciler) updateEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint, caCertBundleSecret string) (params.GithubEndpoint, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update endpoint")
 
@@ -175,7 +188,7 @@ func (r *GitHubEndpointReconciler) updateEndpoint(ctx context.Context, client ga
 				APIBaseURL:    util.StringPtr(endpoint.Spec.APIBaseURL),
 				UploadBaseURL: util.StringPtr(endpoint.Spec.UploadBaseURL),
 				BaseURL:       util.StringPtr(endpoint.Spec.BaseURL),
-				CACertBundle:  endpoint.Spec.CACertBundle,
+				CACertBundle:  []byte(caCertBundleSecret),
 			}))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.UpdateEndpoint error: %s", err))
@@ -222,6 +235,25 @@ func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client g
 	return ctrl.Result{}, nil
 }
 
+func (r *GitHubEndpointReconciler) handleCaCertBundleSecret(ctx context.Context, endpoint *garmoperatorv1beta1.GitHubEndpoint) (string, error) {
+	// as caCertBundle is optional we exit early if it is not set and do not set any conditions
+	if reflect.ValueOf(endpoint.Spec.CACertBundleSecretRef).IsZero() {
+		return "", nil
+	}
+
+	caCertBundleSecret, err := secret.FetchRef(ctx, r.Client, &endpoint.Spec.CACertBundleSecretRef, endpoint.Namespace)
+	if err != nil {
+		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(endpoint, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		if err := r.Status().Update(ctx, endpoint); err != nil {
+			return "", err
+		}
+		return "", err
+	}
+	conditions.MarkTrue(endpoint, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+	return caCertBundleSecret, nil
+}
+
 func (r *GitHubEndpointReconciler) ensureFinalizer(ctx context.Context, endpoint *garmoperatorv1beta1.GitHubEndpoint) error {
 	if !controllerutil.ContainsFinalizer(endpoint, key.GitHubEndpointFinalizerName) {
 		controllerutil.AddFinalizer(endpoint, key.GitHubEndpointFinalizerName)
@@ -230,9 +262,40 @@ func (r *GitHubEndpointReconciler) ensureFinalizer(ctx context.Context, endpoint
 	return nil
 }
 
+func (r *GitHubEndpointReconciler) findEndpointsForSecret(ctx context.Context, obj client.Object) []reconcile.Request {
+	secretObj, ok := obj.(*corev1.Secret)
+	if !ok {
+		return nil
+	}
+
+	var endpointList garmoperatorv1beta1.GitHubEndpointList
+	if err := r.List(ctx, &endpointList); err != nil {
+		return nil
+	}
+
+	var requests []reconcile.Request
+	for _, c := range endpointList.Items {
+		if c.Spec.CACertBundleSecretRef.Name == secretObj.Name {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: c.Namespace,
+					Name:      c.Name,
+				},
+			})
+		}
+	}
+
+	return requests
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *GitHubEndpointReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&garmoperatorv1beta1.GitHubEndpoint{}).
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(r.findEndpointsForSecret),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
 		Complete(r)
 }
