@@ -12,7 +12,7 @@ type GitHubEndpointSpec struct {
 	APIBaseURL            string    `json:"apiBaseUrl,omitempty"`
 	UploadBaseURL         string    `json:"uploadBaseUrl,omitempty"`
 	BaseURL               string    `json:"baseUrl,omitempty"`
-	CACertBundleSecretRef SecretRef `json:"caCertBundle,omitempty"`
+	CACertBundleSecretRef SecretRef `json:"caCertBundleSecretRef,omitempty"`
 }
 
 // GitHubEndpointStatus defines the observed state of GitHubEndpoint

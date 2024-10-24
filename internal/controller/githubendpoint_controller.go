@@ -9,13 +9,19 @@ import (
 
 	"github.com/cloudbase/garm/client/endpoints"
 	"github.com/cloudbase/garm/params"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/annotations"
@@ -256,9 +262,40 @@ func (r *GitHubEndpointReconciler) ensureFinalizer(ctx context.Context, endpoint
 	return nil
 }
 
+func (r *GitHubEndpointReconciler) findEndpointsForSecret(ctx context.Context, obj client.Object) []reconcile.Request {
+	secretObj, ok := obj.(*corev1.Secret)
+	if !ok {
+		return nil
+	}
+
+	var endpointList garmoperatorv1beta1.GitHubEndpointList
+	if err := r.List(ctx, &endpointList); err != nil {
+		return nil
+	}
+
+	var requests []reconcile.Request
+	for _, c := range endpointList.Items {
+		if c.Spec.CACertBundleSecretRef.Name == secretObj.Name {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: c.Namespace,
+					Name:      c.Name,
+				},
+			})
+		}
+	}
+
+	return requests
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *GitHubEndpointReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&garmoperatorv1beta1.GitHubEndpoint{}).
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(r.findEndpointsForSecret),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
 		Complete(r)
 }

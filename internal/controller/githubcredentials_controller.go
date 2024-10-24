@@ -302,7 +302,7 @@ func (r *GitHubCredentialReconciler) ensureFinalizer(ctx context.Context, creden
 }
 
 func (r *GitHubCredentialReconciler) findCredentialsForSecret(ctx context.Context, obj client.Object) []reconcile.Request {
-	secret, ok := obj.(*corev1.Secret)
+	secretObj, ok := obj.(*corev1.Secret)
 	if !ok {
 		return nil
 	}
@@ -314,7 +314,7 @@ func (r *GitHubCredentialReconciler) findCredentialsForSecret(ctx context.Contex
 
 	var requests []reconcile.Request
 	for _, c := range creds.Items {
-		if c.Spec.SecretRef.Name == secret.Name {
+		if c.Spec.SecretRef.Name == secretObj.Name {
 			requests = append(requests, reconcile.Request{
 				NamespacedName: types.NamespacedName{
 					Namespace: c.Namespace,
