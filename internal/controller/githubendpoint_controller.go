@@ -5,7 +5,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/mercedes-benz/garm-operator/pkg/secret"
 	"reflect"
 
 	"github.com/cloudbase/garm/client/endpoints"
@@ -24,6 +23,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
+	"github.com/mercedes-benz/garm-operator/pkg/secret"
 	"github.com/mercedes-benz/garm-operator/pkg/util"
 )
 

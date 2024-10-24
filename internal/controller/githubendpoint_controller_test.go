@@ -11,6 +11,7 @@ import (
 	"github.com/cloudbase/garm/client/endpoints"
 	"github.com/cloudbase/garm/params"
 	"go.uber.org/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -52,10 +53,23 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
 					BaseURL:       "https://github.com",
-					CACertBundle:  nil,
+					CACertBundleSecretRef: garmoperatorv1beta1.SecretRef{
+						Name: "gh-endpoint-ca-cert-bundle",
+						Key:  "caCertBundle",
+					},
 				},
 			},
-			runtimeObjects: []runtime.Object{},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "gh-endpoint-ca-cert-bundle",
+					},
+					Data: map[string][]byte{
+						"caCertBundle": []byte("foobar"),
+					},
+				},
+			},
 			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
@@ -69,13 +83,23 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
 					BaseURL:       "https://github.com",
-					CACertBundle:  nil,
+					CACertBundleSecretRef: garmoperatorv1beta1.SecretRef{
+						Name: "gh-endpoint-ca-cert-bundle",
+						Key:  "caCertBundle",
+					},
 				},
 				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
 							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -101,7 +125,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						APIBaseURL:    util.StringPtr("https://api.github.com"),
 						UploadBaseURL: util.StringPtr("https://uploads.github.com"),
 						BaseURL:       util.StringPtr("https://github.com"),
-						CACertBundle:  nil,
+						CACertBundle:  []byte("foobar"),
 					})).Return(&endpoints.UpdateGithubEndpointOK{
 					Payload: params.GithubEndpoint{
 						Name:          "existing-github-endpoint",
@@ -109,7 +133,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						APIBaseURL:    "https://api.github.com",
 						UploadBaseURL: "https://uploads.github.com",
 						BaseURL:       "https://github.com",
-						CACertBundle:  nil,
+						CACertBundle:  []byte("foobar"),
 					},
 				}, nil)
 			},
@@ -130,7 +154,10 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					APIBaseURL:    "https://api.github-enterprise.com",
 					UploadBaseURL: "https://uploads.github-enterprise.com",
 					BaseURL:       "https://github-enterprise.com",
-					CACertBundle:  nil,
+					CACertBundleSecretRef: garmoperatorv1beta1.SecretRef{
+						Name: "gh-endpoint-ca-cert-bundle",
+						Key:  "caCertBundle",
+					},
 				},
 				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
@@ -141,10 +168,27 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
 					},
 				},
 			},
-			runtimeObjects: []runtime.Object{},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "gh-endpoint-ca-cert-bundle",
+					},
+					Data: map[string][]byte{
+						"caCertBundle": []byte("foobar"),
+					},
+				},
+			},
 			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
@@ -158,13 +202,23 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					APIBaseURL:    "https://api.github-enterprise.com",
 					UploadBaseURL: "https://uploads.github-enterprise.com",
 					BaseURL:       "https://github-enterprise.com",
-					CACertBundle:  nil,
+					CACertBundleSecretRef: garmoperatorv1beta1.SecretRef{
+						Name: "gh-endpoint-ca-cert-bundle",
+						Key:  "caCertBundle",
+					},
 				},
 				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
 							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -182,7 +236,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 							APIBaseURL:    "https://api.github.com",
 							UploadBaseURL: "https://uploads.github.com",
 							BaseURL:       "https://github.com",
-							CACertBundle:  nil,
+							CACertBundle:  []byte("foobar"),
 						},
 					}, nil)
 				m.UpdateEndpoint(endpoints.NewUpdateGithubEndpointParams().
@@ -192,7 +246,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						APIBaseURL:    util.StringPtr("https://api.github-enterprise.com"),
 						UploadBaseURL: util.StringPtr("https://uploads.github-enterprise.com"),
 						BaseURL:       util.StringPtr("https://github-enterprise.com"),
-						CACertBundle:  nil,
+						CACertBundle:  []byte("foobar"),
 					})).Return(&endpoints.UpdateGithubEndpointOK{
 					Payload: params.GithubEndpoint{
 						Name:          "existing-github-endpoint",
@@ -200,7 +254,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						APIBaseURL:    "https://api.github-enterprise.com",
 						UploadBaseURL: "https://uploads.github-enterprise.com",
 						BaseURL:       "https://github-enterprise.com",
-						CACertBundle:  nil,
+						CACertBundle:  []byte("foobar"),
 					},
 				}, nil)
 			},
@@ -218,7 +272,10 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
 					BaseURL:       "https://github.com",
-					CACertBundle:  nil,
+					CACertBundleSecretRef: garmoperatorv1beta1.SecretRef{
+						Name: "gh-endpoint-ca-cert-bundle",
+						Key:  "caCertBundle",
+					},
 				},
 			},
 			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
@@ -234,7 +291,10 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
 					BaseURL:       "https://github.com",
-					CACertBundle:  nil,
+					CACertBundleSecretRef: garmoperatorv1beta1.SecretRef{
+						Name: "gh-endpoint-ca-cert-bundle",
+						Key:  "caCertBundle",
+					},
 				},
 				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
@@ -245,10 +305,27 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
 					},
 				},
 			},
-			runtimeObjects: []runtime.Object{},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "gh-endpoint-ca-cert-bundle",
+					},
+					Data: map[string][]byte{
+						"caCertBundle": []byte("foobar"),
+					},
+				},
+			},
 			expectGarmRequest: func(m *mock.MockEndpointClientMockRecorder) {
 				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().
 					WithName("new-github-endpoint")).
@@ -260,7 +337,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						APIBaseURL:    "https://api.github.com",
 						UploadBaseURL: "https://uploads.github.com",
 						BaseURL:       "https://github.com",
-						CACertBundle:  nil,
+						CACertBundle:  []byte("foobar"),
 					})).Return(&endpoints.CreateGithubEndpointOK{
 					Payload: params.GithubEndpoint{
 						Name:          "new-github-endpoint",
@@ -268,7 +345,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						APIBaseURL:    "https://api.github.com",
 						UploadBaseURL: "https://uploads.github.com",
 						BaseURL:       "https://github.com",
-						CACertBundle:  nil,
+						CACertBundle:  []byte("foobar"),
 					},
 				}, nil)
 				m.UpdateEndpoint(endpoints.NewUpdateGithubEndpointParams().
@@ -278,7 +355,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						APIBaseURL:    util.StringPtr("https://api.github.com"),
 						UploadBaseURL: util.StringPtr("https://uploads.github.com"),
 						BaseURL:       util.StringPtr("https://github.com"),
-						CACertBundle:  nil,
+						CACertBundle:  []byte("foobar"),
 					})).Return(&endpoints.UpdateGithubEndpointOK{
 					Payload: params.GithubEndpoint{
 						Name:          "new-github-endpoint",
@@ -286,7 +363,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						APIBaseURL:    "https://api.github.com",
 						UploadBaseURL: "https://uploads.github.com",
 						BaseURL:       "https://github.com",
-						CACertBundle:  nil,
+						CACertBundle:  []byte("foobar"),
 					},
 				}, nil)
 			},
@@ -304,7 +381,6 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					APIBaseURL:    "",
 					UploadBaseURL: "",
 					BaseURL:       "",
-					CACertBundle:  nil,
 				},
 			},
 			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
@@ -339,7 +415,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 							APIBaseURL:    "https://api.github.com",
 							UploadBaseURL: "https://uploads.github.com",
 							BaseURL:       "https://github.com",
-							CACertBundle:  nil,
+							CACertBundle:  []byte("foobar"),
 						},
 					}, nil)
 				m.UpdateEndpoint(endpoints.NewUpdateGithubEndpointParams().
@@ -349,10 +425,144 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						APIBaseURL:    util.StringPtr(""),
 						UploadBaseURL: util.StringPtr(""),
 						BaseURL:       util.StringPtr(""),
-						CACertBundle:  nil,
+						CACertBundle:  []byte(""),
 					})).Return(nil, endpoints.NewUpdateGithubEndpointDefault(400))
 			},
 			wantErr: true,
+		},
+		{
+			name: "github-endpoint update - no ca cert bundle secret found",
+			object: &garmoperatorv1beta1.GitHubEndpoint{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-github-endpoint",
+					Namespace: "default",
+				},
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
+					Description:   "existing-github-endpoint",
+					APIBaseURL:    "https://api.github.com",
+					UploadBaseURL: "https://uploads.github.com",
+					BaseURL:       "https://github.com",
+					CACertBundleSecretRef: garmoperatorv1beta1.SecretRef{
+						Name: "ca-cert-bundle",
+						Key:  "caCertBundle",
+					},
+				},
+			},
+			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-github-endpoint",
+					Namespace: "default",
+					Finalizers: []string{
+						key.GitHubEndpointFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
+					Description:   "existing-github-endpoint",
+					APIBaseURL:    "https://api.github.com",
+					UploadBaseURL: "https://uploads.github.com",
+					BaseURL:       "https://github.com",
+					CACertBundleSecretRef: garmoperatorv1beta1.SecretRef{
+						Name: "ca-cert-bundle",
+						Key:  "caCertBundle",
+					},
+				},
+				Status: garmoperatorv1beta1.GitHubEndpointStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "secrets \"ca-cert-bundle\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Status:             metav1.ConditionFalse,
+							Message:            "secrets \"ca-cert-bundle\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
+				},
+			},
+			runtimeObjects:    []runtime.Object{},
+			expectGarmRequest: func(_ *mock.MockEndpointClientMockRecorder) {},
+			wantErr:           true,
+		},
+		{
+			name: "github-endpoint update - no ca cert bundle secret defined",
+			object: &garmoperatorv1beta1.GitHubEndpoint{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-github-endpoint",
+					Namespace: "default",
+				},
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
+					Description:   "existing-github-endpoint",
+					APIBaseURL:    "https://api.github.com",
+					UploadBaseURL: "https://uploads.github.com",
+					BaseURL:       "https://github.com",
+				},
+			},
+			expectedObject: &garmoperatorv1beta1.GitHubEndpoint{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing-github-endpoint",
+					Namespace: "default",
+					Finalizers: []string{
+						key.GitHubEndpointFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
+					Description:   "existing-github-endpoint",
+					APIBaseURL:    "https://api.github.com",
+					UploadBaseURL: "https://uploads.github.com",
+					BaseURL:       "https://github.com",
+				},
+				Status: garmoperatorv1beta1.GitHubEndpointStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
+				},
+			},
+			runtimeObjects: []runtime.Object{},
+			expectGarmRequest: func(m *mock.MockEndpointClientMockRecorder) {
+				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().
+					WithName("existing-github-endpoint")).
+					Return(&endpoints.GetGithubEndpointOK{
+						Payload: params.GithubEndpoint{
+							Name:          "existing-github-endpoint",
+							Description:   "existing-github-endpoint",
+							APIBaseURL:    "https://api.github.com",
+							UploadBaseURL: "https://uploads.github.com",
+							BaseURL:       "https://github.com",
+							CACertBundle:  []byte(""),
+						},
+					}, nil)
+				m.UpdateEndpoint(endpoints.NewUpdateGithubEndpointParams().
+					WithName("existing-github-endpoint").
+					WithBody(params.UpdateGithubEndpointParams{
+						Description:   util.StringPtr("existing-github-endpoint"),
+						APIBaseURL:    util.StringPtr("https://api.github.com"),
+						UploadBaseURL: util.StringPtr("https://uploads.github.com"),
+						BaseURL:       util.StringPtr("https://github.com"),
+						CACertBundle:  []byte(""),
+					})).Return(&endpoints.UpdateGithubEndpointOK{
+					Payload: params.GithubEndpoint{
+						Name:          "existing-github-endpoint",
+						Description:   "existing-github-endpoint",
+						APIBaseURL:    "https://api.github.com",
+						UploadBaseURL: "https://uploads.github.com",
+						BaseURL:       "https://github.com",
+						CACertBundle:  []byte(""),
+					},
+				}, nil)
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -430,7 +640,10 @@ func TestGitHubEndpointReconciler_reconcileDelete(t *testing.T) {
 					APIBaseURL:    "https://api.github.com",
 					UploadBaseURL: "https://uploads.github.com",
 					BaseURL:       "https://github.com",
-					CACertBundle:  []byte(""),
+					CACertBundleSecretRef: garmoperatorv1beta1.SecretRef{
+						Name: "gh-endpoint-ca-cert-bundle",
+						Key:  "caCertBundle",
+					},
 				},
 				Status: garmoperatorv1beta1.GitHubEndpointStatus{
 					Conditions: []metav1.Condition{
@@ -441,10 +654,27 @@ func TestGitHubEndpointReconciler_reconcileDelete(t *testing.T) {
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
+						{
+							Type:               string(conditions.SecretReference),
+							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
 					},
 				},
 			},
-			runtimeObjects: []runtime.Object{},
+			runtimeObjects: []runtime.Object{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "gh-endpoint-ca-cert-bundle",
+					},
+					Data: map[string][]byte{
+						"caCertBundle": []byte("foobar"),
+					},
+				},
+			},
 			expectGarmRequest: func(m *mock.MockEndpointClientMockRecorder) {
 				m.DeleteEndpoint(
 					endpoints.NewDeleteGithubEndpointParams().
