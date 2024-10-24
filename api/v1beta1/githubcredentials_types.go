@@ -26,10 +26,13 @@ type GitHubCredentialSpec struct {
 
 // GitHubCredentialStatus defines the observed state of GitHubCredential
 type GitHubCredentialStatus struct {
-	ID            int64  `json:"id"`
-	APIBaseURL    string `json:"apiBaseUrl"`
-	UploadBaseURL string `json:"uploadBaseUrl"`
-	BaseURL       string `json:"baseUrl"`
+	ID            int64    `json:"id"`
+	APIBaseURL    string   `json:"apiBaseUrl"`
+	UploadBaseURL string   `json:"uploadBaseUrl"`
+	BaseURL       string   `json:"baseUrl"`
+	Repositories  []string `json:"repositories,omitempty"`
+	Organizations []string `json:"organizations,omitempty"`
+	Enterprises   []string `json:"enterprises,omitempty"`
 
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
@@ -43,6 +46,9 @@ type GitHubCredentialStatus struct {
 //+kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message",priority=1
 //+kubebuilder:printcolumn:name="AuthType",type="string",JSONPath=`.spec.authType`,description="Authentication type"
 //+kubebuilder:printcolumn:name="GitHubEndpoint",type="string",JSONPath=`.spec.endpointRef.name`,description="GitHubEndpoint name these credentials are tied to"
+//+kubebuilder:printcolumn:name="Repositories",type="string",JSONPath=`.status.repositories`,description="Repositories these credentials are tied to",priority=1
+//+kubebuilder:printcolumn:name="Organizations",type="string",JSONPath=`.status.organizations`,description="Organizations these credentials are tied to",priority=1
+//+kubebuilder:printcolumn:name="Enterprises",type="string",JSONPath=`.status.enterprises`,description="Enterprises these credentials are tied to",priority=1
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of GitHubCredential"
 
 // GitHubCredential is the Schema for the githubcredential API
