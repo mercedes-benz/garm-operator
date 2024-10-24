@@ -38,7 +38,7 @@ type GitHubCredentialStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=githubcredential,scope=Namespaced,categories=garm,shortName=creds
+//+kubebuilder:resource:path=githubcredentials,scope=Namespaced,categories=garm,shortName=creds
 //+kubebuilder:subresource:status
 //+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Credentials ID"
