@@ -17,7 +17,7 @@ data:
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Enterprise"
-            version: "v1alpha1"
+            version: "v1beta1"
           metricNamePrefix: garm_operator
           commonLabels:
             crd_type: "enterprise"
@@ -40,7 +40,7 @@ data:
                 type: Info
                 info:
                   labelsFromPath:
-                    credentialsName: [ spec, credentialsName ]
+                    credentialsRefName: [ spec, credentialsRef, name ]
                     webhookSecretRefKey: [ spec, webhookSecretRef, key ]
                     webhookSecretRefName: [ spec, webhookSecretRef, name ]
                     id: [ status, id ]
@@ -77,7 +77,7 @@ data:
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Organization"
-            version: "v1alpha1"
+            version: "v1beta1"
           metricNamePrefix: garm_operator
           commonLabels:
             crd_type: "organization"
@@ -100,7 +100,7 @@ data:
                 type: Info
                 info:
                   labelsFromPath:
-                    credentialsName: [ spec, credentialsName ]
+                    credentialsRefName: [ spec, credentialsRef, name ]
                     webhookSecretRefKey: [ spec, webhookSecretRef, key ]
                     webhookSecretRefName: [ spec, webhookSecretRef, name ]
                     id: [ status, id ]
@@ -137,7 +137,7 @@ data:
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Repository"
-            version: "v1alpha1"
+            version: "v1beta1"
           metricNamePrefix: garm_operator
           commonLabels:
             crd_type: "repository"
@@ -161,7 +161,7 @@ data:
                 info:
                   labelsFromPath:
                     owner: [ spec, owner ]
-                    credentialsName: [ spec, credentialsName ]
+                    credentialsRefName: [ spec, credentialsRef, name ]
                     webhookSecretRefKey: [ spec, webhookSecretRef, key ]
                     webhookSecretRefName: [ spec, webhookSecretRef, name ]
                     id: [ status, id ]
@@ -198,7 +198,7 @@ data:
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Pool"
-            version: "v1alpha1"
+            version: "v1beta1"
           metricNamePrefix: garm_operator
           commonLabels:
             crd_type: "pool"
@@ -302,7 +302,7 @@ data:
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Image"
-            version: "v1alpha1"
+            version: "v1beta1"
           metricNamePrefix: garm_operator
           commonLabels:
             crd_type: "image"
@@ -326,3 +326,138 @@ data:
                 info:
                   labelsFromPath:
                     tag: [spec, tag]
+
+        ############################
+        #      GarmServerConfig    #
+        ############################
+        - groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: "GarmServerConfig"
+            version: "v1beta1"
+          metricNamePrefix: garm_operator
+          commonLabels:
+            crd_type: "garmserverconfig"
+          labelsFromPath:
+            name: [ metadata, name ]
+            namespace: [ metadata, namespace ]
+          metrics:
+            - name: garmserverconfig_created
+              help: Unix creation timestamp.
+              each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+            
+            - name: garmserverconfig_info
+              help: Information about a garm server config.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    callbackUrl: [spec, callbackUrl]
+                    metadataUrl: [spec, metadataUrl]
+                    webhookUrl: [spec, webhookUrl]
+                    controllerId: [status, controllerId]
+                    minimumJobAgeBackoff: [status, minimumJobAgeBackoff]
+                    version: [status, version]
+
+        ############################
+        #      GitHubEndpoint    #
+        ############################
+        - groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: "GitHubEndpoint"
+            version: "v1beta1"
+          metricNamePrefix: garm_operator
+          commonLabels:
+            crd_type: "githubendpoint"
+          labelsFromPath:
+            name: [ metadata, name ]
+            namespace: [ metadata, namespace ]
+          metrics:
+            - name: githubendpoint_created
+              help: Unix creation timestamp.
+              each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+            
+            - name: githubendpoint_info
+              help: Information about a githubendpoint config.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    apiBaseUrl: [spec, apiBaseUrl]
+                    baseUrl: [spec, baseUrl]
+                    uploadBaseUrl: [spec, uploadBaseUrl]
+
+            - name: githubendpoint_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]
+
+        ############################
+        #      GitHubCredential    #
+        ############################
+        - groupVersionKind:
+            group: garm-operator.mercedes-benz.com
+            kind: "GitHubCredential"
+            version: "v1beta1"
+          metricNamePrefix: garm_operator
+          commonLabels:
+            crd_type: "githubcredential"
+          labelsFromPath:
+            name: [ metadata, name ]
+            namespace: [ metadata, namespace ]
+          metrics:
+            - name: githubcredential_created
+              help: Unix creation timestamp.
+              each:
+                gauge:
+                  path:
+                    - metadata
+                    - creationTimestamp
+                type: Gauge
+            
+            - name: githubcredential_info
+              help: Information about a githubcredential config.
+              each:
+                type: Info
+                info:
+                  labelsFromPath:
+                    authType: [spec, authType]
+                    secretRefKey: [ spec, secretRef, key ]
+                    secretRefName: [ spec, secretRef, name ]
+                    endpointRefName: [ spec, endpointRef, name ]
+                    apiBaseUrl: [status, apiBaseUrl]
+                    baseUrl: [status, baseUrl]
+                    uploadBaseUrl: [status, uploadBaseUrl]
+                    id: [status, id]
+
+            - name: githubcredential_status_conditions
+              help: Displays whether status of each possible condition is True or False.
+              each:
+                type: Gauge
+                gauge:
+                  path:
+                    - status
+                    - conditions
+                  valueFrom:
+                    - status
+                  labelFromKey: reason
+                  labelsFromPath:
+                    type: [ type ]

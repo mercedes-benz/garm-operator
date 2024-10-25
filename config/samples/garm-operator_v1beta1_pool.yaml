@@ -1,12 +1,71 @@
-apiVersion: garm-operator.mercedes-benz.com/v1beta1
+apiVersion: garm-operator.mercedes-benz.com/v1alpha1
 kind: Pool
 metadata:
-  labels:
-    app.kubernetes.io/name: pool
-    app.kubernetes.io/instance: pool-sample
-    app.kubernetes.io/part-of: garm-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: garm-operator
-  name: pool-sample
+  name: openstack-small-pool-enterprise
 spec:
-  # TODO(user): Add fields here
+  githubScopeRef:
+    apiGroup: garm-operator.mercedes-benz.com
+    kind: Enterprise
+    name: enterprise-sample
+  enabled: true
+  extraSpecs: "{}"
+  flavor: small
+  githubRunnerGroup: ""
+  imageName: runner-default
+  maxRunners: 4
+  minIdleRunners: 2
+  osArch: amd64
+  osType: linux
+  providerName: openstack # this is the name defined in your garm server
+  runnerBootstrapTimeout: 20
+  runnerPrefix: ""
+  tags:
+    - linux-amd64-ubuntu
+---
+apiVersion: garm-operator.mercedes-benz.com/v1alpha1
+kind: Pool
+metadata:
+  name: openstack-medium-pool-org
+spec:
+  githubScopeRef:
+    apiGroup: garm-operator.mercedes-benz.com
+    kind: Organization
+    name: github-actions
+  enabled: true
+  extraSpecs: "{}"
+  flavor: medium
+  githubRunnerGroup: ""
+  imageName: runner-default
+  maxRunners: 4
+  minIdleRunners: 2
+  osArch: amd64
+  osType: linux
+  providerName: openstack # this is the name defined in your garm server
+  runnerBootstrapTimeout: 20
+  runnerPrefix: ""
+  tags:
+    - linux-amd64-ubuntu
+---
+apiVersion: garm-operator.mercedes-benz.com/v1alpha1
+kind: Pool
+metadata:
+  name: openstack-medium-pool-repo
+spec:
+  githubScopeRef:
+    apiGroup: garm-operator.mercedes-benz.com
+    kind: Repository
+    name: garm-operator
+  enabled: true
+  extraSpecs: "{}"
+  flavor: medium
+  githubRunnerGroup: ""
+  imageName: runner-default
+  maxRunners: 4
+  minIdleRunners: 2
+  osArch: amd64
+  osType: linux
+  providerName: openstack
+  runnerBootstrapTimeout: 20
+  runnerPrefix: ""
+  tags:
+    - linux-amd64-ubuntu
