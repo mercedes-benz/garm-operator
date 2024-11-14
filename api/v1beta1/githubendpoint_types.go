@@ -21,7 +21,7 @@ type GitHubEndpointStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=githubendpoints,scope=Namespaced,categories=garm,shortName=gep
+//+kubebuilder:resource:path=githubendpoints,scope=Namespaced,categories=garm
 //+kubebuilder:subresource:status
 //+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="URL",type="string",JSONPath=".spec.apiBaseUrl",description="API Base URL"
