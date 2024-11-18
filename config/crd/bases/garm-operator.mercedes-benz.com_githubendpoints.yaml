@@ -13,8 +13,6 @@ spec:
     kind: GitHubEndpoint
     listKind: GitHubEndpointList
     plural: githubendpoints
-    shortNames:
-    - gep
     singular: githubendpoint
   scope: Namespaced
   versions:

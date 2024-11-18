@@ -13,8 +13,6 @@ spec:
     kind: GarmServerConfig
     listKind: GarmServerConfigList
     plural: garmserverconfigs
-    shortNames:
-    - server
     singular: garmserverconfig
   scope: Namespaced
   versions:

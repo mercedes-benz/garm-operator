@@ -27,7 +27,7 @@ type GarmServerConfigStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=garmserverconfigs,scope=Namespaced,categories=garm,shortName=server
+//+kubebuilder:resource:path=garmserverconfigs,scope=Namespaced,categories=garm
 //+kubebuilder:subresource:status
 //+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.controllerId",description="Controller ID"
