@@ -33,16 +33,17 @@
 
 ### Garm Version
 
-garm-operator uses [`garm-api-client`](https://github.com/cloudbase/garm/tree/main/client) to talk
-with `garm` servers. The supported `garm` server version is determined by `garm-api-client`.
+`garm-operator` is tightly coupled with the `garm` server. Therefore, the compatibility between `garm-operator` and `garm` is crucial.
 
-> [!WARNING]  
-> `garm-operator` is currently tested with `garm` server version `v0.1.4`. Newer versions are not guaranteed to work.
-> 
-> `garm` server version `>v0.1.4` introduces a few breaking changes.
-> [provider]() and [credential]() configuration has moved away from being defined in the `garm` server configuration.
-> Instead, they are now defined via the `garm` API itself.
-> This feature set isn't implemented in the `garm-operator` yet.
+| garm-operator | garm    | compatible                                                       |
+|---------------|---------|------------------------------------------------------------------|
+| `0.4.x`       | `0.1.5` | :white_check_mark:                                               |
+| `0.4.x`       | `0.1.4` | :x:                                                              |
+| `0.3.x`       | `0.1.4` | :white_check_mark:                                               |
+| `0.3.x`       | `0.1.5` | :warning: - only when `garm` got updated from `0.1.4` to `0.1.5` |
+
+> [!NOTE] 
+> please also read the [operator update guide](docs/operator_update.md) when you want to update the `garm-operator`.
 
 ### Kubernetes Version
 
@@ -92,7 +93,7 @@ For local development, please read the [development guide](DEVELOPMENT.md).
 
 To make some assumptions and corresponding decisions transparent, we use ADRs (Architecture Decision Records) to document them.
 
-All ADRs can be found in the [here](docs/architectural-decision-records.md).
+All ADRs can be found [here](docs/architectural-decision-records.md).
 
 ## Contributing
 

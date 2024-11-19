@@ -4,14 +4,19 @@
 
 <!-- toc -->
 - [Quickstart](#quickstart)
+- [<a href="architectural-decision-records.md">Architecture Decision Records</a>](#architecture-decision-records)
 - [how to](#how-to)
   - [scale runners](#scale-runners)
   - [pause reconciliation](#pause-reconciliation)
+  - [<a href="config/configuration-parsing.md">configure the operator</a>](#configure-the-operator)
+  - [<a href="kube-state-metrics/kube-state-metrics-config.md">monitor operator CRs</a>](#monitor-operator-crs)
 <!-- /toc -->
 
 ## Quickstart
 
 [Quickstart](quickstart.md) contains a walk-through of how to get started with `garm-operator`.
+
+## [Architecture Decision Records](architectural-decision-records.md)
 
 ## how to
 
@@ -97,3 +102,7 @@ $ kubectl annotate organization developer-org garm-operator.mercedes-benz.com/pa
 
 organization.garm-operator.mercedes-benz.com/developer-org annotate
 ```
+
+### [configure the operator](config/configuration-parsing.md)
+
+### [monitor operator CRs](kube-state-metrics/kube-state-metrics-config.md)

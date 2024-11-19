@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: MIT -->
 
-# Kube State Metrics Configuration
+# kube-state-metrics Configuration
 
-[Here](../../config/kube-state-metrics/configmap.yaml) you will find a sample configuration for a kube-state-metrics agent to expose metrics of `garm-operators` custom resources.
+[Here](../../config/kube-state-metrics/configmap.yaml) you will find a sample configuration for [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) to expose metrics of `garm-operators` custom resources.
 If you are using the official [helm chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) you can place the contents of `.data.config.yaml` into your helm-charts `values.yaml` file like so:
 
 ```yaml
