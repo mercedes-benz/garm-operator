@@ -81,7 +81,7 @@ rules:
 - apiGroups:
   - garm-operator.mercedes-benz.com
   resources:
-  - githubcredential
+  - githubcredentials
   verbs:
   - create
   - delete
@@ -93,13 +93,13 @@ rules:
 - apiGroups:
   - garm-operator.mercedes-benz.com
   resources:
-  - githubcredential/finalizers
+  - githubcredentials/finalizers
   verbs:
   - update
 - apiGroups:
   - garm-operator.mercedes-benz.com
   resources:
-  - githubcredential/status
+  - githubcredentials/status
   verbs:
   - get
   - patch
