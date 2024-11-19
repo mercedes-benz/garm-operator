@@ -24,6 +24,7 @@ type EnterpriseStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=enterprises,scope=Namespaced,categories=garm,shortName=ent
+//+kubebuilder:deprecatedversion:warning=This version is deprecated. Use v1beta1 instead.
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Enterprise ID"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
