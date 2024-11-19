@@ -13,7 +13,7 @@ data:
       resources:
         ##################
         #   ENTERPRISE   #
-        #################
+        ##################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Enterprise"
@@ -33,7 +33,6 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-
             - name: enterprise_info
               help: Information about an enterprise.
               each:
@@ -44,7 +43,6 @@ data:
                     webhookSecretRefKey: [ spec, webhookSecretRef, key ]
                     webhookSecretRefName: [ spec, webhookSecretRef, name ]
                     id: [ status, id ]
-            
             - name: enterprise_annotation_paused_info
               help: Whether the enterprise reconciliation is paused.
               each:
@@ -56,7 +54,6 @@ data:
                     - garm-operator.mercedes-benz.com/paused
                   labelsFromPath:
                     paused_value: []
-
             - name: enterprise_status_conditions
               help: Displays whether status of each possible condition is True or False.
               each:
@@ -70,9 +67,8 @@ data:
                   labelFromKey: reason
                   labelsFromPath:
                     type: [ type ]
-
-        ##################
-        #   Org         #
+        #################
+        #      Org      #
         #################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
@@ -93,7 +89,6 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-
             - name: org_info
               help: Information about an organization.
               each:
@@ -104,7 +99,6 @@ data:
                     webhookSecretRefKey: [ spec, webhookSecretRef, key ]
                     webhookSecretRefName: [ spec, webhookSecretRef, name ]
                     id: [ status, id ]
-            
             - name: org_annotation_paused_info
               help: Whether the org reconciliation is paused.
               each:
@@ -116,7 +110,6 @@ data:
                     - garm-operator.mercedes-benz.com/paused
                   labelsFromPath:
                     paused_value: [ ]
-
             - name: org_status_conditions
               help: Displays whether status of each possible condition is True or False.
               each:
@@ -130,10 +123,9 @@ data:
                   labelFromKey: reason
                   labelsFromPath:
                     type: [ type ]
-
         ##################
-        #   Repo         #
-        #################
+        #      Repo      #
+        ##################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Repository"
@@ -153,7 +145,6 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-
             - name: repo_info
               help: Information about a repository.
               each:
@@ -165,7 +156,6 @@ data:
                     webhookSecretRefKey: [ spec, webhookSecretRef, key ]
                     webhookSecretRefName: [ spec, webhookSecretRef, name ]
                     id: [ status, id ]
-            
             - name: repo_annotation_paused_info
               help: Whether the repo reconciliation is paused.
               each:
@@ -177,7 +167,6 @@ data:
                     - garm-operator.mercedes-benz.com/paused
                   labelsFromPath:
                     paused_value: [ ]
-
             - name: repo_status_conditions
               help: Displays whether status of each possible condition is True or False.
               each:
@@ -191,8 +180,7 @@ data:
                   labelFromKey: reason
                   labelsFromPath:
                     type: [ type ]
-
-        ##################
+        #################
         #      Pool     #
         #################
         - groupVersionKind:
@@ -214,7 +202,6 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-            
             - name: pool_info
               help: Information about a pool.
               each:
@@ -232,7 +219,6 @@ data:
                     runnerPrefix: [spec, runnerPrefix]
                     tags: [spec, tags]
                     id: [status, id]
-
             - name: pool_enabled
               help: Whether the pool is enabled.
               each:
@@ -242,7 +228,6 @@ data:
                   path:
                     - spec
                     - enabled
-
             - name: pool_min_idle_runners
               help: Minimum number of idle runners.
               each:
@@ -251,7 +236,6 @@ data:
                   path:
                     - spec
                     - minIdleRunners
-                  
             - name: pool_max_runners
               help: Maximum number of runners.
               each:
@@ -260,7 +244,6 @@ data:
                   path:
                     - spec
                     - maxRunners
-            
             - name: status_long_running_idle_runners
               help: Number of long running idle runners.
               each:
@@ -269,7 +252,6 @@ data:
                   path:
                     - status
                     - longRunningIdleRunners
-            
             - name: pool_annotation_paused_info
               help: Whether the pool reconciliation is paused.
               each:
@@ -281,7 +263,6 @@ data:
                     - garm-operator.mercedes-benz.com/paused
                   labelsFromPath:
                     paused_value: [ ]
-
             - name: pool_status_conditions
               help: Displays whether status of each possible condition is True or False.
               each:
@@ -295,10 +276,9 @@ data:
                   labelFromKey: reason
                   labelsFromPath:
                     type: [ type ]
-
         ##################
         #      Image    #
-        #################
+        ##################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "Image"
@@ -318,7 +298,6 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-            
             - name: image_info
               help: Information about an image.
               each:
@@ -326,7 +305,6 @@ data:
                 info:
                   labelsFromPath:
                     tag: [spec, tag]
-
         ############################
         #      GarmServerConfig    #
         ############################
@@ -349,7 +327,6 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-            
             - name: garmserverconfig_info
               help: Information about a garm server config.
               each:
@@ -362,10 +339,9 @@ data:
                     controllerId: [status, controllerId]
                     minimumJobAgeBackoff: [status, minimumJobAgeBackoff]
                     version: [status, version]
-
-        ############################
+        ##########################
         #      GitHubEndpoint    #
-        ############################
+        ##########################
         - groupVersionKind:
             group: garm-operator.mercedes-benz.com
             kind: "GitHubEndpoint"
@@ -385,7 +361,6 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-            
             - name: githubendpoint_info
               help: Information about a githubendpoint config.
               each:
@@ -395,7 +370,6 @@ data:
                     apiBaseUrl: [spec, apiBaseUrl]
                     baseUrl: [spec, baseUrl]
                     uploadBaseUrl: [spec, uploadBaseUrl]
-
             - name: githubendpoint_status_conditions
               help: Displays whether status of each possible condition is True or False.
               each:
@@ -409,7 +383,6 @@ data:
                   labelFromKey: reason
                   labelsFromPath:
                     type: [ type ]
-
         ############################
         #      GitHubCredential    #
         ############################
@@ -432,7 +405,6 @@ data:
                     - metadata
                     - creationTimestamp
                 type: Gauge
-            
             - name: githubcredential_info
               help: Information about a githubcredential config.
               each:
@@ -447,7 +419,6 @@ data:
                     baseUrl: [status, baseUrl]
                     uploadBaseUrl: [status, uploadBaseUrl]
                     id: [status, id]
-
             - name: githubcredential_status_conditions
               help: Displays whether status of each possible condition is True or False.
               each:
