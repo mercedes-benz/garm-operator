@@ -25,6 +25,7 @@ type RepositoryStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=repositories,scope=Namespaced,categories=garm,shortName=repo
+//+kubebuilder:deprecatedversion:warning=This version is deprecated. Use v1beta1 instead.
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Repository ID"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

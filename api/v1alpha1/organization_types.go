@@ -24,6 +24,7 @@ type OrganizationStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=organizations,scope=Namespaced,categories=garm,shortName=org
+//+kubebuilder:deprecatedversion:warning=This version is deprecated. Use v1beta1 instead.
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Organization ID"
 //+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

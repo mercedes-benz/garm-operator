@@ -31,6 +31,7 @@ type ImageStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=images,scope=Namespaced,categories=garm
+//+kubebuilder:deprecatedversion:warning=This version is deprecated. Use v1beta1 instead.
 //+kubebuilder:printcolumn:name="Tag",type=string,JSONPath=`.spec.tag`
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
