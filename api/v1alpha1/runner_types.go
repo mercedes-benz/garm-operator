@@ -76,6 +76,7 @@ type RunnerStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=runners,scope=Namespaced,categories=garm,shortName=run
+//+kubebuilder:deprecatedversion:warning=This version is deprecated. Use v1beta1 instead.
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="Runner ID"
 //+kubebuilder:printcolumn:name="Pool",type="string",JSONPath=".status.poolId",description="Pool CR Name"

@@ -64,6 +64,7 @@ func (p *Pool) GetConditions() []metav1.Condition {
 //+kubebuilder:subresource:status
 //+kubebuilder:subresource:scale:specpath=.spec.minIdleRunners,statuspath=.status.longRunningIdleRunners,selectorpath=.status.selector
 //+kubebuilder:resource:path=pools,scope=Namespaced,categories=garm
+//+kubebuilder:deprecatedversion:warning=This version is deprecated. Use v1beta1 instead.
 //+kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.status.id`
 //+kubebuilder:printcolumn:name="MinIdleRunners",type=string,JSONPath=`.spec.minIdleRunners`
 //+kubebuilder:printcolumn:name="MaxRunners",type=string,JSONPath=`.spec.maxRunners`
