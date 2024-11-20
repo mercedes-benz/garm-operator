@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 
 ---
-date: 2022-11-20
+date: 2024-11-20
 desc: Reflection of the default GitHub endpoint
 state: accepted
 ---
