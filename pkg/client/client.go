@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -189,7 +190,7 @@ func IsUnauthenticatedError(err interface{}) bool {
 	if !ok {
 		return false
 	}
-	return apiErr.IsCode(401)
+	return apiErr.IsCode(http.StatusUnauthorized)
 }
 
 func IsNotFoundError(err interface{}) bool {
@@ -197,7 +198,15 @@ func IsNotFoundError(err interface{}) bool {
 	if !ok {
 		return false
 	}
-	return apiErr.IsCode(404)
+	return apiErr.IsCode(http.StatusNotFound)
+}
+
+func IsConflictError(err interface{}) bool {
+	apiErr, ok := err.(runtime.ClientResponseStatus)
+	if !ok {
+		return false
+	}
+	return apiErr.IsCode(http.StatusConflict)
 }
 
 type Func[T interface{}] func() (T, error)
