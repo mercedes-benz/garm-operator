@@ -35,12 +35,12 @@
 
 `garm-operator` is tightly coupled with the `garm` server. Therefore, the compatibility between `garm-operator` and `garm` is crucial.
 
-| garm-operator | garm    | compatible                                                       |
-|---------------|---------|------------------------------------------------------------------|
-| `0.4.x`       | `0.1.5` | :white_check_mark:                                               |
-| `0.4.x`       | `0.1.4` | :x:                                                              |
-| `0.3.x`       | `0.1.4` | :white_check_mark:                                               |
-| `0.3.x`       | `0.1.5` | :warning: - only when `garm` got updated from `0.1.4` to `0.1.5` |
+| garm-operator | garm    | compatible                                                                                                                                                   |
+|---------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `0.4.x`       | `0.1.5` | :white_check_mark:                                                                                                                                           |
+| `0.4.x`       | `0.1.4` | :x:                                                                                                                                                          |
+| `0.3.x`       | `0.1.4` | :white_check_mark:                                                                                                                                           |
+| `0.3.x`       | `0.1.5` | :warning: It is not recommended to operate during a longer time period. This state mostly exists when you update the `garm-operator` from `0.3.x` to `0.4.x` |
 
 > [!NOTE] 
 > please also read the [operator update guide](docs/operator_update.md) when you want to update the `garm-operator`.
