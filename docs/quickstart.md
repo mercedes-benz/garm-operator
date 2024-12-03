@@ -49,6 +49,7 @@ spec:
   callbackUrl: http://garm-server.garm-server.svc:9997/api/v1/callbacks
   metadataUrl: http://garm-server.garm-server.svc:9997/api/v1/metadata
   webhookUrl: http://garm-server.garm-server.svc:9997/webhook
+EOF
 ```
 
 After applying your `GarmServerConfig` CR, you should see a populated `.status.id` field when querying with `kubectl`. 
@@ -77,6 +78,7 @@ spec:
   apiBaseUrl: "https://api.github.com"
   uploadBaseUrl: "https://uploads.github.com"
   baseUrl: "https://github.com"
+EOF
 ```
 
 After applying your `GitHubEndpoint` CR, you should see the endpoint configuration in `ready=true` state when querying with `kubectl`.
@@ -115,6 +117,7 @@ metadata:
   namespace: garm-operator-system
 data:
   token: <base64 encoded token>
+EOF
 ```
 
 After applying your `GitHubCredential` CR, you should see the endpoint configuration in `ready=true` state when querying with `kubectl`.
