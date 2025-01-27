@@ -77,7 +77,7 @@ mkdir -p "tmp/"
 
 echo "create bd scan ${BLACKDUCK_SCAN_VERSION_NAME}"
 set +e
-bash <(curl -s -L https://detect.synopsys.com/detect8.sh) \
+bash <(curl -s -L https://detect.blackduck.com/detect10.sh) \
     --blackduck.url="${BLACKDUCK_URL}" \
     --blackduck.api.token="${BLACKDUCK_TOKEN}" \
     --detect.project.name="${BLACKDUCK_PROJECT_NAME}" \
