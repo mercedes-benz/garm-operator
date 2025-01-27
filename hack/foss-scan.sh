@@ -77,7 +77,7 @@ mkdir -p "tmp/"
 
 echo "create bd scan ${BLACKDUCK_SCAN_VERSION_NAME}"
 set +e
-bash <(curl -s -L https://detect.synopsys.com/detect8.sh) \
+bash <(curl -s -L https://detect.blackduck.com/detect10.sh) \
     --blackduck.url="${BLACKDUCK_URL}" \
     --blackduck.api.token="${BLACKDUCK_TOKEN}" \
     --detect.project.name="${BLACKDUCK_PROJECT_NAME}" \
@@ -95,8 +95,8 @@ bash <(curl -s -L https://detect.synopsys.com/detect8.sh) \
 chmod +x ./hack/generate-notices-file.sh
 
 if ! ./hack/generate-notices-file.sh; then
-  echo "Error: generate-notices-file.sh execution failed!"
-  exit 1
+    echo "Error: generate-notices-file.sh execution failed!"
+    exit 1
 fi
 
 RC=$?
