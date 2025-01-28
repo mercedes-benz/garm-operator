@@ -10,9 +10,10 @@ import (
 
 // EnterpriseSpec defines the desired state of Enterprise
 type EnterpriseSpec struct {
+	// credentialsName is the name of the secret that contains the enterprise credentials
 	CredentialsName string `json:"credentialsName"`
 
-	// WebhookSecretRef represents a secret that should be used for the webhook
+	// webhookSecretRef represents a secret that should be used for the webhook
 	WebhookSecretRef SecretRef `json:"webhookSecretRef"`
 }
 
@@ -37,7 +38,9 @@ type Enterprise struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EnterpriseSpec   `json:"spec,omitempty"`
+	// spec holds the specification of the enterprise
+	Spec EnterpriseSpec `json:"spec,omitempty"`
+	// status holds the status information of the enterprise
 	Status EnterpriseStatus `json:"status,omitempty"`
 }
 
@@ -93,7 +96,8 @@ func (e *Enterprise) GetKind() string {
 type EnterpriseList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Enterprise `json:"items"`
+	// items is the list of Enterprise objects
+	Items []Enterprise `json:"items"`
 }
 
 func init() {

@@ -16,7 +16,7 @@ type ImageSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Tag is the Name of the image in its registry
+	// tag is the Name of the image in its registry
 	// e.g.
 	// - in openstack it can be the image name or id
 	// - in k8s it can be the docker image name + tag
