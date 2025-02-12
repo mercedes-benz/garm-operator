@@ -30,6 +30,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
+	"github.com/mercedes-benz/garm-operator/pkg/finalizers"
 	"github.com/mercedes-benz/garm-operator/pkg/secret"
 )
 
@@ -64,6 +65,11 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 
+	// ensure the finalizer
+	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, organization, key.OrganizationFinalizerName); err != nil || finalizerAdded {
+		return ctrl.Result{}, err
+	}
+
 	organizationClient := garmClient.NewOrganizationClient()
 
 	// Handle deleted organizations
@@ -77,11 +83,6 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client garmClient.OrganizationClient, organization *garmoperatorv1beta1.Organization) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("organization", organization.Name)
-
-	// If the Organization doesn't has our finalizer, add it.
-	if err := r.ensureFinalizer(ctx, organization); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &organization.Spec.WebhookSecretRef, organization.Namespace)
 	if err != nil {
@@ -282,14 +283,6 @@ func (r *OrganizationReconciler) getCredentialsRef(ctx context.Context, org *gar
 		return creds, err
 	}
 	return creds, nil
-}
-
-func (r *OrganizationReconciler) ensureFinalizer(ctx context.Context, org *garmoperatorv1beta1.Organization) error {
-	if !controllerutil.ContainsFinalizer(org, key.OrganizationFinalizerName) {
-		controllerutil.AddFinalizer(org, key.OrganizationFinalizerName)
-		return r.Update(ctx, org)
-	}
-	return nil
 }
 
 func (r *OrganizationReconciler) findOrgsForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {

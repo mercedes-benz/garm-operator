@@ -63,6 +63,9 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
@@ -132,6 +135,13 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 							Status:             metav1.ConditionTrue,
 							Message:            "Successfully fetched Image CR Ref",
 							Reason:             string(conditions.FetchingImageRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.ScopeReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "Successfully fetched Enterprise CR Ref",
+							Reason:             string(conditions.FetchingScopeRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},
@@ -271,6 +281,9 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
@@ -341,6 +354,13 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 							Status:             metav1.ConditionTrue,
 							Message:            "Successfully fetched Image CR Ref",
 							Reason:             string(conditions.FetchingImageRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.ScopeReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "Successfully fetched Enterprise CR Ref",
+							Reason:             string(conditions.FetchingScopeRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},
@@ -559,6 +579,9 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
@@ -631,6 +654,13 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 							Status:             metav1.ConditionTrue,
 							Message:            "Successfully fetched Image CR Ref",
 							Reason:             string(conditions.FetchingImageRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.ScopeReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "Successfully fetched Enterprise CR Ref",
+							Reason:             string(conditions.FetchingScopeRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},
@@ -959,6 +989,9 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
@@ -1030,6 +1063,13 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 							Message:            "images.garm-operator.mercedes-benz.com \"ubuntu-image\" not found",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
+						{
+							Type:               string(conditions.ScopeReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "Successfully fetched Enterprise CR Ref",
+							Reason:             string(conditions.FetchingScopeRefSuccessReason),
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
 					},
 				},
 			},
@@ -1098,6 +1138,9 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
+					Finalizers: []string{
+						key.PoolFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.PoolSpec{
 					GitHubScopeRef: corev1.TypedLocalObjectReference{
@@ -1168,6 +1211,13 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 							Reason:             string(conditions.FetchingImageRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "images.garm-operator.mercedes-benz.com \"ubuntu-image-not-existent\" not found",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+						{
+							Type:               string(conditions.ScopeReference),
+							Status:             metav1.ConditionTrue,
+							Message:            "Successfully fetched Enterprise CR Ref",
+							Reason:             string(conditions.FetchingScopeRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},

@@ -1,4 +1,4 @@
-apiVersion: garm-operator.mercedes-benz.com/v1alpha1
+apiVersion: garm-operator.mercedes-benz.com/v1beta1
 kind: Pool
 metadata:
   name: openstack-small-pool-enterprise
@@ -22,7 +22,7 @@ spec:
   tags:
     - linux-amd64-ubuntu
 ---
-apiVersion: garm-operator.mercedes-benz.com/v1alpha1
+apiVersion: garm-operator.mercedes-benz.com/v1beta1
 kind: Pool
 metadata:
   name: openstack-medium-pool-org
@@ -46,7 +46,7 @@ spec:
   tags:
     - linux-amd64-ubuntu
 ---
-apiVersion: garm-operator.mercedes-benz.com/v1alpha1
+apiVersion: garm-operator.mercedes-benz.com/v1beta1
 kind: Pool
 metadata:
   name: openstack-medium-pool-repo

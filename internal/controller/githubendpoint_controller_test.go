@@ -266,6 +266,9 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-github-endpoint",
 					Namespace: "default",
+					Finalizers: []string{
+						key.GitHubEndpointFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "new github endpoint",
@@ -375,6 +378,9 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
+					Finalizers: []string{
+						key.GitHubEndpointFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "",
@@ -436,6 +442,9 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
+					Finalizers: []string{
+						key.GitHubEndpointFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "existing-github-endpoint",
@@ -495,6 +504,9 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-endpoint",
 					Namespace: "default",
+					Finalizers: []string{
+						key.GitHubEndpointFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.GitHubEndpointSpec{
 					Description:   "existing-github-endpoint",

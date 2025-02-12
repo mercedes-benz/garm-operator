@@ -30,6 +30,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
+	"github.com/mercedes-benz/garm-operator/pkg/finalizers"
 	"github.com/mercedes-benz/garm-operator/pkg/secret"
 	"github.com/mercedes-benz/garm-operator/pkg/util"
 )
@@ -65,6 +66,11 @@ func (r *GitHubCredentialReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, nil
 	}
 
+	// ensure the finalizer
+	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, credentials, key.CredentialsFinalizerName); err != nil || finalizerAdded {
+		return ctrl.Result{}, err
+	}
+
 	credentialsClient := garmClient.NewCredentialsClient()
 
 	// Handle deleted credentials
@@ -78,11 +84,6 @@ func (r *GitHubCredentialReconciler) Reconcile(ctx context.Context, req ctrl.Req
 func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredential) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("credentials", credentials.Name)
-
-	// If the GitHubCredential doesn't have our finalizer, add it.
-	if err := r.ensureFinalizer(ctx, credentials); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// get credentials in garm db with resource name
 	garmGitHubCreds, err := r.getExistingCredentials(client, credentials.Name)
@@ -309,14 +310,6 @@ func (r *GitHubCredentialReconciler) getEndpointRef(ctx context.Context, credent
 		return endpoint, err
 	}
 	return endpoint, nil
-}
-
-func (r *GitHubCredentialReconciler) ensureFinalizer(ctx context.Context, credentials *garmoperatorv1beta1.GitHubCredential) error {
-	if !controllerutil.ContainsFinalizer(credentials, key.CredentialsFinalizerName) {
-		controllerutil.AddFinalizer(credentials, key.CredentialsFinalizerName)
-		return r.Update(ctx, credentials)
-	}
-	return nil
 }
 
 func (r *GitHubCredentialReconciler) findCredentialsForSecret(ctx context.Context, obj client.Object) []reconcile.Request {

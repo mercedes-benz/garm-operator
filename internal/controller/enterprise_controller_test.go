@@ -431,6 +431,9 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.EnterpriseSpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
@@ -566,6 +569,9 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-enterprise",
 					Namespace: "default",
+					Finalizers: []string{
+						key.EnterpriseFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.EnterpriseSpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{

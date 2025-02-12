@@ -5,7 +5,7 @@ metadata:
 spec:
   webhookSecretRef:
     key: "webhookSecret"
-    name: "org-webhook-secret"
+    name: "repo-webhook-secret"
   credentialsRef:
     apiGroup: garm-operator.mercedes-benz.com
     kind: GitHubCredentials

@@ -30,6 +30,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
+	"github.com/mercedes-benz/garm-operator/pkg/finalizers"
 	"github.com/mercedes-benz/garm-operator/pkg/secret"
 )
 
@@ -64,6 +65,11 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	// ensure the finalizer
+	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, repository, key.RepositoryFinalizerName); err != nil || finalizerAdded {
+		return ctrl.Result{}, err
+	}
+
 	repositoryClient := garmClient.NewRepositoryClient()
 
 	// Handle deleted repositories
@@ -77,11 +83,6 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("repository", repository.Name)
-
-	// If the Repository doesn't have our finalizer, add it.
-	if err := r.ensureFinalizer(ctx, repository); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &repository.Spec.WebhookSecretRef, repository.Namespace)
 	if err != nil {
@@ -283,14 +284,6 @@ func (r *RepositoryReconciler) getCredentialsRef(ctx context.Context, repository
 		return creds, err
 	}
 	return creds, nil
-}
-
-func (r *RepositoryReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1beta1.Repository) error {
-	if !controllerutil.ContainsFinalizer(pool, key.RepositoryFinalizerName) {
-		controllerutil.AddFinalizer(pool, key.RepositoryFinalizerName)
-		return r.Update(ctx, pool)
-	}
-	return nil
 }
 
 func (r *RepositoryReconciler) findReposForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {
