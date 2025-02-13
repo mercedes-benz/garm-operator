@@ -30,6 +30,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
+	"github.com/mercedes-benz/garm-operator/pkg/finalizers"
 	"github.com/mercedes-benz/garm-operator/pkg/secret"
 )
 
@@ -65,6 +66,11 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	// ensure the finalizer
+	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, enterprise, key.EnterpriseFinalizerName); err != nil || finalizerAdded {
+		return ctrl.Result{}, err
+	}
+
 	enterpriseClient := garmClient.NewEnterpriseClient()
 
 	// Handle deleted enterprises
@@ -78,11 +84,6 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmClient.EnterpriseClient, enterprise *garmoperatorv1beta1.Enterprise) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("enterprise", enterprise.Name)
-
-	// If the Enterprise doesn't have our finalizer, add it.
-	if err := r.ensureFinalizer(ctx, enterprise); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace)
 	if err != nil {
@@ -284,14 +285,6 @@ func (r *EnterpriseReconciler) getCredentialsRef(ctx context.Context, enterprise
 		return creds, err
 	}
 	return creds, nil
-}
-
-func (r *EnterpriseReconciler) ensureFinalizer(ctx context.Context, enterprise *garmoperatorv1beta1.Enterprise) error {
-	if !controllerutil.ContainsFinalizer(enterprise, key.EnterpriseFinalizerName) {
-		controllerutil.AddFinalizer(enterprise, key.EnterpriseFinalizerName)
-		return r.Update(ctx, enterprise)
-	}
-	return nil
 }
 
 func (r *EnterpriseReconciler) findEnterprisesForCredentials(ctx context.Context, obj client.Object) []reconcile.Request {

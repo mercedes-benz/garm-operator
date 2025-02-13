@@ -387,6 +387,9 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-github-credential",
 					Namespace: "default",
+					Finalizers: []string{
+						key.CredentialsFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "new-github-credential",
@@ -582,6 +585,9 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "existing-github-credential",
 					Namespace: "default",
+					Finalizers: []string{
+						key.CredentialsFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "existing-github-credential",

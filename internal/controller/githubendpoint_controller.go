@@ -29,6 +29,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
+	"github.com/mercedes-benz/garm-operator/pkg/finalizers"
 	"github.com/mercedes-benz/garm-operator/pkg/secret"
 	"github.com/mercedes-benz/garm-operator/pkg/util"
 )
@@ -64,6 +65,11 @@ func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, nil
 	}
 
+	// ensure the finalizer
+	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, endpoint, key.GitHubEndpointFinalizerName); err != nil || finalizerAdded {
+		return ctrl.Result{}, err
+	}
+
 	endpointClient := garmClient.NewEndpointClient()
 
 	// Handle deleted endpoints
@@ -77,11 +83,6 @@ func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("endpoint", endpoint.Name)
-
-	// If the GitHubEndpoint doesn't have our finalizer, add it.
-	if err := r.ensureFinalizer(ctx, endpoint); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	// fetch CACertbundle from secret
 	caCertBundleSecret, err := r.handleCaCertBundleSecret(ctx, endpoint)
@@ -252,14 +253,6 @@ func (r *GitHubEndpointReconciler) handleCaCertBundleSecret(ctx context.Context,
 	}
 	conditions.MarkTrue(endpoint, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
 	return caCertBundleSecret, nil
-}
-
-func (r *GitHubEndpointReconciler) ensureFinalizer(ctx context.Context, endpoint *garmoperatorv1beta1.GitHubEndpoint) error {
-	if !controllerutil.ContainsFinalizer(endpoint, key.GitHubEndpointFinalizerName) {
-		controllerutil.AddFinalizer(endpoint, key.GitHubEndpointFinalizerName)
-		return r.Update(ctx, endpoint)
-	}
-	return nil
 }
 
 func (r *GitHubEndpointReconciler) findEndpointsForSecret(ctx context.Context, obj client.Object) []reconcile.Request {

@@ -34,6 +34,7 @@ import (
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/event"
+	"github.com/mercedes-benz/garm-operator/pkg/finalizers"
 	poolUtil "github.com/mercedes-benz/garm-operator/pkg/pools"
 	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/runners"
 	"github.com/mercedes-benz/garm-operator/pkg/tags"
@@ -73,6 +74,11 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
+	// ensure the finalizer
+	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, pool, key.PoolFinalizerName); err != nil || finalizerAdded {
+		return ctrl.Result{}, err
+	}
+
 	poolClient := garmClient.NewPoolClient()
 
 	instanceClient := garmClient.NewInstanceClient()
@@ -98,10 +104,6 @@ func (r *PoolReconciler) reconcileNormal(ctx context.Context, poolClient garmCli
 		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
 	}
 	conditions.MarkTrue(pool, conditions.ScopeReference, conditions.FetchingScopeRefSuccessReason, fmt.Sprintf("Successfully fetched %s CR Ref", pool.Spec.GitHubScopeRef.Kind))
-
-	if err := r.ensureFinalizer(ctx, pool); err != nil {
-		return r.handleUpdateError(ctx, pool, err, conditions.ReconcileErrorReason)
-	}
 
 	// pool status id has been set and id matches existing garm pool, so we know that the pool is persisted in garm and needs to be updated
 	if pool.Status.ID != "" && poolUtil.GarmPoolExists(poolClient, pool) {
@@ -320,14 +322,6 @@ func (r *PoolReconciler) handleSuccessfulUpdate(ctx context.Context, pool *garmo
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func (r *PoolReconciler) ensureFinalizer(ctx context.Context, pool *garmoperatorv1beta1.Pool) error {
-	if !controllerutil.ContainsFinalizer(pool, key.PoolFinalizerName) {
-		controllerutil.AddFinalizer(pool, key.PoolFinalizerName)
-		return r.Update(ctx, pool)
-	}
-	return nil
 }
 
 func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1beta1.Pool, imageTag string, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {

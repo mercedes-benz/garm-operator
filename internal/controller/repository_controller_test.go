@@ -443,6 +443,9 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
 					Namespace: "default",
+					Finalizers: []string{
+						key.RepositoryFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{
@@ -584,6 +587,9 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "new-repository",
 					Namespace: "default",
+					Finalizers: []string{
+						key.RepositoryFinalizerName,
+					},
 				},
 				Spec: garmoperatorv1beta1.RepositorySpec{
 					CredentialsRef: corev1.TypedLocalObjectReference{

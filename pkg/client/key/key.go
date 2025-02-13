@@ -11,5 +11,6 @@ const (
 	RunnerFinalizerName         = groupName + "/runner"
 	GitHubEndpointFinalizerName = groupName + "/endpoint"
 	CredentialsFinalizerName    = groupName + "/credentials"
+	ServerConfigFinalizerName   = groupName + "/serverconfig"
 	PausedAnnotation            = groupName + "/paused"
 )
