@@ -55,3 +55,7 @@ jobs:
         run: make release
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+
+      - name: Send http get to doc.crds.dev to index a new version
+        run: |
+          curl -sL https://doc.crds.dev/github.com/mercedes-benz/garm-operator@${{ github.event.release.tag_name }} | grep -A2 'class="container"'
