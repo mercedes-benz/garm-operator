@@ -10,11 +10,11 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     ignore:
       # Ignore k8s, controller-runtime and its transitives modules as they are upgraded manually.
       # we also have to update local kind cluster configuration (hack/kind-with-registry.sh)
