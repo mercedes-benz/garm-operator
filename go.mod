@@ -2,7 +2,6 @@
 module github.com/mercedes-benz/garm-operator
 
 go 1.24.0
-
 require (
 	github.com/cloudbase/garm v0.1.5
 	github.com/cloudbase/garm-provider-common v0.1.4
@@ -23,9 +22,9 @@ require (
 	go.uber.org/mock v0.5.0
 	golang.org/x/mod v0.24.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.29.14
-	k8s.io/apimachinery v0.29.14
-	k8s.io/client-go v0.29.14
+	k8s.io/api v0.29.15
+	k8s.io/apimachinery v0.29.15
+	k8s.io/client-go v0.29.15
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	sigs.k8s.io/controller-runtime v0.17.6
