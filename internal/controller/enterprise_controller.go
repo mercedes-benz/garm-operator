@@ -77,7 +77,7 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Initialize conditions to unknown if not set already
 	enterprise.InitializeConditions()
-	
+
 	// always update the status
 	defer func() {
 		if !reflect.DeepEqual(enterprise.Status, orig.Status) {
@@ -103,6 +103,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace)
 	if err != nil {
+		event.Error(r.Recorder, enterprise, err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(enterprise, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
 		return ctrl.Result{}, err
@@ -111,6 +112,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	credentials, err := r.getCredentialsRef(ctx, enterprise)
 	if err != nil {
+		event.Error(r.Recorder, enterprise, err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingCredentialsRefFailedReason, err.Error())
 		conditions.MarkFalse(enterprise, conditions.CredentialsReference, conditions.FetchingCredentialsRefFailedReason, err.Error())
 		return ctrl.Result{}, err
