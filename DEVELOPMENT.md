@@ -93,6 +93,6 @@ Clone the `garm-provider-k8s` repo:
    ```
 And follow this [guide](https://github.com/mercedes-benz/garm-provider-k8s/blob/main/DEVELOPMENT.md). But `instead` of the `make tilt-up` in the `garm-provider-k8s` repo, execute the folling command. Make sure you are in your `kind-garm-operator` kubernetes context:
    ```bash
-   $ RUNNER_IMAGE="localhost:5000/runner:linux-ubuntu-22.04-x86_64" make build copy docker-build docker-build-summerwind-runner && kubectl apply -k hack/local-development/kubernetes/
+   $ make build copy docker-build docker-build-summerwind-runner && kubectl apply -k hack/local-development/kubernetes/
    ```
 Essentially this does the same as the `make tilt-up` target in `garm-provider-k8s`, but in your local garm-operator cluster. Otherwise, a separate cluster will be spawned with the latest garm-operator release.
