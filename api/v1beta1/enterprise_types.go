@@ -44,6 +44,24 @@ type Enterprise struct {
 	Status EnterpriseStatus `json:"status,omitempty"`
 }
 
+func (e *Enterprise) InitializeConditions() {
+	if conditions.Get(e, conditions.ReadyCondition) == nil {
+		conditions.MarkUnknown(e, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(e, conditions.PoolManager) == nil {
+		conditions.MarkUnknown(e, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(e, conditions.SecretReference) == nil {
+		conditions.MarkUnknown(e, conditions.SecretReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(e, conditions.CredentialsReference) == nil {
+		conditions.MarkUnknown(e, conditions.CredentialsReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+}
+
 func (e *Enterprise) SetConditions(conditions []metav1.Condition) {
 	e.Status.Conditions = conditions
 }

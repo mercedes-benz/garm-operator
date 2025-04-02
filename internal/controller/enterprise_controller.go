@@ -47,7 +47,7 @@ type EnterpriseReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=enterprises/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",namespace=xxxxx,resources=secrets,verbs=get;list;watch;
 
-func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
 	enterprise := &garmoperatorv1beta1.Enterprise{}
@@ -59,6 +59,8 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		return ctrl.Result{}, err
 	}
+
+	orig := enterprise.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(enterprise) {
@@ -72,6 +74,20 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	enterpriseClient := garmClient.NewEnterpriseClient()
+
+	// Initialize conditions to unknown if not set already
+	enterprise.InitializeConditions()
+	
+	// always update the status
+	defer func() {
+		if !reflect.DeepEqual(enterprise.Status, orig.Status) {
+			if err := r.Status().Update(ctx, enterprise); err != nil {
+				log.Error(err, "failed to update status")
+				res = ctrl.Result{Requeue: true}
+				retErr = err
+			}
+		}
+	}()
 
 	// Handle deleted enterprises
 	if !enterprise.DeletionTimestamp.IsZero() {
@@ -89,13 +105,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	if err != nil {
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(enterprise, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkUnknown(enterprise, conditions.CredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
-		if conditions.Get(enterprise, conditions.PoolManager) == nil {
-			conditions.MarkUnknown(enterprise, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
-		}
-		if err := r.Status().Update(ctx, enterprise); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 	conditions.MarkTrue(enterprise, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
@@ -104,12 +113,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	if err != nil {
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingCredentialsRefFailedReason, err.Error())
 		conditions.MarkFalse(enterprise, conditions.CredentialsReference, conditions.FetchingCredentialsRefFailedReason, err.Error())
-		if conditions.Get(enterprise, conditions.PoolManager) == nil {
-			conditions.MarkUnknown(enterprise, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
-		}
-		if err := r.Status().Update(ctx, enterprise); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 	conditions.MarkTrue(enterprise, conditions.CredentialsReference, conditions.FetchingCredentialsRefSuccessReason, "")
@@ -118,9 +121,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	if err != nil {
 		event.Error(r.Recorder, enterprise, err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, enterprise); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -130,9 +130,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 		if err != nil {
 			event.Error(r.Recorder, enterprise, err.Error())
 			conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-			if err := r.Status().Update(ctx, enterprise); err != nil {
-				return ctrl.Result{}, err
-			}
 			return ctrl.Result{}, err
 		}
 	}
@@ -146,9 +143,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	if err != nil {
 		event.Error(r.Recorder, enterprise, err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, enterprise); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -160,10 +154,6 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	if !garmEnterprise.PoolManagerStatus.IsRunning {
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.PoolManagerFailureReason, "Pool Manager is not running")
 		conditions.MarkFalse(enterprise, conditions.PoolManager, conditions.PoolManagerFailureReason, garmEnterprise.PoolManagerStatus.FailureReason)
-	}
-
-	if err := r.Status().Update(ctx, enterprise); err != nil {
-		return ctrl.Result{}, err
 	}
 
 	log.Info("reconciling enterprise successfully done")
@@ -243,9 +233,6 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmC
 	log.Info("starting enterprise deletion")
 	event.Deleting(r.Recorder, enterprise, "starting enterprise deletion")
 	conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingEnterpriseMsg)
-	if err := r.Status().Update(ctx, enterprise); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	err := client.DeleteEnterprise(
 		enterprises.NewDeleteEnterpriseParams().
@@ -255,9 +242,6 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmC
 		log.V(1).Info(fmt.Sprintf("client.DeleteEnterprise error: %s", err))
 		event.Error(r.Recorder, enterprise, err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, enterprise); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 

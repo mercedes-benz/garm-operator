@@ -11,6 +11,7 @@ import (
 )
 
 type ConditionStatusObject interface {
+	InitializeConditions()
 	SetConditions(conditions []metav1.Condition)
 	GetConditions() []metav1.Condition
 }
