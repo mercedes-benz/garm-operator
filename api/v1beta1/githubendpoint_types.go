@@ -38,6 +38,8 @@ type GitHubEndpoint struct {
 	Status GitHubEndpointStatus `json:"status,omitempty"`
 }
 
+func (e *GitHubEndpoint) InitializeConditions() {}
+
 func (e *GitHubEndpoint) SetConditions(conditions []metav1.Condition) {
 	e.Status.Conditions = conditions
 }

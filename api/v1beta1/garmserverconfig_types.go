@@ -47,6 +47,8 @@ type GarmServerConfig struct {
 	Status GarmServerConfigStatus `json:"status,omitempty"`
 }
 
+func (g *GarmServerConfig) InitializeConditions() {}
+
 func (g *GarmServerConfig) SetConditions(conditions []metav1.Condition) {
 	g.Status.Conditions = conditions
 }

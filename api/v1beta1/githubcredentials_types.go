@@ -60,6 +60,8 @@ type GitHubCredential struct {
 	Status GitHubCredentialStatus `json:"status,omitempty"`
 }
 
+func (g *GitHubCredential) InitializeConditions() {}
+
 func (g *GitHubCredential) SetConditions(conditions []metav1.Condition) {
 	g.Status.Conditions = conditions
 }
