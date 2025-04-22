@@ -4,6 +4,7 @@ package v1beta1
 
 import (
 	"github.com/cloudbase/garm/params"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -60,7 +61,19 @@ type GitHubCredential struct {
 	Status GitHubCredentialStatus `json:"status,omitempty"`
 }
 
-func (g *GitHubCredential) InitializeConditions() {}
+func (g *GitHubCredential) InitializeConditions() {
+	if conditions.Get(g, conditions.ReadyCondition) == nil {
+		conditions.MarkUnknown(g, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(g, conditions.EndpointReference) == nil {
+		conditions.MarkUnknown(g, conditions.EndpointReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(g, conditions.SecretReference) == nil {
+		conditions.MarkUnknown(g, conditions.SecretReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+}
 
 func (g *GitHubCredential) SetConditions(conditions []metav1.Condition) {
 	g.Status.Conditions = conditions
