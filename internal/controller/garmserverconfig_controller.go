@@ -5,6 +5,8 @@ package controller
 import (
 	"context"
 	"errors"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
+	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"reflect"
 
 	garmapiserverparams "github.com/cloudbase/garm/apiserver/params"
@@ -37,7 +39,7 @@ type GarmServerConfigReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=garmserverconfigs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=garmserverconfigs/finalizers,verbs=update
 
-func (r *GarmServerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GarmServerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 	log.Info("Reconciling GarmServerConfig")
 
@@ -52,11 +54,26 @@ func (r *GarmServerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
+	orig := garmServerConfig.DeepCopy()
+
 	// Ignore objects that are paused
 	if annotations.IsPaused(garmServerConfig) {
 		log.Info("Reconciliation is paused for GarmServerConfig")
 		return ctrl.Result{}, nil
 	}
+
+	garmServerConfig.InitializeConditions()
+
+	// always update the status
+	defer func() {
+		if !reflect.DeepEqual(garmServerConfig.Status, orig.Status) {
+			if err := r.Status().Update(ctx, garmServerConfig); err != nil {
+				log.Error(err, "failed to update status")
+				res = ctrl.Result{Requeue: true}
+				retErr = err
+			}
+		}
+	}()
 
 	return r.reconcileNormal(ctx, controllerClient, garmServerConfig)
 }
@@ -73,13 +90,23 @@ func (r *GarmServerConfigReconciler) reconcileNormal(ctx context.Context, contro
 	// sync applied spec with controller info in garm
 	newControllerInfo, err := r.updateControllerInfo(ctx, controllerClient, garmServerConfig, &controllerInfo)
 	if err != nil {
+		log.Error(err, "Failed to update controller info")
+		event.Error(r.Recorder, garmServerConfig, err.Error())
+		conditions.MarkFalse(garmServerConfig, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
 
 	// update CR with new state from garm
-	if err := r.updateGarmServerConfigStatus(ctx, newControllerInfo, garmServerConfig); err != nil {
-		return ctrl.Result{}, err
-	}
+	garmServerConfig.Status.ControllerID = newControllerInfo.ControllerID.String()
+	garmServerConfig.Status.Hostname = newControllerInfo.Hostname
+	garmServerConfig.Status.MetadataURL = newControllerInfo.MetadataURL
+	garmServerConfig.Status.CallbackURL = newControllerInfo.CallbackURL
+	garmServerConfig.Status.WebhookURL = newControllerInfo.WebhookURL
+	garmServerConfig.Status.ControllerWebhookURL = newControllerInfo.ControllerWebhookURL
+	garmServerConfig.Status.MinimumJobAgeBackoff = newControllerInfo.MinimumJobAgeBackoff
+	garmServerConfig.Status.Version = newControllerInfo.Version
+
+	conditions.MarkTrue(garmServerConfig, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
 
 	return ctrl.Result{}, nil
 }
@@ -107,50 +134,6 @@ func (r *GarmServerConfigReconciler) updateControllerInfo(ctx context.Context, c
 		return nil, err
 	}
 	return &response.Payload, nil
-}
-
-func (r *GarmServerConfigReconciler) updateGarmServerConfigStatus(ctx context.Context, controllerInfo *params.ControllerInfo, garmServerConfigCR *garmoperatorv1beta1.GarmServerConfig) error {
-	log := log.FromContext(ctx)
-
-	if !r.needsStatusUpdate(controllerInfo, garmServerConfigCR) {
-		log.Info("GarmServerConfig CR up to date")
-		return nil
-	}
-
-	log.Info("Updating GarmServerConfig CR")
-	garmServerConfigStatus := garmoperatorv1beta1.GarmServerConfigStatus{
-		ControllerID:         controllerInfo.ControllerID.String(),
-		Hostname:             controllerInfo.Hostname,
-		MetadataURL:          controllerInfo.MetadataURL,
-		CallbackURL:          controllerInfo.CallbackURL,
-		WebhookURL:           controllerInfo.WebhookURL,
-		ControllerWebhookURL: controllerInfo.ControllerWebhookURL,
-		MinimumJobAgeBackoff: controllerInfo.MinimumJobAgeBackoff,
-		Version:              controllerInfo.Version,
-	}
-
-	garmServerConfigCR.Status = garmServerConfigStatus
-	err := r.Status().Update(ctx, garmServerConfigCR)
-	if err != nil {
-		log.Error(err, "Failed to update GarmServerConfig CR")
-		return err
-	}
-	return nil
-}
-
-func (r *GarmServerConfigReconciler) needsStatusUpdate(controllerInfo *params.ControllerInfo, garmServerConfigCR *garmoperatorv1beta1.GarmServerConfig) bool {
-	tempStatus := garmoperatorv1beta1.GarmServerConfigStatus{
-		ControllerID:         controllerInfo.ControllerID.String(),
-		Hostname:             controllerInfo.Hostname,
-		MetadataURL:          controllerInfo.MetadataURL,
-		CallbackURL:          controllerInfo.CallbackURL,
-		WebhookURL:           controllerInfo.WebhookURL,
-		ControllerWebhookURL: controllerInfo.ControllerWebhookURL,
-		MinimumJobAgeBackoff: controllerInfo.MinimumJobAgeBackoff,
-		Version:              controllerInfo.Version,
-	}
-
-	return !reflect.DeepEqual(garmServerConfigCR.Status, tempStatus)
 }
 
 func (r *GarmServerConfigReconciler) getControllerInfo(client garmclient.ControllerClient) (params.ControllerInfo, error) {
