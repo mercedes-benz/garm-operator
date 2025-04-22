@@ -50,11 +50,11 @@ type RunnerStatus struct {
 	// for this instance.
 	Addresses []commonParams.Address `json:"addresses,omitempty"`
 
-	// Status is the status of the instance inside the provider (eg: running, stopped, etc)
-	Status commonParams.InstanceStatus `json:"status,omitempty"`
+	// Status is the runner status as it appears on GitHub. (idle, pending, ...)
+	Status params.RunnerStatus `json:"status,omitempty"`
 
-	// RunnerStatus is the github runner status as it appears on GitHub.
-	InstanceStatus params.RunnerStatus `json:"instanceStatus,omitempty"`
+	// InstanceStatus of the instance inside the respective cloud provider of the physical instance (eg: running, stopped, ...)
+	InstanceStatus commonParams.InstanceStatus `json:"instanceStatus,omitempty"`
 
 	// PoolID is the ID of the garm pool to which a runner belongs.
 	PoolID string `json:"poolId,omitempty"`

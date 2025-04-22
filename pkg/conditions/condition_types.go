@@ -53,6 +53,13 @@ const (
 	FetchingEndpointRefFailedReason  ConditionReason = "FetchingEndpointRefFailed"
 )
 
+// Runner Conditions
+const (
+	RunnerReadyReason    ConditionReason = "RunnerIdleAndRunning"
+	RunnerNotReadyReason ConditionReason = "RunnerNotReadyYet"
+	RunnerErrorReason    ConditionReason = "RunnerProvisioningError"
+)
+
 const (
 	GarmServerNotReconciledYetMsg  string = "GARM server not reconciled yet"
 	CredentialsNotReconciledYetMsg string = "credentials not reconciled yet"
@@ -61,5 +68,9 @@ const (
 	DeletingRepoMsg                string = "Deleting repository"
 	DeletingPoolMsg                string = "Deleting pool"
 	DeletingEndpointMsg            string = "Deleting endpoint"
-	DeletingCredentialsMsg         string = "Deleting credentials" // #nosec G101
+	DeletingCredentialsMsg         string = "Deleting credentials"              // #nosec G101
+	DeletingRunnerMsg              string = "Deleting runner"                   // #nosec G101
+	RunnerIdleAndRunningMsg        string = "Runner is idle and running"        // #nosec G101
+	RunnerProvisioningFailedMsg    string = "Provisioning runner failed"        // #nosec G101
+	RunnerNotReadyYetMsg           string = "Runner is still being provisioned" // #nosec G101
 )
