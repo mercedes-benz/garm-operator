@@ -48,7 +48,7 @@ type GitHubCredentialReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=githubcredentials/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",namespace=xxxxx,resources=secrets,verbs=get;list;watch;
 
-func (r *GitHubCredentialReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GitHubCredentialReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
 	credentials := &garmoperatorv1beta1.GitHubCredential{}
@@ -59,6 +59,8 @@ func (r *GitHubCredentialReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 		return ctrl.Result{}, err
 	}
+
+	orig := credentials.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(credentials) {
@@ -72,6 +74,20 @@ func (r *GitHubCredentialReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	credentialsClient := garmClient.NewCredentialsClient()
+
+	// Initialize conditions to unknown if not set already
+	credentials.InitializeConditions()
+
+	// always update the status
+	defer func() {
+		if !reflect.DeepEqual(credentials.Status, orig.Status) {
+			if err := r.Status().Update(ctx, credentials); err != nil {
+				log.Error(err, "failed to update status")
+				res = ctrl.Result{Requeue: true}
+				retErr = err
+			}
+		}
+	}()
 
 	// Handle deleted credentials
 	if !credentials.DeletionTimestamp.IsZero() {
@@ -90,9 +106,6 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	if err != nil {
 		event.Error(r.Recorder, credentials, err.Error())
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, credentials); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -101,9 +114,6 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	if err != nil {
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.FetchingEndpointRefFailedReason, err.Error())
 		conditions.MarkFalse(credentials, conditions.EndpointReference, conditions.FetchingEndpointRefFailedReason, err.Error())
-		if err := r.Status().Update(ctx, credentials); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 	conditions.MarkTrue(credentials, conditions.EndpointReference, conditions.FetchingEndpointRefSuccessReason, "Successfully fetched GitHubEndpoint CR Ref")
@@ -113,9 +123,6 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	if err != nil {
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(credentials, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
-		if err := r.Status().Update(ctx, credentials); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 	conditions.MarkTrue(credentials, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
@@ -126,9 +133,6 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 		if err != nil {
 			event.Error(r.Recorder, credentials, err.Error())
 			conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-			if err := r.Status().Update(ctx, credentials); err != nil {
-				return ctrl.Result{}, err
-			}
 			return ctrl.Result{}, err
 		}
 	}
@@ -138,9 +142,6 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	if err != nil {
 		event.Error(r.Recorder, credentials, err.Error())
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, credentials); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -149,9 +150,6 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	if err != nil {
 		event.Error(r.Recorder, credentials, err.Error())
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, credentials); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 	garmGitHubCreds = res.Payload
@@ -168,9 +166,6 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	credentials.Status.Enterprises = enterprises
 
 	conditions.MarkTrue(credentials, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
-	if err := r.Status().Update(ctx, credentials); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	log.Info("reconciling credentials successfully done")
 	return ctrl.Result{}, nil
