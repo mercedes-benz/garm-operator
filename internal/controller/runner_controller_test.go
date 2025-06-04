@@ -109,8 +109,9 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 
 			// create a fake reconciler
 			reconciler := &RunnerReconciler{
-				Client:   client,
-				Recorder: record.NewFakeRecorder(3),
+				Client:        client,
+				Recorder:      record.NewFakeRecorder(3),
+				ReconcileChan: make(chan event.GenericEvent, 1),
 			}
 
 			mockInstanceClient := mock.NewMockInstanceClient(mockCtrl)
@@ -252,8 +253,9 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 
 			// create a fake reconciler
 			reconciler := &RunnerReconciler{
-				Client:   client,
-				Recorder: record.NewFakeRecorder(3),
+				Client:        client,
+				Recorder:      record.NewFakeRecorder(3),
+				ReconcileChan: make(chan event.GenericEvent, 1),
 			}
 
 			mockInstanceClient := mock.NewMockInstanceClient(mockCtrl)
@@ -427,28 +429,28 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 
 			// create a fake reconciler
 			reconciler := &RunnerReconciler{
-				Client:   client,
-				Recorder: record.NewFakeRecorder(3),
+				Client:        client,
+				Recorder:      record.NewFakeRecorder(3),
+				ReconcileChan: make(chan event.GenericEvent, 1),
 			}
 
 			mockInstanceClient := mock.NewMockInstanceClient(mockCtrl)
 			tt.expectGarmRequest(mockInstanceClient.EXPECT())
 
 			config.Config.Operator.WatchNamespace = "test-namespace"
-			fakeChan := make(chan event.GenericEvent)
 
 			go func() {
-				err = reconciler.EnqueueRunnerInstances(context.Background(), mockInstanceClient, fakeChan)
+				err = reconciler.EnqueueRunnerInstances(context.Background(), mockInstanceClient)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("RunnerReconciler.EnqueueRunnerInstances() error = %v, wantErr %v", err, tt.wantErr)
 					return
 				}
-				close(fakeChan)
+				close(reconciler.ReconcileChan)
 			}()
 
 			// receive events in fake channel and compare if expected event occurs by filtering received events in fake channel by expected event
 			var eventCount int
-			for obj := range fakeChan {
+			for obj := range reconciler.ReconcileChan {
 				t.Logf("Received Event: %s", obj.Object.GetName())
 
 				filtered := slices.CompactFunc(tt.expectedEvents, func(i, j event.GenericEvent) bool {
