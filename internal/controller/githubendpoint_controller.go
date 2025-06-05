@@ -47,7 +47,7 @@ type GitHubEndpointReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=githubendpoints/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",namespace=xxxxx,resources=secrets,verbs=get;list;watch;
 
-func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
 	endpoint := &garmoperatorv1beta1.GitHubEndpoint{}
@@ -58,6 +58,8 @@ func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 		return ctrl.Result{}, err
 	}
+
+	orig := endpoint.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(endpoint) {
@@ -71,6 +73,20 @@ func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	endpointClient := garmClient.NewEndpointClient()
+
+	// Initialize conditions to unknown if not set already
+	endpoint.InitializeConditions()
+
+	// always update the status
+	defer func() {
+		if !reflect.DeepEqual(endpoint.Status, orig.Status) {
+			if err := r.Status().Update(ctx, endpoint); err != nil {
+				log.Error(err, "failed to update status")
+				res = ctrl.Result{Requeue: true}
+				retErr = err
+			}
+		}
+	}()
 
 	// Handle deleted endpoints
 	if !endpoint.DeletionTimestamp.IsZero() {
@@ -95,9 +111,6 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 	if err != nil {
 		event.Error(r.Recorder, endpoint, err.Error())
 		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, endpoint); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -107,9 +120,6 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 		if err != nil {
 			event.Error(r.Recorder, endpoint, err.Error())
 			conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-			if err := r.Status().Update(ctx, endpoint); err != nil {
-				return ctrl.Result{}, err
-			}
 			return ctrl.Result{}, err
 		}
 	}
@@ -119,20 +129,13 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 	if err != nil {
 		event.Error(r.Recorder, endpoint, err.Error())
 		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, endpoint); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
 	// set and update endpoint status
 	conditions.MarkTrue(endpoint, conditions.ReadyCondition, conditions.SuccessfulReconcileReason, "")
 	log.Info("reconciling endpoint successfully done", "endpoint", garmEndpoint.Name)
-	if err := r.Status().Update(ctx, endpoint); err != nil {
-		return ctrl.Result{}, err
-	}
 
-	log.Info("reconciling endpoint successfully done")
 	return ctrl.Result{}, nil
 }
 
@@ -206,9 +209,6 @@ func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client g
 	log.Info("starting endpoint deletion")
 	event.Deleting(r.Recorder, endpoint, "starting endpoint deletion")
 	conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingEndpointMsg)
-	if err := r.Status().Update(ctx, endpoint); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	err := client.DeleteEndpoint(
 		endpoints.NewDeleteGithubEndpointParams().
@@ -218,9 +218,6 @@ func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client g
 		log.V(1).Info(fmt.Sprintf("client.DeleteEndpoint error: %s", err))
 		event.Error(r.Recorder, endpoint, err.Error())
 		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, endpoint); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -246,9 +243,6 @@ func (r *GitHubEndpointReconciler) handleCaCertBundleSecret(ctx context.Context,
 	if err != nil {
 		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(endpoint, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
-		if err := r.Status().Update(ctx, endpoint); err != nil {
-			return "", err
-		}
 		return "", err
 	}
 	conditions.MarkTrue(endpoint, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
