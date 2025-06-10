@@ -35,8 +35,9 @@ import (
 // RunnerReconciler reconciles a Runner object
 type RunnerReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Scheme        *runtime.Scheme
+	Recorder      record.EventRecorder
+	ReconcileChan chan event.GenericEvent
 }
 
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=runners,verbs=get;list;watch;create;update;patch;delete
@@ -192,30 +193,26 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager, eventChan chan event.GenericEvent, options controller.Options) error {
-	c, err := ctrl.NewControllerManagedBy(mgr).
+func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager, options controller.Options) error {
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&garmoperatorv1beta1.Runner{}).
 		WithOptions(options).
-		Build(r)
-	if err != nil {
-		return err
-	}
-
-	return c.Watch(&source.Channel{Source: eventChan}, &handler.EnqueueRequestForObject{})
+		WatchesRawSource(source.Channel(r.ReconcileChan, &handler.EnqueueRequestForObject{})).
+		Complete(r)
 }
 
-func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan chan event.GenericEvent) {
+func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context) {
 	log := log.FromContext(ctx)
 	ticker := time.NewTicker(config.Config.Operator.SyncRunnersInterval)
 	for {
 		select {
 		case <-ctx.Done():
 			log.Info("Closing event channel for runners...")
-			close(eventChan)
+			close(r.ReconcileChan)
 			return
 		case <-ticker.C:
 			instanceClient := garmClient.NewInstanceClient()
-			err := r.EnqueueRunnerInstances(ctx, instanceClient, eventChan)
+			err := r.EnqueueRunnerInstances(ctx, instanceClient)
 			if err != nil {
 				log.Error(err, "Failed polling runner instances")
 			}
@@ -223,7 +220,7 @@ func (r *RunnerReconciler) PollRunnerInstances(ctx context.Context, eventChan ch
 	}
 }
 
-func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, instanceClient garmClient.InstanceClient, eventChan chan event.GenericEvent) error {
+func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, instanceClient garmClient.InstanceClient) error {
 	pools, err := r.fetchPools(ctx)
 	if err != nil {
 		return err
@@ -242,11 +239,11 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, instanceC
 	}
 
 	// triggers controller to reconcile based on instances in garm db
-	enqeueRunnerEvents(garmRunnerInstances, eventChan)
+	r.enqeueRunnerEvents(garmRunnerInstances)
 	return nil
 }
 
-func enqeueRunnerEvents(garmRunnerInstances params.Instances, eventChan chan event.GenericEvent) {
+func (r *RunnerReconciler) enqeueRunnerEvents(garmRunnerInstances params.Instances) {
 	for _, runner := range garmRunnerInstances {
 		runnerObj := garmoperatorv1beta1.Runner{
 			ObjectMeta: metav1.ObjectMeta{
@@ -259,7 +256,7 @@ func enqeueRunnerEvents(garmRunnerInstances params.Instances, eventChan chan eve
 			Object: &runnerObj,
 		}
 
-		eventChan <- e
+		r.ReconcileChan <- e
 	}
 }
 
