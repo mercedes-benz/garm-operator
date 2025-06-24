@@ -18,6 +18,8 @@ dockers:
       - "ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }}"
       - "ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:latest"
     dockerfile: release.Dockerfile
+    extra_files:
+      - tmp/3RD_PARTY_LICENSES.txt
 
 archives:
   - format: tar.gz
