@@ -122,7 +122,7 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res
 	// sync garm runner status back to RunnerCR
 	err = r.updateRunnerStatus(ctx, runner, garmRunner)
 
-	return ctrl.Result{RequeueAfter: time.Second * 5}, err
+	return ctrl.Result{}, err
 }
 
 func (r *RunnerReconciler) createRunnerCR(ctx context.Context, runnerCR *garmoperatorv1beta1.Runner, garmRunner *params.Instance, namespace string) (ctrl.Result, error) {
@@ -280,16 +280,35 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, instanceC
 		return err
 	}
 
-	// triggers controller to reconcile based on instances in garm db
-	r.enqeueRunnerEvents(garmRunnerInstances)
+	runnerCRList := &garmoperatorv1beta1.RunnerList{}
+	err = r.List(ctx, runnerCRList)
+	if err != nil {
+		return err
+	}
+
+	var runnerCRNameList []string
+	for _, runner := range runnerCRList.Items {
+		runnerCRNameList = append(runnerCRNameList, runner.Name)
+	}
+
+	var runnerInstanceNameList []string
+	for _, runner := range garmRunnerInstances {
+		runnerInstanceNameList = append(runnerInstanceNameList, strings.ToLower(runner.Name))
+	}
+
+	runnersToDelete := getRunnerDiff(runnerCRNameList, runnerInstanceNameList)
+
+	runnersToEnqueue := append(runnerInstanceNameList, runnersToDelete...)
+
+	r.enqeueRunnerEvents(runnersToEnqueue)
 	return nil
 }
 
-func (r *RunnerReconciler) enqeueRunnerEvents(garmRunnerInstances params.Instances) {
-	for _, runner := range garmRunnerInstances {
+func (r *RunnerReconciler) enqeueRunnerEvents(runnerNames []string) {
+	for _, runner := range runnerNames {
 		runnerObj := garmoperatorv1beta1.Runner{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      strings.ToLower(runner.Name),
+				Name:      strings.ToLower(runner),
 				Namespace: config.Config.Operator.WatchNamespace,
 			},
 		}
@@ -346,4 +365,20 @@ func (r *RunnerReconciler) runnerSpecsEqual(runner garmoperatorv1beta1.Runner, g
 	}
 
 	return reflect.DeepEqual(runner.Status, tmpRunnerStatus)
+}
+
+func getRunnerDiff(runnerCRs, garmRunners []string) []string {
+	cache := make(map[string]struct{})
+	var diff []string
+
+	for _, runner := range garmRunners {
+		cache[runner] = struct{}{}
+	}
+
+	for _, runnerCR := range runnerCRs {
+		if _, found := cache[runnerCR]; !found {
+			diff = append(diff, runnerCR)
+		}
+	}
+	return diff
 }
