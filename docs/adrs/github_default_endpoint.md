@@ -3,7 +3,7 @@
 ---
 date: 2024-11-20
 desc: Reflection of the default GitHub endpoint
-state: accepted
+state: deprecated
 ---
 <!--
 What is the status, such as proposed, accepted, rejected, deprecated, superseded, etc.?
@@ -46,3 +46,7 @@ The `GitHubEndpoint` is referenced in the `GitHubCredential` object.
 ## Decision Outcome
 
 The validation rules in the `CRD` blocks the creation of a `GitHubEndpoint` object with the name `github.com`.
+
+> ![IMPORTANT]
+> With [PR #412](https://github.com/cloudbase/garm/pull/412) `garm` allowed the mutation of the default GitHub API endpoint. This means that the `GitHubEndpoint` object with the name `github.com` can be created and updated.
+> Therefore the restriction in the `CRD` is removed and the `GitHubEndpoint` object with the name `github.com` can be created and updated.
