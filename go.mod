@@ -21,7 +21,7 @@ require (
 	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.2
-	golang.org/x/mod v0.25.0
+	golang.org/x/mod v0.26.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.31.0
 	k8s.io/apimachinery v0.31.0
