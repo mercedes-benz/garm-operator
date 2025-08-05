@@ -26,39 +26,47 @@ func (i *Image) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 //+kubebuilder:webhook:path=/validate-garm-operator-mercedes-benz-com-v1beta1-image,mutating=false,failurePolicy=fail,sideEffects=None,groups=garm-operator.mercedes-benz.com,resources=images,verbs=delete,versions=v1beta1,name=validate.image.garm-operator.mercedes-benz.com,admissionReviewVersions=v1
 
-var _ webhook.Validator = &Image{}
+type ImageValidator struct {
+}
+
+var _ webhook.CustomValidator = &ImageValidator{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (i *Image) ValidateCreate() (admission.Warnings, error) {
-	imagelog.Info("validate create", "name", i.Name, "namespace", i.Namespace)
+func (i *ImageValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (i *Image) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
-	imagelog.Info("validate update", "name", i.Name, "namespace", i.Namespace)
+func (i *ImageValidator) ValidateUpdate(ctx context.Context, _ runtime.Object, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (i *Image) ValidateDelete() (admission.Warnings, error) {
-	imagelog.Info("validate delete", "name", i.Name, "namespace", i.Namespace)
+func (i *ImageValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	var msg string
 
-	pools, err := i.attachedPools(context.Background())
+	image, ok := obj.(*Image)
+	if !ok {
+		msg = fmt.Sprintf("expected Image object, got %T", obj)
+		return nil, apierrors.NewBadRequest(msg)
+	}
+
+	imagelog.Info("validate delete", "name", image.Name, "namespace", image.Namespace)
+
+	pools, err := attachedPools(context.Background(), image.Name)
 	if err != nil {
-		msg = fmt.Sprintf("imagename=%s with tag=%s can not be deleted, failed to fetch pools: %s", i.Name, i.Spec.Tag, err.Error())
+		msg = fmt.Sprintf("imagename=%s with tag=%s can not be deleted, failed to fetch pools: %s", image.Name, image.Spec.Tag, err.Error())
 		return nil, apierrors.NewBadRequest(msg)
 	}
 
 	if len(pools) > 0 {
-		msg = fmt.Sprintf("imagename=%s with tag=%s can not be deleted, as it is still referenced by at least one pool", i.Name, i.Spec.Tag)
+		msg = fmt.Sprintf("imagename=%s with tag=%s can not be deleted, as it is still referenced by at least one pool", image.Name, image.Spec.Tag)
 		return nil, apierrors.NewBadRequest(msg)
 	}
 	return nil, nil
 }
 
-func (i *Image) attachedPools(ctx context.Context) ([]Pool, error) {
+func attachedPools(ctx context.Context, imageName string) ([]Pool, error) {
 	var pools PoolList
 	var result []Pool
 	if err := c.List(ctx, &pools); err != nil {
@@ -68,7 +76,7 @@ func (i *Image) attachedPools(ctx context.Context) ([]Pool, error) {
 	for _, pool := range pools.Items {
 		// we do not care about pools that are already deleted
 		if pool.GetDeletionTimestamp() == nil {
-			if pool.Spec.ImageName == i.Name {
+			if pool.Spec.ImageName == imageName {
 				result = append(result, pool)
 			}
 		}

@@ -3,6 +3,7 @@
 package v1beta1
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -33,15 +34,24 @@ func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 //+kubebuilder:webhook:path=/validate-garm-operator-mercedes-benz-com-v1beta1-pool,mutating=false,failurePolicy=fail,sideEffects=None,groups=garm-operator.mercedes-benz.com,resources=pools,verbs=create;update,versions=v1beta1,name=validate.pool.garm-operator.mercedes-benz.com,admissionReviewVersions=v1
 
-var _ webhook.Validator = &Pool{}
+type PoolValidator struct {
+}
+
+var _ webhook.CustomValidator = &PoolValidator{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Pool) ValidateCreate() (admission.Warnings, error) {
-	poollog.Info("validate create request", "name", r.Name, "namespace", r.Namespace)
+func (r *PoolValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 
-	if err := r.validateExtraSpec(); err != nil {
+	pool, ok := obj.(*Pool)
+	if !ok {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected Pool object, got %T", obj))
+	}
+
+	poollog.Info("validate create request", "name", pool.Name, "namespace", pool.Namespace)
+
+	if err := validateExtraSpec(pool); err != nil {
 		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-			r.Name,
+			pool.Name,
 			field.ErrorList{err},
 		)
 	}
@@ -50,66 +60,75 @@ func (r *Pool) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Pool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	poollog.Info("validate update", "name", r.Name, "namespace", r.Namespace)
+func (r *PoolValidator) ValidateUpdate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) (admission.Warnings, error) {
 
-	oldCRD, ok := old.(*Pool)
+	pool, ok := obj.(*Pool)
+	if !ok {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected Pool object, got %T", obj))
+	}
+
+	poollog.Info("validate update", "name", pool.Name, "namespace", pool.Namespace)
+
+	oldCRD, ok := oldObj.(*Pool)
 	if !ok {
 		return nil, apierrors.NewBadRequest("failed to convert runtime.Object to Pool CRD")
 	}
 
 	// if the object is being deleted, skip validation
-	if r.GetDeletionTimestamp() == nil {
-		if err := r.validateExtraSpec(); err != nil {
-			return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-				r.Name,
-				field.ErrorList{err},
-			)
-		}
+	if err := validateExtraSpec(pool); err != nil {
+		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+			pool.Name,
+			field.ErrorList{err},
+		)
+	}
 
-		if err := r.validateProviderName(oldCRD); err != nil {
-			return nil, apierrors.NewInvalid(
-				schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-				r.Name,
-				field.ErrorList{err},
-			)
-		}
+	if err := validateProviderName(pool, oldCRD); err != nil {
+		return nil, apierrors.NewInvalid(
+			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+			pool.Name,
+			field.ErrorList{err},
+		)
+	}
 
-		if err := r.validateGitHubScope(oldCRD); err != nil {
-			return nil, apierrors.NewInvalid(
-				schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
-				r.Name,
-				field.ErrorList{err},
-			)
-		}
+	if err := validateGitHubScope(pool, oldCRD); err != nil {
+		return nil, apierrors.NewInvalid(
+			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+			pool.Name,
+			field.ErrorList{err},
+		)
 	}
 
 	return nil, nil
 }
 
-func (r *Pool) validateProviderName(old *Pool) *field.Error {
-	poollog.Info("validate spec.providerName", "spec.providerName", r.Spec.ProviderName)
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+func (r *PoolValidator) ValidateDelete(ctx context.Context, _ runtime.Object) (admission.Warnings, error) {
+	return nil, nil
+}
+
+func validateProviderName(pool, oldPool *Pool) *field.Error {
+	poollog.Info("validate spec.providerName", "spec.providerName", pool.Spec.ProviderName)
 	fieldPath := field.NewPath("spec").Child("providerName")
-	n := r.Spec.ProviderName
-	o := old.Spec.ProviderName
+	n := pool.Spec.ProviderName
+	o := oldPool.Spec.ProviderName
 	if n != o {
 		return field.Invalid(
 			fieldPath,
-			r.Spec.ProviderName,
+			pool.Spec.ProviderName,
 			fmt.Errorf("can not change provider of an existing pool. Old name: %s, new name:  %s", o, n).Error(),
 		)
 	}
 	return nil
 }
 
-func (r *Pool) validateExtraSpec() *field.Error {
+func validateExtraSpec(pool *Pool) *field.Error {
 	extraSpecs := json.RawMessage([]byte{})
 	fieldPath := field.NewPath("spec").Child("extraSpecs")
-	err := json.Unmarshal([]byte(r.Spec.ExtraSpecs), &extraSpecs)
+	err := json.Unmarshal([]byte(pool.Spec.ExtraSpecs), &extraSpecs)
 	if err != nil {
 		return field.Invalid(
 			fieldPath,
-			r.Spec.ExtraSpecs,
+			pool.Spec.ExtraSpecs,
 			fmt.Errorf("can not unmarshal extraSpecs: %s", err.Error()).Error(),
 		)
 	}
@@ -117,23 +136,17 @@ func (r *Pool) validateExtraSpec() *field.Error {
 	return nil
 }
 
-func (r *Pool) validateGitHubScope(old *Pool) *field.Error {
-	poollog.Info("validate spec.githubScopeRef", "spec.githubScopeRef", r.Spec.GitHubScopeRef)
+func validateGitHubScope(pool, oldPool *Pool) *field.Error {
+	poollog.Info("validate spec.githubScopeRef", "spec.githubScopeRef", pool.Spec.GitHubScopeRef)
 	fieldPath := field.NewPath("spec").Child("githubScopeRef")
-	n := r.Spec.GitHubScopeRef
-	o := old.Spec.GitHubScopeRef
+	n := pool.Spec.GitHubScopeRef
+	o := oldPool.Spec.GitHubScopeRef
 	if !reflect.DeepEqual(n, o) {
 		return field.Invalid(
 			fieldPath,
-			r.Spec.ProviderName,
+			pool.Spec.ProviderName,
 			fmt.Errorf("can not change githubScopeRef of an existing pool. Old name: %+v, new name:  %+v", o, n).Error(),
 		)
 	}
 	return nil
-}
-
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Pool) ValidateDelete() (admission.Warnings, error) {
-	poollog.Info("validate delete", "name", r.Name, "namespace", r.Namespace)
-	return nil, nil
 }
