@@ -31,7 +31,7 @@ func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/validate-garm-operator-mercedes-benz-com-v1alpha1-pool,mutating=false,failurePolicy=fail,sideEffects=None,groups=garm-operator.mercedes-benz.com,resources=pools,verbs=create;update,versions=v1alpha1,name=validate.pool.garm-operator.mercedes-benz.com,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-garm-operator-mercedes-benz-com-v1beta1-pool,mutating=false,failurePolicy=fail,sideEffects=None,groups=garm-operator.mercedes-benz.com,resources=pools,verbs=create;update,versions=v1beta1,name=validate.pool.garm-operator.mercedes-benz.com,admissionReviewVersions=v1
 
 var _ webhook.Validator = &Pool{}
 
