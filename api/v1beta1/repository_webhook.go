@@ -22,13 +22,13 @@ var repositorylog = logf.Log.WithName("repository-resource")
 func (r *Repository) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(&RepositoryValidator{}).
 		Complete()
 }
 
 //+kubebuilder:webhook:path=/validate-garm-operator-mercedes-benz-com-v1beta1-repository,mutating=false,failurePolicy=fail,sideEffects=None,groups=garm-operator.mercedes-benz.com,resources=repositories,verbs=update,versions=v1beta1,name=validate.repository.garm-operator.mercedes-benz.com,admissionReviewVersions=v1
 
-type RepositoryValidator struct {
-}
+type RepositoryValidator struct{}
 
 var _ webhook.CustomValidator = &RepositoryValidator{}
 
@@ -38,8 +38,7 @@ func (r *RepositoryValidator) ValidateCreate(_ context.Context, _ runtime.Object
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *RepositoryValidator) ValidateUpdate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) (admission.Warnings, error) {
-
+func (r *RepositoryValidator) ValidateUpdate(_ context.Context, obj runtime.Object, oldObj runtime.Object) (admission.Warnings, error) {
 	repo, ok := obj.(*Repository)
 	if !ok {
 		return nil, apierrors.NewBadRequest("failed to convert runtime.Object to Repository CRD")
@@ -71,7 +70,7 @@ func validateRepoOwnerName(repo, oldRepo *Repository) *field.Error {
 		return field.Invalid(
 			fieldPath,
 			repo.Spec.Owner,
-			fmt.Errorf("cannot change owner of repository resource. Old name: %s, new name:  %s", o, n).Error(),
+			fmt.Errorf("can not change owner of an existing repository. Old name: %s, new name: %s", o, n).Error(),
 		)
 	}
 	return nil

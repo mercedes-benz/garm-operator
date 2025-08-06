@@ -29,19 +29,18 @@ func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	c = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(&PoolValidator{}).
 		Complete()
 }
 
 //+kubebuilder:webhook:path=/validate-garm-operator-mercedes-benz-com-v1beta1-pool,mutating=false,failurePolicy=fail,sideEffects=None,groups=garm-operator.mercedes-benz.com,resources=pools,verbs=create;update,versions=v1beta1,name=validate.pool.garm-operator.mercedes-benz.com,admissionReviewVersions=v1
 
-type PoolValidator struct {
-}
+type PoolValidator struct{}
 
 var _ webhook.CustomValidator = &PoolValidator{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *PoolValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-
+func (r *PoolValidator) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	pool, ok := obj.(*Pool)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected Pool object, got %T", obj))
@@ -60,8 +59,7 @@ func (r *PoolValidator) ValidateCreate(ctx context.Context, obj runtime.Object) 
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *PoolValidator) ValidateUpdate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) (admission.Warnings, error) {
-
+func (r *PoolValidator) ValidateUpdate(_ context.Context, obj runtime.Object, oldObj runtime.Object) (admission.Warnings, error) {
 	pool, ok := obj.(*Pool)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected Pool object, got %T", obj))
@@ -102,7 +100,7 @@ func (r *PoolValidator) ValidateUpdate(ctx context.Context, obj runtime.Object, 
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *PoolValidator) ValidateDelete(ctx context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *PoolValidator) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
@@ -115,7 +113,7 @@ func validateProviderName(pool, oldPool *Pool) *field.Error {
 		return field.Invalid(
 			fieldPath,
 			pool.Spec.ProviderName,
-			fmt.Errorf("can not change provider of an existing pool. Old name: %s, new name:  %s", o, n).Error(),
+			fmt.Errorf("can not change provider of an existing pool. Old name: %s, new name: %s", o, n).Error(),
 		)
 	}
 	return nil
@@ -137,16 +135,25 @@ func validateExtraSpec(pool *Pool) *field.Error {
 }
 
 func validateGitHubScope(pool, oldPool *Pool) *field.Error {
-	poollog.Info("validate spec.githubScopeRef", "spec.githubScopeRef", pool.Spec.GitHubScopeRef)
+	// poollog.Info("validate spec.githubScopeRef", "spec.githubScopeRef", pool.Spec.GitHubScopeRef)
 	fieldPath := field.NewPath("spec").Child("githubScopeRef")
 	n := pool.Spec.GitHubScopeRef
 	o := oldPool.Spec.GitHubScopeRef
-	if !reflect.DeepEqual(n, o) {
+	if !reflect.DeepEqual(n.Name, o.Name) {
 		return field.Invalid(
 			fieldPath,
-			pool.Spec.ProviderName,
-			fmt.Errorf("can not change githubScopeRef of an existing pool. Old name: %+v, new name:  %+v", o, n).Error(),
+			pool.Spec.GitHubScopeRef.Name,
+			fmt.Errorf("can not change githubScopeRef of an existing pool. Old name: %+v, new name: %+v", o.Name, n.Name).Error(),
 		)
 	}
+
+	if !reflect.DeepEqual(n.Kind, o.Kind) {
+		return field.Invalid(
+			fieldPath,
+			pool.Spec.GitHubScopeRef.Kind,
+			fmt.Errorf("can not change githubScopeRef of an existing pool. Old Kind: %+v, new Kind: %+v", o.Kind, n.Kind).Error(),
+		)
+	}
+
 	return nil
 }
