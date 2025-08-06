@@ -239,41 +239,18 @@ func run() error {
 	}
 
 	// webhooks
-	if err = (&garmoperatorv1alpha1.Enterprise{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Enterprise: %w", err)
-	}
-
-	if err = (&garmoperatorv1alpha1.Organization{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Organization: %w", err)
-	}
-
-	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Pool: %w", err)
+	if err = (&garmoperatorv1beta1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create webhook Repository: %w", err)
 	}
 
 	if err = (&garmoperatorv1beta1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create webhook Pool: %w", err)
 	}
 
-	if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Image: %w", err)
-	}
-
 	if err = (&garmoperatorv1beta1.Image{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create webhook Image: %w", err)
 	}
 
-	if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Repository: %w", err)
-	}
-
-	if err = (&garmoperatorv1beta1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Repository: %w", err)
-	}
-
-	if err = (&garmoperatorv1alpha1.Runner{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Runner: %w", err)
-	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
