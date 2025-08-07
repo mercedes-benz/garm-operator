@@ -193,14 +193,14 @@ func run() error {
 	}
 
 	if config.Config.Operator.RunnerReconciliation {
-		runnerEvents := make(chan event.GenericEvent)
 		runnerReconciler := &garmcontroller.RunnerReconciler{
-			Client: mgr.GetClient(),
-			Scheme: mgr.GetScheme(),
+			Client:        mgr.GetClient(),
+			Scheme:        mgr.GetScheme(),
+			ReconcileChan: make(chan event.GenericEvent),
 		}
 
 		// setup controller so it can reconcile if events from runnerEvents are queued
-		if err = runnerReconciler.SetupWithManager(mgr, runnerEvents,
+		if err = runnerReconciler.SetupWithManager(mgr,
 			controller.Options{
 				MaxConcurrentReconciles: config.Config.Operator.RunnerConcurrency,
 			},
@@ -210,7 +210,7 @@ func run() error {
 
 		// fetch runner instances periodically and enqueue reconcile events for runner ctrl if external system has changed
 		ctx, cancel := context.WithCancel(ctx)
-		go runnerReconciler.PollRunnerInstances(ctx, runnerEvents)
+		go runnerReconciler.PollRunnerInstances(ctx)
 		defer cancel()
 	}
 
@@ -239,41 +239,18 @@ func run() error {
 	}
 
 	// webhooks
-	if err = (&garmoperatorv1alpha1.Enterprise{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Enterprise: %w", err)
-	}
-
-	if err = (&garmoperatorv1alpha1.Organization{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Organization: %w", err)
-	}
-
-	if err = (&garmoperatorv1alpha1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Pool: %w", err)
+	if err = (&garmoperatorv1beta1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create webhook Repository: %w", err)
 	}
 
 	if err = (&garmoperatorv1beta1.Pool{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create webhook Pool: %w", err)
 	}
 
-	if err = (&garmoperatorv1alpha1.Image{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Image: %w", err)
-	}
-
 	if err = (&garmoperatorv1beta1.Image{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create webhook Image: %w", err)
 	}
 
-	if err = (&garmoperatorv1alpha1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Repository: %w", err)
-	}
-
-	if err = (&garmoperatorv1beta1.Repository{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Repository: %w", err)
-	}
-
-	if err = (&garmoperatorv1alpha1.Runner{}).SetupWebhookWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create webhook Runner: %w", err)
-	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
