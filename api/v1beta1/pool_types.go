@@ -4,6 +4,7 @@ package v1beta1
 
 import (
 	commonParams "github.com/cloudbase/garm-provider-common/params"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -50,6 +51,12 @@ type PoolStatus struct {
 	Selector               string `json:"selector"`
 
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+}
+
+func (p *Pool) InitializeConditions() {
+	if conditions.Get(p, conditions.ReadyCondition) == nil {
+		conditions.MarkUnknown(p, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
 }
 
 func (p *Pool) SetConditions(conditions []metav1.Condition) {
