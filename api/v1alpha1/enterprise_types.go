@@ -50,12 +50,12 @@ func (e *Enterprise) InitializeConditions() {
 		conditions.MarkUnknown(e, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
 	}
 
-	if conditions.Get(e, conditions.SecretReference) == nil {
-		conditions.MarkUnknown(e, conditions.SecretReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	if conditions.Get(e, conditions.WebhookSecretReference) == nil {
+		conditions.MarkUnknown(e, conditions.WebhookSecretReference, conditions.UnknownReason, conditions.WebhookSecretNotReconciledYetMsg)
 	}
 
-	if conditions.Get(e, conditions.CredentialsReference) == nil {
-		conditions.MarkUnknown(e, conditions.CredentialsReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	if conditions.Get(e, conditions.GithubCredentialsReference) == nil {
+		conditions.MarkUnknown(e, conditions.GithubCredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
 	}
 }
 

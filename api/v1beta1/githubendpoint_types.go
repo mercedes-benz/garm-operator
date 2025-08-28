@@ -44,8 +44,8 @@ func (e *GitHubEndpoint) InitializeConditions() {
 		conditions.MarkUnknown(e, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
 	}
 
-	if conditions.Get(e, conditions.SecretReference) == nil {
-		conditions.MarkUnknown(e, conditions.SecretReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	if conditions.Get(e, conditions.WebhookSecretReference) == nil {
+		conditions.MarkUnknown(e, conditions.WebhookSecretReference, conditions.UnknownReason, conditions.WebhookSecretNotReconciledYetMsg)
 	}
 }
 

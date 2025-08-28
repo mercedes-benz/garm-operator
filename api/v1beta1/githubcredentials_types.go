@@ -66,12 +66,12 @@ func (g *GitHubCredential) InitializeConditions() {
 		conditions.MarkUnknown(g, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
 	}
 
-	if conditions.Get(g, conditions.EndpointReference) == nil {
-		conditions.MarkUnknown(g, conditions.EndpointReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	if conditions.Get(g, conditions.GithubEndpointReference) == nil {
+		conditions.MarkUnknown(g, conditions.GithubEndpointReference, conditions.UnknownReason, conditions.GithubEndpointNotReconciledYetMsg)
 	}
 
-	if conditions.Get(g, conditions.SecretReference) == nil {
-		conditions.MarkUnknown(g, conditions.SecretReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	if conditions.Get(g, conditions.WebhookSecretReference) == nil {
+		conditions.MarkUnknown(g, conditions.WebhookSecretReference, conditions.UnknownReason, conditions.WebhookSecretNotReconciledYetMsg)
 	}
 }
 

@@ -103,20 +103,20 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &repository.Spec.WebhookSecretRef, repository.Namespace)
 	if err != nil {
 		event.Error(r.Recorder, repository, err.Error())
-		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkFalse(repository, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(repository, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(repository, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+	conditions.MarkTrue(repository, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefSuccessReason, "")
 
 	credentials, err := r.getCredentialsRef(ctx, repository)
 	if err != nil {
 		event.Error(r.Recorder, repository, err.Error())
-		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingCredentialsRefFailedReason, err.Error())
-		conditions.MarkFalse(repository, conditions.CredentialsReference, conditions.FetchingCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(repository, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(repository, conditions.CredentialsReference, conditions.FetchingCredentialsRefSuccessReason, "")
+	conditions.MarkTrue(repository, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefSuccessReason, "")
 
 	garmRepository, err := r.getExistingGarmRepo(ctx, client, repository)
 	if err != nil {

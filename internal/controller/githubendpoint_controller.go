@@ -241,11 +241,11 @@ func (r *GitHubEndpointReconciler) handleCaCertBundleSecret(ctx context.Context,
 
 	caCertBundleSecret, err := secret.FetchRef(ctx, r.Client, &endpoint.Spec.CACertBundleSecretRef, endpoint.Namespace)
 	if err != nil {
-		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkFalse(endpoint, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(endpoint, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		return "", err
 	}
-	conditions.MarkTrue(endpoint, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+	conditions.MarkTrue(endpoint, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefSuccessReason, "")
 	return caCertBundleSecret, nil
 }
 

@@ -112,20 +112,20 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	// fetch endpoint resource
 	endpoint, err := r.getEndpointRef(ctx, credentials)
 	if err != nil {
-		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.FetchingEndpointRefFailedReason, err.Error())
-		conditions.MarkFalse(credentials, conditions.EndpointReference, conditions.FetchingEndpointRefFailedReason, err.Error())
+		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.FetchingGithubEndpointRefFailedReason, err.Error())
+		conditions.MarkFalse(credentials, conditions.GithubEndpointReference, conditions.FetchingGithubEndpointRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(credentials, conditions.EndpointReference, conditions.FetchingEndpointRefSuccessReason, "Successfully fetched GitHubEndpoint CR Ref")
+	conditions.MarkTrue(credentials, conditions.GithubEndpointReference, conditions.FetchingGithubEndpointRefSuccessReason, "Successfully fetched GitHubEndpoint CR Ref")
 
 	// fetch secret
 	githubSecret, err := secret.FetchRef(ctx, r.Client, &credentials.Spec.SecretRef, credentials.Namespace)
 	if err != nil {
-		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkFalse(credentials, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(credentials, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(credentials, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+	conditions.MarkTrue(credentials, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefSuccessReason, "")
 
 	// if not found, create credentials in garm db
 	if reflect.ValueOf(garmGitHubCreds).IsZero() {
