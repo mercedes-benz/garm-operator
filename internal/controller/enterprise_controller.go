@@ -50,15 +50,23 @@ type EnterpriseReconciler struct {
 func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
+	enterpriseClient := garmClient.NewEnterpriseClient()
+
 	enterprise := &garmoperatorv1beta1.Enterprise{}
 	err := r.Get(ctx, req.NamespacedName, enterprise)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Info("object was not found")
+			log.Info("object was not found", "name", req.Name, "namespace", req.Namespace, "kind", "Enterprise")
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
 	}
+
+	return r.reconcile(ctx, enterpriseClient, enterprise)
+}
+
+func (r *EnterpriseReconciler) reconcile(ctx context.Context, enterpriseClient garmClient.EnterpriseClient, enterprise *garmoperatorv1beta1.Enterprise) (res ctrl.Result, retErr error) {
+	log := log.FromContext(ctx)
 
 	orig := enterprise.DeepCopy()
 
@@ -73,8 +81,6 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	enterpriseClient := garmClient.NewEnterpriseClient()
-
 	// Initialize conditions to unknown if not set already
 	enterprise.InitializeConditions()
 
@@ -83,7 +89,7 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if !reflect.DeepEqual(enterprise.Status, orig.Status) {
 			if err := r.Status().Update(ctx, enterprise); err != nil {
 				log.Error(err, "failed to update status")
-				res = ctrl.Result{Requeue: true}
+				res = ctrl.Result{}
 				retErr = err
 			}
 		}

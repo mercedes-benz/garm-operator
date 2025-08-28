@@ -925,10 +925,10 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 
 			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Enterprise)
 
-			mockEnterprise := mock.NewMockEnterpriseClient(mockCtrl)
-			tt.expectGarmRequest(mockEnterprise.EXPECT())
+			mockEnterpriseClient := mock.NewMockEnterpriseClient(mockCtrl)
+			tt.expectGarmRequest(mockEnterpriseClient.EXPECT())
 
-			_, err = reconciler.reconcileNormal(context.Background(), mockEnterprise, enterprise)
+			_, err = reconciler.reconcile(context.Background(), mockEnterpriseClient, enterprise)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EnterpriseReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -1045,10 +1045,10 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 
 			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Enterprise)
 
-			mockEnterprise := mock.NewMockEnterpriseClient(mockCtrl)
-			tt.expectGarmRequest(mockEnterprise.EXPECT())
+			mockEnterpriseClient := mock.NewMockEnterpriseClient(mockCtrl)
+			tt.expectGarmRequest(mockEnterpriseClient.EXPECT())
 
-			_, err = reconciler.reconcileDelete(context.Background(), mockEnterprise, enterprise)
+			_, err = reconciler.reconcileDelete(context.Background(), mockEnterpriseClient, enterprise)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EnterpriseReconciler.reconcileDelete() error = %v, wantErr %v", err, tt.wantErr)
 				return
