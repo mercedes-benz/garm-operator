@@ -54,12 +54,12 @@ func (r *Repository) InitializeConditions() {
 		conditions.MarkUnknown(r, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
 	}
 
-	if conditions.Get(r, conditions.SecretReference) == nil {
-		conditions.MarkUnknown(r, conditions.SecretReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	if conditions.Get(r, conditions.WebhookSecretReference) == nil {
+		conditions.MarkUnknown(r, conditions.WebhookSecretReference, conditions.UnknownReason, conditions.WebhookSecretNotReconciledYetMsg)
 	}
 
-	if conditions.Get(r, conditions.CredentialsReference) == nil {
-		conditions.MarkUnknown(r, conditions.CredentialsReference, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	if conditions.Get(r, conditions.GithubCredentialsReference) == nil {
+		conditions.MarkUnknown(r, conditions.GithubCredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
 	}
 }
 

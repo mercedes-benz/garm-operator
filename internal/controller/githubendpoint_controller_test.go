@@ -98,8 +98,8 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -169,8 +169,8 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -217,8 +217,8 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -309,8 +309,8 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -479,14 +479,14 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Reason:             string(conditions.FetchingWebhookSecretRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "secrets \"ca-cert-bundle\" not found",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "secrets \"ca-cert-bundle\" not found",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -667,8 +667,8 @@ func TestGitHubEndpointReconciler_reconcileDelete(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),

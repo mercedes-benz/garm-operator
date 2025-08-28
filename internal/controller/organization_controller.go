@@ -103,20 +103,20 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &organization.Spec.WebhookSecretRef, organization.Namespace)
 	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
-		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkFalse(organization, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(organization, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(organization, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+	conditions.MarkTrue(organization, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefSuccessReason, "")
 
 	credentials, err := r.getCredentialsRef(ctx, organization)
 	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
-		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingCredentialsRefFailedReason, err.Error())
-		conditions.MarkFalse(organization, conditions.CredentialsReference, conditions.FetchingCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(organization, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(organization, conditions.CredentialsReference, conditions.FetchingCredentialsRefSuccessReason, "")
+	conditions.MarkTrue(organization, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefSuccessReason, "")
 
 	garmOrganization, err := r.getExistingGarmOrg(ctx, client, organization)
 	if err != nil {

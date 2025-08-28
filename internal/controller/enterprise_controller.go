@@ -104,20 +104,20 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace)
 	if err != nil {
 		event.Error(r.Recorder, enterprise, err.Error())
-		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkFalse(enterprise, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(enterprise, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(enterprise, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+	conditions.MarkTrue(enterprise, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefSuccessReason, "")
 
 	credentials, err := r.getCredentialsRef(ctx, enterprise)
 	if err != nil {
 		event.Error(r.Recorder, enterprise, err.Error())
-		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingCredentialsRefFailedReason, err.Error())
-		conditions.MarkFalse(enterprise, conditions.CredentialsReference, conditions.FetchingCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(enterprise, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(enterprise, conditions.CredentialsReference, conditions.FetchingCredentialsRefSuccessReason, "")
+	conditions.MarkTrue(enterprise, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefSuccessReason, "")
 
 	garmEnterprise, err := r.getExistingGarmEnterprise(ctx, client, enterprise)
 	if err != nil {
