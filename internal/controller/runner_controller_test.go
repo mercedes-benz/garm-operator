@@ -86,8 +86,8 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 					OSType:         "linux",
 					PoolID:         "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
 					ProviderID:     "kubernetes_external",
-					Status:         commonParams.InstanceRunning,
-					InstanceStatus: params.RunnerIdle,
+					InstanceStatus: commonParams.InstanceRunning,
+					Status:         params.RunnerIdle,
 				},
 			},
 		},
@@ -117,7 +117,7 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 			mockInstanceClient := mock.NewMockInstanceClient(mockCtrl)
 			tt.expectGarmRequest(mockInstanceClient.EXPECT())
 
-			_, err = reconciler.reconcile(context.Background(), tt.req, mockInstanceClient)
+			_, err = reconciler.reconcileNormal(context.Background(), tt.req, mockInstanceClient)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RunnerReconciler.reconcile() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -187,8 +187,8 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 						OSType:         "linux",
 						PoolID:         "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
 						ProviderID:     "kubernetes_external",
-						Status:         commonParams.InstanceRunning,
-						InstanceStatus: params.RunnerIdle,
+						InstanceStatus: commonParams.InstanceRunning,
+						Status:         params.RunnerIdle,
 					},
 				},
 			},
@@ -230,8 +230,8 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 					OSType:         "linux",
 					PoolID:         "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
 					ProviderID:     "kubernetes_external",
-					Status:         commonParams.InstanceRunning,
-					InstanceStatus: params.RunnerIdle,
+					InstanceStatus: commonParams.InstanceRunning,
+					Status:         params.RunnerIdle,
 				},
 			},
 		},
@@ -261,7 +261,7 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 			mockInstanceClient := mock.NewMockInstanceClient(mockCtrl)
 			tt.expectGarmRequest(mockInstanceClient.EXPECT())
 
-			_, err = reconciler.reconcile(context.Background(), tt.req, mockInstanceClient)
+			_, err = reconciler.reconcileNormal(context.Background(), tt.req, mockInstanceClient)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RunnerReconciler.reconcile() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -321,8 +321,8 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						OSType:         "linux",
 						PoolID:         "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
 						ProviderID:     "road-runner-k8s-fy5snjcv5dzn",
-						Status:         commonParams.InstanceRunning,
-						InstanceStatus: params.RunnerIdle,
+						InstanceStatus: commonParams.InstanceRunning,
+						Status:         params.RunnerIdle,
 					},
 				},
 				&garmoperatorv1beta1.Runner{
@@ -346,8 +346,8 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						OSType:         "linux",
 						PoolID:         "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
 						ProviderID:     "road-runner-k8s-n6kq2mt3k4qr",
-						Status:         commonParams.InstanceRunning,
-						InstanceStatus: params.RunnerIdle,
+						InstanceStatus: commonParams.InstanceRunning,
+						Status:         params.RunnerIdle,
 					},
 				},
 				&garmoperatorv1beta1.Pool{

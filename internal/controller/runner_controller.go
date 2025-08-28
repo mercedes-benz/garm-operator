@@ -49,10 +49,13 @@ type RunnerReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=runners/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=runners/finalizers,verbs=update
 
-func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
-	log := log.FromContext(ctx)
-
+func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	instanceClient := garmClient.NewInstanceClient()
+	return r.reconcileNormal(ctx, req, instanceClient)
+}
+
+func (r *RunnerReconciler) reconcileNormal(ctx context.Context, req ctrl.Request, instanceClient garmClient.InstanceClient) (res ctrl.Result, retErr error) {
+	log := log.FromContext(ctx)
 
 	// try fetch runner instance in garm db with events coming from reconcile loop events of RunnerCR or from manually enqueued events of garm api.
 	garmRunner, err := r.getGarmRunnerInstanceByName(instanceClient, req.Name)
@@ -304,8 +307,8 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, instanceC
 	return nil
 }
 
-func (r *RunnerReconciler) enqeueRunnerEvents(runnerNames []string) {
-	for _, runner := range runnerNames {
+func (r *RunnerReconciler) enqeueRunnerEvents(runners []string) {
+	for _, runner := range runners {
 		runnerObj := garmoperatorv1beta1.Runner{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      strings.ToLower(runner),
