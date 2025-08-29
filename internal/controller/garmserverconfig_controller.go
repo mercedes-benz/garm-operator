@@ -5,8 +5,6 @@ package controller
 import (
 	"context"
 	"errors"
-	"github.com/mercedes-benz/garm-operator/pkg/conditions"
-	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"reflect"
 
 	garmapiserverparams "github.com/cloudbase/garm/apiserver/params"
@@ -24,6 +22,8 @@ import (
 	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/annotations"
 	garmclient "github.com/mercedes-benz/garm-operator/pkg/client"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
+	"github.com/mercedes-benz/garm-operator/pkg/event"
 	"github.com/mercedes-benz/garm-operator/pkg/util"
 )
 

@@ -5,8 +5,9 @@ package v1beta1
 import (
 	commonParams "github.com/cloudbase/garm-provider-common/params"
 	"github.com/cloudbase/garm/params"
-	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 )
 
 // RunnerSpec defines the desired state of Runner

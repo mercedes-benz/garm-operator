@@ -3,8 +3,6 @@ package controller
 
 import (
 	"context"
-	"github.com/mercedes-benz/garm-operator/pkg/conditions"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -16,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,6 +27,7 @@ import (
 	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 )
 
@@ -477,7 +477,6 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 					},
 				}}
 				m.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID("a46553c6-ad87-454b-b5f5-a1c468d78c1e")).Return(poolInstancesResponse, nil)
-
 			},
 			wantErr: false,
 			expectedObject: &garmoperatorv1beta1.Runner{

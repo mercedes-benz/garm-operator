@@ -4,14 +4,14 @@ package controller
 
 import (
 	"context"
-	commonParams "github.com/cloudbase/garm-provider-common/params"
-	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"reflect"
 	"strings"
 	"time"
 
+	commonParams "github.com/cloudbase/garm-provider-common/params"
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/params"
+	"github.com/google/go-cmp/cmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,11 +29,10 @@ import (
 	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/runners"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 // RunnerReconciler reconciles a Runner object
@@ -81,7 +80,7 @@ func (r *RunnerReconciler) reconcileNormal(ctx context.Context, req ctrl.Request
 	// Did not find RunnerCR and found garm runner, create the RunnerCR
 	case apierrors.IsNotFound(err) && garmRunner != nil:
 		log.Info("Did not find RunnerCR and found garm runner, creating RunnerCR", "runner", garmRunner.Name)
-		return r.createRunnerCR(ctx, runner, garmRunner, req.Namespace)
+		return r.createRunnerCR(ctx, garmRunner, req.Namespace)
 
 	// Did not find RunnerCR and no matching garm runner, do nothing
 	case apierrors.IsNotFound(err) && garmRunner == nil:
@@ -127,11 +126,11 @@ func (r *RunnerReconciler) reconcileNormal(ctx context.Context, req ctrl.Request
 	return ctrl.Result{}, err
 }
 
-func (r *RunnerReconciler) createRunnerCR(ctx context.Context, runnerCR *garmoperatorv1beta1.Runner, garmRunner *params.Instance, namespace string) (ctrl.Result, error) {
+func (r *RunnerReconciler) createRunnerCR(ctx context.Context, garmRunner *params.Instance, namespace string) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("Creating RunnerCR", "Runner", garmRunner.Name)
 
-	runnerCR = &garmoperatorv1beta1.Runner{
+	runnerCR := &garmoperatorv1beta1.Runner{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.ToLower(garmRunner.Name),
 			Namespace: namespace,
@@ -300,9 +299,9 @@ func (r *RunnerReconciler) EnqueueRunnerInstances(ctx context.Context, instanceC
 
 	runnersToDelete := getRunnerDiff(runnerCRNameList, runnerInstanceNameList)
 
-	runnersToEnqueue := append(runnerInstanceNameList, runnersToDelete...)
+	runnerInstanceNameList = append(runnerInstanceNameList, runnersToDelete...)
 
-	r.enqeueRunnerEvents(runnersToEnqueue)
+	r.enqeueRunnerEvents(runnerInstanceNameList)
 	return nil
 }
 
@@ -345,28 +344,6 @@ func (r *RunnerReconciler) fetchRunnerInstancesByNamespacedPools(instanceClient 
 		garmRunnerInstances = append(garmRunnerInstances, poolRunners.Payload...)
 	}
 	return garmRunnerInstances, nil
-}
-
-func (r *RunnerReconciler) runnerSpecsEqual(runner garmoperatorv1beta1.Runner, garmRunner *params.Instance) bool {
-	runner.Status.PoolID = ""
-	tmpRunnerStatus := garmoperatorv1beta1.RunnerStatus{
-		ID:                garmRunner.ID,
-		ProviderID:        garmRunner.ProviderID,
-		AgentID:           garmRunner.AgentID,
-		Name:              garmRunner.Name,
-		OSType:            garmRunner.OSType,
-		OSName:            garmRunner.OSName,
-		OSVersion:         garmRunner.OSVersion,
-		OSArch:            garmRunner.OSArch,
-		Addresses:         garmRunner.Addresses,
-		Status:            garmRunner.RunnerStatus,
-		InstanceStatus:    garmRunner.Status,
-		ProviderFault:     string(garmRunner.ProviderFault),
-		GitHubRunnerGroup: garmRunner.GitHubRunnerGroup,
-		PoolID:            "",
-	}
-
-	return reflect.DeepEqual(runner.Status, tmpRunnerStatus)
 }
 
 func getRunnerDiff(runnerCRs, garmRunners []string) []string {
