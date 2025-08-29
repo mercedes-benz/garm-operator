@@ -4,7 +4,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	commonParams "github.com/cloudbase/garm-provider-common/params"
 	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"reflect"
@@ -105,15 +104,12 @@ func (r *RunnerReconciler) reconcileNormal(ctx context.Context, req ctrl.Request
 		if !reflect.DeepEqual(runner.Status, orig.Status) {
 			log.Info("Update runner status...")
 			diff := cmp.Diff(orig.Status, runner.Status)
-			fmt.Println("Differences found:")
-			fmt.Println(diff)
+			log.V(1).Info("Runner status changed", "diff", diff)
 			if err := r.Status().Update(ctx, runner); err != nil {
-				log.Error(err, "failed to update status")
-				res = ctrl.Result{Requeue: true}
+				log.Error(err, "failed to update status", "runner", runner.Name)
+				res = ctrl.Result{}
 				retErr = err
 			}
-		} else {
-			log.Info("Nothing changed in runner status")
 		}
 	}()
 
@@ -124,6 +120,9 @@ func (r *RunnerReconciler) reconcileNormal(ctx context.Context, req ctrl.Request
 
 	// sync garm runner status back to RunnerCR
 	err = r.updateRunnerStatus(ctx, runner, garmRunner)
+	if err != nil {
+		log.Error(err, "Failed to update runner status", "runner", runner.Name)
+	}
 
 	return ctrl.Result{}, err
 }

@@ -3,8 +3,9 @@ package controller
 
 import (
 	"context"
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"reflect"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -50,7 +51,40 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 					Namespace: "runner",
 				},
 			},
-			runtimeObjects: []runtime.Object{},
+			runtimeObjects: []runtime.Object{
+				&garmoperatorv1beta1.Pool{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Pool",
+						APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "my-enterprise-pool",
+						Namespace: "test-namespace",
+					},
+					Spec: garmoperatorv1beta1.PoolSpec{
+						GitHubScopeRef: corev1.TypedLocalObjectReference{
+							APIGroup: &garmoperatorv1beta1.GroupVersion.Group,
+							Kind:     string(garmoperatorv1beta1.EnterpriseScope),
+							Name:     "my-enterprise",
+						},
+						ProviderName:           "kubernetes_external",
+						MaxRunners:             5,
+						MinIdleRunners:         3,
+						ImageName:              "ubuntu-image",
+						Flavor:                 "medium",
+						OSType:                 "linux",
+						OSArch:                 "arm64",
+						Tags:                   []string{"kubernetes", "linux", "arm64", "ubuntu"},
+						Enabled:                true,
+						RunnerBootstrapTimeout: 20,
+						ExtraSpecs:             "",
+						GitHubRunnerGroup:      "",
+					},
+					Status: garmoperatorv1beta1.PoolStatus{
+						ID: "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
+					},
+				},
+			},
 			expectGarmRequest: func(m *mock.MockInstanceClientMockRecorder) {
 				response := params.Instances{
 					params.Instance{
@@ -66,6 +100,7 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 					},
 				}
 
+				m.ListInstances(instances.NewListInstancesParams()).Return(&instances.ListInstancesOK{Payload: response}, nil)
 				m.ListInstances(instances.NewListInstancesParams()).Return(&instances.ListInstancesOK{Payload: response}, nil)
 			},
 			wantErr: false,
@@ -84,10 +119,19 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 					ID:             "8215f6c6-486e-4893-84df-3231b185a148",
 					OSArch:         "amd64",
 					OSType:         "linux",
-					PoolID:         "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
+					PoolID:         "my-enterprise-pool",
 					ProviderID:     "kubernetes_external",
 					InstanceStatus: commonParams.InstanceRunning,
 					Status:         params.RunnerIdle,
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.RunnerReadyReason),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            conditions.RunnerIdleAndRunningMsg,
+						},
+					},
 				},
 			},
 		},
@@ -123,6 +167,12 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 				return
 			}
 
+			_, err = reconciler.reconcileNormal(context.Background(), tt.req, mockInstanceClient)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("RunnerReconciler.reconcile() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
 			runner := &garmoperatorv1beta1.Runner{}
 			err = client.Get(context.Background(), types.NamespacedName{Namespace: tt.req.Namespace, Name: strings.ToLower(tt.req.Name)}, runner)
 			if (err != nil) != tt.wantErr {
@@ -135,8 +185,12 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 
 			// empty resource version to avoid comparison errors
 			runner.ObjectMeta.ResourceVersion = ""
+
+			conditions.NilLastTransitionTime(tt.expectedObject)
+			conditions.NilLastTransitionTime(runner)
+
 			if !reflect.DeepEqual(runner, tt.expectedObject) {
-				t.Errorf("RunnerReconciler.reconcile() got = %#v, want %#v", runner, tt.expectedObject)
+				t.Errorf("RunnerReconciler.reconcile() \ngot = %#v\n want %#v", runner, tt.expectedObject)
 			}
 		})
 	}
@@ -269,12 +323,7 @@ func TestRunnerReconciler_reconcileDeleteGarmRunner(t *testing.T) {
 
 			runner := &garmoperatorv1beta1.Runner{}
 			err = client.Get(context.Background(), types.NamespacedName{Namespace: tt.req.Namespace, Name: strings.ToLower(tt.req.Name)}, runner)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("RunnerReconciler.reconcile() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			assert.NotZero(t, runner.ObjectMeta.DeletionTimestamp)
+			assert.Equal(t, true, apierrors.IsNotFound(err))
 		})
 	}
 }
@@ -283,22 +332,18 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
+	now := metav1.NewTime(time.Now().UTC())
+
 	tests := []struct {
 		name              string
-		req               ctrl.Request
 		runtimeObjects    []runtime.Object
 		expectGarmRequest func(m *mock.MockInstanceClientMockRecorder)
 		wantErr           bool
-		expectedEvents    []event.GenericEvent
+		expectedObject    *garmoperatorv1beta1.Runner
+		expectedLength    int
 	}{
 		{
 			name: "Delete Runner CR with no matching entry in Garm DB",
-			req: ctrl.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      "road-runner-k8s-fy5snjcv5dzn",
-					Namespace: "runner",
-				},
-			},
 			runtimeObjects: []runtime.Object{
 				&garmoperatorv1beta1.Runner{
 					TypeMeta: metav1.TypeMeta{
@@ -323,6 +368,15 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						ProviderID:     "road-runner-k8s-fy5snjcv5dzn",
 						InstanceStatus: commonParams.InstanceRunning,
 						Status:         params.RunnerIdle,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.RunnerReadyReason),
+								Status:             metav1.ConditionTrue,
+								LastTransitionTime: metav1.NewTime(time.Now()),
+								Message:            conditions.RunnerIdleAndRunningMsg,
+							},
+						},
 					},
 				},
 				&garmoperatorv1beta1.Runner{
@@ -348,6 +402,15 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						ProviderID:     "road-runner-k8s-n6kq2mt3k4qr",
 						InstanceStatus: commonParams.InstanceRunning,
 						Status:         params.RunnerIdle,
+						Conditions: []metav1.Condition{
+							{
+								Type:               string(conditions.ReadyCondition),
+								Reason:             string(conditions.RunnerReadyReason),
+								Status:             metav1.ConditionTrue,
+								LastTransitionTime: metav1.NewTime(time.Now()),
+								Message:            conditions.RunnerIdleAndRunningMsg,
+							},
+						},
 					},
 				},
 				&garmoperatorv1beta1.Pool{
@@ -384,7 +447,7 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockInstanceClientMockRecorder) {
-				response := &instances.ListPoolInstancesOK{Payload: params.Instances{
+				allInstancesResponse := &instances.ListInstancesOK{Payload: params.Instances{
 					params.Instance{
 						Name:         "road-runner-k8s-FY5snJcv5dzn",
 						AgentID:      120,
@@ -397,15 +460,57 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						RunnerStatus: params.RunnerIdle,
 					},
 				}}
-				m.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID("a46553c6-ad87-454b-b5f5-a1c468d78c1e")).Return(response, nil)
+				m.ListInstances(instances.NewListInstancesParams()).Return(allInstancesResponse, nil)
+				m.ListInstances(instances.NewListInstancesParams()).Return(allInstancesResponse, nil)
+
+				poolInstancesResponse := &instances.ListPoolInstancesOK{Payload: params.Instances{
+					params.Instance{
+						Name:         "road-runner-k8s-FY5snJcv5dzn",
+						AgentID:      120,
+						ID:           "8215f6c6-486e-4893-84df-3231b185a148",
+						OSArch:       "amd64",
+						OSType:       "linux",
+						PoolID:       "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
+						ProviderID:   "road-runner-k8s-fy5snjcv5dzn",
+						Status:       commonParams.InstanceRunning,
+						RunnerStatus: params.RunnerIdle,
+					},
+				}}
+				m.ListPoolInstances(instances.NewListPoolInstancesParams().WithPoolID("a46553c6-ad87-454b-b5f5-a1c468d78c1e")).Return(poolInstancesResponse, nil)
+
 			},
 			wantErr: false,
-			expectedEvents: []event.GenericEvent{
-				{
-					Object: &garmoperatorv1beta1.Runner{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "road-runner-k8s-fy5snjcv5dzn",
-							Namespace: "test-namespace",
+			expectedObject: &garmoperatorv1beta1.Runner{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Runner",
+					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "road-runner-k8s-n6kq2mt3k4qr",
+					Namespace:         "test-namespace",
+					DeletionTimestamp: &now,
+					Finalizers: []string{
+						key.RunnerFinalizerName,
+					},
+				},
+				Spec: garmoperatorv1beta1.RunnerSpec{},
+				Status: garmoperatorv1beta1.RunnerStatus{
+					Name:           "road-runner-k8s-n6KQ2Mt3k4qr",
+					AgentID:        130,
+					ID:             "13d31cad-588b-4ea8-8015-052a76ad3dd3",
+					OSArch:         "amd64",
+					OSType:         "linux",
+					PoolID:         "a46553c6-ad87-454b-b5f5-a1c468d78c1e",
+					ProviderID:     "road-runner-k8s-n6kq2mt3k4qr",
+					InstanceStatus: commonParams.InstanceRunning,
+					Status:         params.RunnerIdle,
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.RunnerReadyReason),
+							Status:             metav1.ConditionTrue,
+							LastTransitionTime: metav1.NewTime(time.Now()),
+							Message:            conditions.RunnerIdleAndRunningMsg,
 						},
 					},
 				},
@@ -448,19 +553,23 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 				close(reconciler.ReconcileChan)
 			}()
 
-			// receive events in fake channel and compare if expected event occurs by filtering received events in fake channel by expected event
-			var eventCount int
 			for obj := range reconciler.ReconcileChan {
 				t.Logf("Received Event: %s", obj.Object.GetName())
 
-				filtered := slices.CompactFunc(tt.expectedEvents, func(i, j event.GenericEvent) bool {
-					return i.Object.GetName() == j.Object.GetName() && i.Object.GetNamespace() == j.Object.GetNamespace()
-				})
-
-				eventCount++
-				assert.Equal(t, 1, len(filtered))
+				_, err = reconciler.reconcileNormal(context.Background(), ctrl.Request{NamespacedName: types.NamespacedName{Name: obj.Object.GetName(), Namespace: obj.Object.GetNamespace()}}, mockInstanceClient)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("RunnerReconciler.reconcile() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
 			}
-			assert.Equal(t, len(tt.expectedEvents), eventCount)
+			runner := &garmoperatorv1beta1.Runner{}
+			err = client.Get(context.Background(), types.NamespacedName{Namespace: tt.expectedObject.Namespace, Name: tt.expectedObject.Name}, runner)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("RunnerReconciler.EnqueueRunnerInstances() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			assert.Equal(t, true, !runner.DeletionTimestamp.IsZero())
 		})
 	}
 }
