@@ -952,10 +952,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 
 			repository := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Repository)
 
-			mockRepository := mock.NewMockRepositoryClient(mockCtrl)
-			tt.expectGarmRequest(mockRepository.EXPECT())
+			mockRepositoryClient := mock.NewMockRepositoryClient(mockCtrl)
+			tt.expectGarmRequest(mockRepositoryClient.EXPECT())
 
-			_, err = reconciler.reconcileNormal(context.Background(), mockRepository, repository)
+			_, err = reconciler.reconcile(context.Background(), mockRepositoryClient, repository)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RepositoryReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
