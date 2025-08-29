@@ -49,6 +49,8 @@ type RepositoryReconciler struct {
 func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
+	repositoryClient := garmClient.NewRepositoryClient()
+
 	repository := &garmoperatorv1beta1.Repository{}
 	err := r.Get(ctx, req.NamespacedName, repository)
 	if err != nil {
@@ -58,6 +60,12 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		return ctrl.Result{}, err
 	}
+
+	return r.reconcile(ctx, repositoryClient, repository)
+}
+
+func (r *RepositoryReconciler) reconcile(ctx context.Context, repositoryClient garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (res ctrl.Result, retErr error) {
+	log := log.FromContext(ctx)
 
 	orig := repository.DeepCopy()
 
@@ -71,8 +79,6 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, repository, key.RepositoryFinalizerName); err != nil || finalizerAdded {
 		return ctrl.Result{}, err
 	}
-
-	repositoryClient := garmClient.NewRepositoryClient()
 
 	// initialize conditions
 	repository.InitializeConditions()
