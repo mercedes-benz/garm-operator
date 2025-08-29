@@ -19,22 +19,20 @@ func (r *Runner) ConvertFrom(dstRaw conversion.Hub) error {
 }
 
 func Convert_v1beta1_RunnerStatus_To_v1alpha1_RunnerStatus(in *v1beta1.RunnerStatus, out *RunnerStatus, s apiconversion.Scope) error {
-	out = &RunnerStatus{
-		ID:                in.ID,
-		ProviderID:        in.ProviderID,
-		AgentID:           in.AgentID,
-		Name:              in.Name,
-		OSType:            in.OSType,
-		OSName:            in.OSName,
-		OSVersion:         in.OSVersion,
-		OSArch:            in.OSArch,
-		Addresses:         nil,
-		Status:            in.Status,
-		InstanceStatus:    in.InstanceStatus,
-		PoolID:            in.PoolID,
-		ProviderFault:     in.ProviderFault,
-		GitHubRunnerGroup: in.GitHubRunnerGroup,
-	}
+	out.ID = in.ID
+	out.ProviderID = in.ProviderID
+	out.AgentID = in.AgentID
+	out.Name = in.Name
+	out.OSType = in.OSType
+	out.OSName = in.OSName
+	out.OSVersion = in.OSVersion
+	out.OSArch = in.OSArch
+	out.Addresses = nil
+	out.Status = in.Status
+	out.InstanceStatus = in.InstanceStatus
+	out.PoolID = in.PoolID
+	out.ProviderFault = in.ProviderFault
+	out.GitHubRunnerGroup = in.GitHubRunnerGroup
 
 	return autoConvert_v1beta1_RunnerStatus_To_v1alpha1_RunnerStatus(in, out, s)
 }

@@ -41,9 +41,9 @@ const (
 	FetchingWebhookSecretRefSuccessReason ConditionReason = "FetchingWebhookSecretRefSuccess"
 	FetchingWebhookSecretRefFailedReason  ConditionReason = "FetchingWebhookSecretRefFailed"
 
-	GithubCredentialsReference                ConditionType   = "GithubCredentialsReference"
-	FetchingGithubCredentialsRefSuccessReason ConditionReason = "GithubCredentialsRefSuccess"
-	FetchingGithubCredentialsRefFailedReason  ConditionReason = "GithubCredentialsRefFailed"
+	GithubCredentialsReference                ConditionType   = "GithubCredentialsReference"  // #nosec G101
+	FetchingGithubCredentialsRefSuccessReason ConditionReason = "GithubCredentialsRefSuccess" // #nosec G101
+	FetchingGithubCredentialsRefFailedReason  ConditionReason = "GithubCredentialsRefFailed"  // #nosec G101
 )
 
 // Credential Conditions
@@ -62,9 +62,9 @@ const (
 
 const (
 	GarmServerNotReconciledYetMsg     string = "GARM server not reconciled yet"
-	CredentialsNotReconciledYetMsg    string = "Github Credentials Ref not reconciled yet"
-	GithubEndpointNotReconciledYetMsg string = "Github Endpoint Ref not reconciled yet"
-	WebhookSecretNotReconciledYetMsg  string = "Webhook Secret Ref not reconciled yet"
+	CredentialsNotReconciledYetMsg    string = "Github Credentials Ref not reconciled yet" // #nosec G101
+	GithubEndpointNotReconciledYetMsg string = "Github Endpoint Ref not reconciled yet"    // #nosec G101
+	WebhookSecretNotReconciledYetMsg  string = "Webhook Secret Ref not reconciled yet"     // #nosec G101
 	DeletingEnterpriseMsg             string = "Deleting enterprise"
 	DeletingOrgMsg                    string = "Deleting organization"
 	DeletingRepoMsg                   string = "Deleting repository"

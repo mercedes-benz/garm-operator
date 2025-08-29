@@ -4,9 +4,10 @@ package v1beta1
 
 import (
 	"github.com/cloudbase/garm/params"
-	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 )
 
 // GitHubCredentialSpec defines the desired state of GitHubCredential
