@@ -49,6 +49,8 @@ type OrganizationReconciler struct {
 func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
+	organizationClient := garmClient.NewOrganizationClient()
+
 	organization := &garmoperatorv1beta1.Organization{}
 	err := r.Get(ctx, req.NamespacedName, organization)
 	if err != nil {
@@ -58,6 +60,12 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 		return ctrl.Result{}, err
 	}
+
+	return r.reconcile(ctx, organizationClient, organization)
+}
+
+func (r *OrganizationReconciler) reconcile(ctx context.Context, organizationClient garmClient.OrganizationClient, organization *garmoperatorv1beta1.Organization) (res ctrl.Result, retErr error) {
+	log := log.FromContext(ctx)
 
 	orig := organization.DeepCopy()
 
@@ -71,8 +79,6 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if finalizerAdded, err := finalizers.EnsureFinalizer(ctx, r.Client, organization, key.OrganizationFinalizerName); err != nil || finalizerAdded {
 		return ctrl.Result{}, err
 	}
-
-	organizationClient := garmClient.NewOrganizationClient()
 
 	// Initialize conditions to unknown if not set already
 	organization.InitializeConditions()
