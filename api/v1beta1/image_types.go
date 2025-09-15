@@ -6,14 +6,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // ImageSpec defines the desired state of Image
 type ImageSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	// Tag is the Name of the image in its registry
 	// e.g.
 	// - in openstack it can be the image name or id
@@ -22,10 +16,7 @@ type ImageSpec struct {
 }
 
 // ImageStatus defines the observed state of Image
-type ImageStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-}
+type ImageStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:storageversion

@@ -45,6 +45,24 @@ type Repository struct {
 	Status RepositoryStatus `json:"status,omitempty"`
 }
 
+func (r *Repository) InitializeConditions() {
+	if conditions.Get(r, conditions.ReadyCondition) == nil {
+		conditions.MarkUnknown(r, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(r, conditions.PoolManager) == nil {
+		conditions.MarkUnknown(r, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(r, conditions.WebhookSecretReference) == nil {
+		conditions.MarkUnknown(r, conditions.WebhookSecretReference, conditions.UnknownReason, conditions.WebhookSecretNotReconciledYetMsg)
+	}
+
+	if conditions.Get(r, conditions.GithubCredentialsReference) == nil {
+		conditions.MarkUnknown(r, conditions.GithubCredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
+	}
+}
+
 func (r *Repository) SetConditions(conditions []metav1.Condition) {
 	r.Status.Conditions = conditions
 }

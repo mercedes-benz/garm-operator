@@ -4,6 +4,8 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 )
 
 // GarmServerConfigSpec defines the desired state of GarmServerConfig
@@ -45,6 +47,12 @@ type GarmServerConfig struct {
 
 	Spec   GarmServerConfigSpec   `json:"spec,omitempty"`
 	Status GarmServerConfigStatus `json:"status,omitempty"`
+}
+
+func (g *GarmServerConfig) InitializeConditions() {
+	if conditions.Get(g, conditions.ReadyCondition) == nil {
+		conditions.MarkUnknown(g, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
 }
 
 func (g *GarmServerConfig) SetConditions(conditions []metav1.Condition) {

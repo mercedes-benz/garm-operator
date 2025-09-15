@@ -41,6 +41,24 @@ type Organization struct {
 	Status OrganizationStatus `json:"status,omitempty"`
 }
 
+func (o *Organization) InitializeConditions() {
+	if conditions.Get(o, conditions.ReadyCondition) == nil {
+		conditions.MarkUnknown(o, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(o, conditions.PoolManager) == nil {
+		conditions.MarkUnknown(o, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(o, conditions.WebhookSecretReference) == nil {
+		conditions.MarkUnknown(o, conditions.WebhookSecretReference, conditions.UnknownReason, conditions.WebhookSecretNotReconciledYetMsg)
+	}
+
+	if conditions.Get(o, conditions.GithubCredentialsReference) == nil {
+		conditions.MarkUnknown(o, conditions.GithubCredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
+	}
+}
+
 func (o *Organization) SetConditions(conditions []metav1.Condition) {
 	o.Status.Conditions = conditions
 }

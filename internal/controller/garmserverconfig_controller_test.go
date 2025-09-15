@@ -5,6 +5,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/cloudbase/garm/client/controller_info"
 	"github.com/cloudbase/garm/params"
@@ -67,6 +68,15 @@ func TestGarmServerConfig_reconcile(t *testing.T) {
 					ControllerWebhookURL: " http://garm-server.garm-server.svc:9997/api/v1/webhook/BE4B3620-D424-43AC-8EDD-5760DBD516BF",
 					MinimumJobAgeBackoff: 30,
 					Version:              "v0.1.5",
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(conditions.ReadyCondition),
+							Reason:             string(conditions.SuccessfulReconcileReason),
+							Status:             metav1.ConditionTrue,
+							Message:            "",
+							LastTransitionTime: metav1.NewTime(time.Now()),
+						},
+					},
 				},
 			},
 			runtimeObjects: []runtime.Object{},

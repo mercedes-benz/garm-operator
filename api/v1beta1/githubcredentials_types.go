@@ -6,6 +6,8 @@ import (
 	"github.com/cloudbase/garm/params"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 )
 
 // GitHubCredentialSpec defines the desired state of GitHubCredential
@@ -58,6 +60,20 @@ type GitHubCredential struct {
 
 	Spec   GitHubCredentialSpec   `json:"spec,omitempty"`
 	Status GitHubCredentialStatus `json:"status,omitempty"`
+}
+
+func (g *GitHubCredential) InitializeConditions() {
+	if conditions.Get(g, conditions.ReadyCondition) == nil {
+		conditions.MarkUnknown(g, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(g, conditions.GithubEndpointReference) == nil {
+		conditions.MarkUnknown(g, conditions.GithubEndpointReference, conditions.UnknownReason, conditions.GithubEndpointNotReconciledYetMsg)
+	}
+
+	if conditions.Get(g, conditions.WebhookSecretReference) == nil {
+		conditions.MarkUnknown(g, conditions.WebhookSecretReference, conditions.UnknownReason, conditions.WebhookSecretNotReconciledYetMsg)
+	}
 }
 
 func (g *GitHubCredential) SetConditions(conditions []metav1.Condition) {
