@@ -1,5 +1,74 @@
 # SPDX-License-Identifier: MIT
 
 # More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
-# Ignore build and test binaries.
+
+# Ignore build and test binaries
 bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Ignore Go workspace and vendor files
+go.work
+go.work.sum
+vendor/
+
+# Ignore project directories not needed in container
+docs/
+hack/
+config/
+examples/
+scripts/
+tools/
+.github/
+.gitlab/
+
+# Ignore test files and directories
+*_test.go
+testdata/
+test/
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Ignore Git and CI/CD files
+.git/
+.gitignore
+.gitattributes
+
+# Ignore Docker files (except main Dockerfile)
+.dockerignore
+docker-compose*.yml
+release.Dockerfile
+
+# Ignore documentation and config files
+*.md
+README*
+LICENSE*
+CONTRIBUTING*
+CHANGELOG*
+.env
+.env.*
+
+# Ignore temporary and log files
+tmp/
+temp/
+*.tmp
+*.log
