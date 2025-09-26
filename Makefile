@@ -320,7 +320,7 @@ govulncheck-scan: govulncheck ## Perform govulncheck scan
 
 .PHONY: nancy-scan
 nancy-scan: nancy ## Perform nancy scan
-	go list -json -deps ./... | $(NANCY) sleuth
+	@go list -json -deps ./... | $(NANCY) sleuth --token=$(OSS_TOKEN) --username=$(OSS_USERNAME)
 
 ##@ Documentation
 .PHONY: generate-doctoc
