@@ -27,7 +27,6 @@ import (
 	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
 	"github.com/mercedes-benz/garm-operator/pkg/client/mock"
-	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 )
 
@@ -123,15 +122,6 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 					ProviderID:     "kubernetes_external",
 					InstanceStatus: commonParams.InstanceRunning,
 					Status:         params.RunnerIdle,
-					Conditions: []metav1.Condition{
-						{
-							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.RunnerReadyReason),
-							Status:             metav1.ConditionTrue,
-							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            conditions.RunnerIdleAndRunningMsg,
-						},
-					},
 				},
 			},
 		},
@@ -185,9 +175,6 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 
 			// empty resource version to avoid comparison errors
 			runner.ObjectMeta.ResourceVersion = ""
-
-			conditions.NilLastTransitionTime(tt.expectedObject)
-			conditions.NilLastTransitionTime(runner)
 
 			if !reflect.DeepEqual(runner, tt.expectedObject) {
 				t.Errorf("RunnerReconciler.reconcile() \ngot = %#v\n want %#v", runner, tt.expectedObject)
@@ -368,15 +355,6 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						ProviderID:     "road-runner-k8s-fy5snjcv5dzn",
 						InstanceStatus: commonParams.InstanceRunning,
 						Status:         params.RunnerIdle,
-						Conditions: []metav1.Condition{
-							{
-								Type:               string(conditions.ReadyCondition),
-								Reason:             string(conditions.RunnerReadyReason),
-								Status:             metav1.ConditionTrue,
-								LastTransitionTime: metav1.NewTime(time.Now()),
-								Message:            conditions.RunnerIdleAndRunningMsg,
-							},
-						},
 					},
 				},
 				&garmoperatorv1beta1.Runner{
@@ -402,15 +380,6 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 						ProviderID:     "road-runner-k8s-n6kq2mt3k4qr",
 						InstanceStatus: commonParams.InstanceRunning,
 						Status:         params.RunnerIdle,
-						Conditions: []metav1.Condition{
-							{
-								Type:               string(conditions.ReadyCondition),
-								Reason:             string(conditions.RunnerReadyReason),
-								Status:             metav1.ConditionTrue,
-								LastTransitionTime: metav1.NewTime(time.Now()),
-								Message:            conditions.RunnerIdleAndRunningMsg,
-							},
-						},
 					},
 				},
 				&garmoperatorv1beta1.Pool{
@@ -503,15 +472,6 @@ func TestRunnerReconciler_reconcileDeleteCR(t *testing.T) {
 					ProviderID:     "road-runner-k8s-n6kq2mt3k4qr",
 					InstanceStatus: commonParams.InstanceRunning,
 					Status:         params.RunnerIdle,
-					Conditions: []metav1.Condition{
-						{
-							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.RunnerReadyReason),
-							Status:             metav1.ConditionTrue,
-							LastTransitionTime: metav1.NewTime(time.Now()),
-							Message:            conditions.RunnerIdleAndRunningMsg,
-						},
-					},
 				},
 			},
 		},

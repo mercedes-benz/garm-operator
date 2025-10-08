@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	commonParams "github.com/cloudbase/garm-provider-common/params"
 	"github.com/cloudbase/garm/client/instances"
 	"github.com/cloudbase/garm/params"
 	"github.com/google/go-cmp/cmp"
@@ -29,7 +28,6 @@ import (
 	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 	"github.com/mercedes-benz/garm-operator/pkg/client/key"
-	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 	"github.com/mercedes-benz/garm-operator/pkg/config"
 	"github.com/mercedes-benz/garm-operator/pkg/filter"
 	runnerUtil "github.com/mercedes-benz/garm-operator/pkg/runners"
@@ -94,9 +92,6 @@ func (r *RunnerReconciler) reconcileNormal(ctx context.Context, req ctrl.Request
 	}
 
 	orig := runner.DeepCopy()
-
-	// Initialize conditions to unknown if not set already
-	runner.InitializeConditions()
 
 	// always update the status
 	defer func() {
@@ -222,21 +217,6 @@ func (r *RunnerReconciler) updateRunnerStatus(ctx context.Context, runner *garmo
 	runner.Status.PoolID = poolName
 	runner.Status.ProviderFault = string(garmRunner.ProviderFault)
 	runner.Status.GitHubRunnerGroup = garmRunner.GitHubRunnerGroup
-
-	if runner.Status.InstanceStatus == commonParams.InstancePendingCreate ||
-		runner.Status.InstanceStatus == commonParams.InstanceCreating ||
-		runner.Status.Status == params.RunnerInstalling ||
-		runner.Status.Status == params.RunnerPending {
-		conditions.MarkFalse(runner, conditions.ReadyCondition, conditions.RunnerNotReadyReason, conditions.RunnerNotReadyYetMsg)
-	}
-
-	if runner.Status.InstanceStatus == commonParams.InstanceError || runner.Status.Status == params.RunnerFailed {
-		conditions.MarkFalse(runner, conditions.ReadyCondition, conditions.RunnerErrorReason, conditions.RunnerProvisioningFailedMsg)
-	}
-
-	if runner.Status.InstanceStatus == commonParams.InstanceRunning && runner.Status.Status == params.RunnerIdle {
-		conditions.MarkTrue(runner, conditions.ReadyCondition, conditions.RunnerReadyReason, conditions.RunnerIdleAndRunningMsg)
-	}
 
 	return nil
 }

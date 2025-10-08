@@ -53,13 +53,6 @@ const (
 	FetchingGithubEndpointRefFailedReason  ConditionReason = "FetchingGithubEndpointRefFailed"
 )
 
-// Runner Conditions
-const (
-	RunnerReadyReason    ConditionReason = "RunnerIdleAndRunning"
-	RunnerNotReadyReason ConditionReason = "RunnerNotReadyYet"
-	RunnerErrorReason    ConditionReason = "RunnerProvisioningError"
-)
-
 const (
 	GarmServerNotReconciledYetMsg     string = "GARM server not reconciled yet"
 	CredentialsNotReconciledYetMsg    string = "Github Credentials Ref not reconciled yet" // #nosec G101

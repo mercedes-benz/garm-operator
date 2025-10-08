@@ -6,8 +6,6 @@ import (
 	commonParams "github.com/cloudbase/garm-provider-common/params"
 	"github.com/cloudbase/garm/params"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 )
 
 // RunnerSpec defines the desired state of Runner
@@ -94,20 +92,6 @@ type Runner struct {
 
 	Spec   RunnerSpec   `json:"spec,omitempty"`
 	Status RunnerStatus `json:"status,omitempty"`
-}
-
-func (r *Runner) InitializeConditions() {
-	if conditions.Get(r, conditions.ReadyCondition) == nil {
-		conditions.MarkUnknown(r, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
-	}
-}
-
-func (r *Runner) SetConditions(conditions []metav1.Condition) {
-	r.Status.Conditions = conditions
-}
-
-func (r *Runner) GetConditions() []metav1.Condition {
-	return r.Status.Conditions
 }
 
 //+kubebuilder:object:root=true
