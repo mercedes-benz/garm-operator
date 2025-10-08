@@ -55,17 +55,13 @@ const (
 
 const (
 	GarmServerNotReconciledYetMsg     string = "GARM server not reconciled yet"
-	CredentialsNotReconciledYetMsg    string = "Github Credentials Ref not reconciled yet" // #nosec G101
-	GithubEndpointNotReconciledYetMsg string = "Github Endpoint Ref not reconciled yet"    // #nosec G101
-	WebhookSecretNotReconciledYetMsg  string = "Webhook Secret Ref not reconciled yet"     // #nosec G101
+	CredentialsNotReconciledYetMsg    string = "GithubCredentialsRef not reconciled yet" // #nosec G101
+	GithubEndpointNotReconciledYetMsg string = "GithubEndpointRef not reconciled yet"    // #nosec G101
+	WebhookSecretNotReconciledYetMsg  string = "WebhookSecretRef not reconciled yet"     // #nosec G101
 	DeletingEnterpriseMsg             string = "Deleting enterprise"
 	DeletingOrgMsg                    string = "Deleting organization"
 	DeletingRepoMsg                   string = "Deleting repository"
 	DeletingPoolMsg                   string = "Deleting pool"
 	DeletingEndpointMsg               string = "Deleting endpoint"
-	DeletingCredentialsMsg            string = "Deleting credentials"              // #nosec G101
-	DeletingRunnerMsg                 string = "Deleting runner"                   // #nosec G101
-	RunnerIdleAndRunningMsg           string = "Runner is idle and running"        // #nosec G101
-	RunnerProvisioningFailedMsg       string = "Provisioning runner failed"        // #nosec G101
-	RunnerNotReadyYetMsg              string = "Runner is still being provisioned" // #nosec G101
+	DeletingCredentialsMsg            string = "Deleting credentials" // #nosec G101
 )
