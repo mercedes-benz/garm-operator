@@ -46,7 +46,7 @@ type RepositoryReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=repositories/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=repositories/finalizers,verbs=update
 
-func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
+func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
 	repositoryClient := garmClient.NewRepositoryClient()
@@ -88,7 +88,7 @@ func (r *RepositoryReconciler) reconcile(ctx context.Context, repositoryClient g
 		if !reflect.DeepEqual(repository.Status, orig.Status) {
 			if err := r.Status().Update(ctx, repository); err != nil {
 				log.Error(err, "failed to update status")
-				res = ctrl.Result{Requeue: true}
+				res = ctrl.Result{}
 				retErr = err
 			}
 		}

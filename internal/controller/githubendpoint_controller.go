@@ -82,7 +82,7 @@ func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		if !reflect.DeepEqual(endpoint.Status, orig.Status) {
 			if err := r.Status().Update(ctx, endpoint); err != nil {
 				log.Error(err, "failed to update status")
-				res = ctrl.Result{Requeue: true}
+				res = ctrl.Result{}
 				retErr = err
 			}
 		}

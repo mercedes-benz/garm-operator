@@ -46,7 +46,7 @@ type OrganizationReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/finalizers,verbs=update
 
-func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
+func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
 	organizationClient := garmClient.NewOrganizationClient()
@@ -88,7 +88,7 @@ func (r *OrganizationReconciler) reconcile(ctx context.Context, organizationClie
 		if !reflect.DeepEqual(organization.Status, orig.Status) {
 			if err := r.Status().Update(ctx, organization); err != nil {
 				log.Error(err, "failed to update status")
-				res = ctrl.Result{Requeue: true}
+				res = ctrl.Result{}
 				retErr = err
 			}
 		}

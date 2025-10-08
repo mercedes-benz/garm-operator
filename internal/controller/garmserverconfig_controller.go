@@ -69,7 +69,7 @@ func (r *GarmServerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if !reflect.DeepEqual(garmServerConfig.Status, orig.Status) {
 			if err := r.Status().Update(ctx, garmServerConfig); err != nil {
 				log.Error(err, "failed to update status")
-				res = ctrl.Result{Requeue: true}
+				res = ctrl.Result{}
 				retErr = err
 			}
 		}

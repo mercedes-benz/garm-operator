@@ -47,7 +47,7 @@ type EnterpriseReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=enterprises/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",namespace=xxxxx,resources=secrets,verbs=get;list;watch;
 
-func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
+func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
 	enterpriseClient := garmClient.NewEnterpriseClient()

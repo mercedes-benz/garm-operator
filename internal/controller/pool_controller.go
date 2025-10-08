@@ -94,7 +94,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res c
 		if !reflect.DeepEqual(pool.Status, orig.Status) {
 			if err := r.Status().Update(ctx, pool); err != nil {
 				log.Error(err, "failed to update status")
-				res = ctrl.Result{Requeue: true}
+				res = ctrl.Result{}
 				retErr = err
 			}
 		}
@@ -290,13 +290,13 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	// get all runners
 	runners, err := runnerUtil.GetRunnersByPoolID(ctx, pool, instanceClient)
 	if err != nil {
-		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
+		return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
 	}
 
 	// get a list of all idle runners to trigger deletion
 	deletableRunners := runnerUtil.DeletableRunners(ctx, runners)
 	if err != nil {
-		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}, err
+		return ctrl.Result{RequeueAfter: 1 * time.Minute}, err
 	}
 
 	// set current idle runners count in status
