@@ -68,7 +68,7 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *EnterpriseReconciler) reconcile(ctx context.Context, enterpriseClient garmClient.EnterpriseClient, enterprise *garmoperatorv1beta1.Enterprise) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
-	orig := enterprise.DeepCopy()
+	initialEnterprise := enterprise.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(enterprise) {
@@ -86,7 +86,7 @@ func (r *EnterpriseReconciler) reconcile(ctx context.Context, enterpriseClient g
 
 	// always update the status
 	defer func() {
-		if !reflect.DeepEqual(enterprise.Status, orig.Status) {
+		if !reflect.DeepEqual(enterprise.Status, initialEnterprise.Status) {
 			if err := r.Status().Update(ctx, enterprise); err != nil {
 				log.Error(err, "failed to update status")
 				res = ctrl.Result{}

@@ -59,7 +59,7 @@ func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
-	orig := endpoint.DeepCopy()
+	initialEndpoint := endpoint.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(endpoint) {
@@ -79,7 +79,7 @@ func (r *GitHubEndpointReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	// always update the status
 	defer func() {
-		if !reflect.DeepEqual(endpoint.Status, orig.Status) {
+		if !reflect.DeepEqual(endpoint.Status, initialEndpoint.Status) {
 			if err := r.Status().Update(ctx, endpoint); err != nil {
 				log.Error(err, "failed to update status")
 				res = ctrl.Result{}

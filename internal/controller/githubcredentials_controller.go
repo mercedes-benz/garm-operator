@@ -60,7 +60,7 @@ func (r *GitHubCredentialReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
-	orig := credentials.DeepCopy()
+	initialCredentials := credentials.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(credentials) {
@@ -80,7 +80,7 @@ func (r *GitHubCredentialReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// always update the status
 	defer func() {
-		if !reflect.DeepEqual(credentials.Status, orig.Status) {
+		if !reflect.DeepEqual(credentials.Status, initialCredentials.Status) {
 			if err := r.Status().Update(ctx, credentials); err != nil {
 				log.Error(err, "failed to update status")
 				res = ctrl.Result{}

@@ -67,7 +67,7 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 func (r *OrganizationReconciler) reconcile(ctx context.Context, organizationClient garmClient.OrganizationClient, organization *garmoperatorv1beta1.Organization) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
-	orig := organization.DeepCopy()
+	initialOrganization := organization.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(organization) {
@@ -85,7 +85,7 @@ func (r *OrganizationReconciler) reconcile(ctx context.Context, organizationClie
 
 	// always update the status
 	defer func() {
-		if !reflect.DeepEqual(organization.Status, orig.Status) {
+		if !reflect.DeepEqual(organization.Status, initialOrganization.Status) {
 			if err := r.Status().Update(ctx, organization); err != nil {
 				log.Error(err, "failed to update status")
 				res = ctrl.Result{}

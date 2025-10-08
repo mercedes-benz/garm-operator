@@ -69,7 +69,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res c
 		return ctrl.Result{}, err
 	}
 
-	orig := pool.DeepCopy()
+	initialPool := pool.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(pool) {
@@ -91,7 +91,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res c
 
 	// always update the status
 	defer func() {
-		if !reflect.DeepEqual(pool.Status, orig.Status) {
+		if !reflect.DeepEqual(pool.Status, initialPool.Status) {
 			if err := r.Status().Update(ctx, pool); err != nil {
 				log.Error(err, "failed to update status")
 				res = ctrl.Result{}

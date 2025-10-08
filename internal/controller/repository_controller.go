@@ -67,7 +67,7 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *RepositoryReconciler) reconcile(ctx context.Context, repositoryClient garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
-	orig := repository.DeepCopy()
+	initialRepository := repository.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(repository) {
@@ -85,7 +85,7 @@ func (r *RepositoryReconciler) reconcile(ctx context.Context, repositoryClient g
 
 	// always update the status
 	defer func() {
-		if !reflect.DeepEqual(repository.Status, orig.Status) {
+		if !reflect.DeepEqual(repository.Status, initialRepository.Status) {
 			if err := r.Status().Update(ctx, repository); err != nil {
 				log.Error(err, "failed to update status")
 				res = ctrl.Result{}

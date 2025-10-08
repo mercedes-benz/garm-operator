@@ -91,13 +91,13 @@ func (r *RunnerReconciler) reconcileNormal(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	orig := runner.DeepCopy()
+	initialRunner := runner.DeepCopy()
 
 	// always update the status
 	defer func() {
-		if !reflect.DeepEqual(runner.Status, orig.Status) {
+		if !reflect.DeepEqual(runner.Status, initialRunner.Status) {
 			log.Info("Update runner status...")
-			diff := cmp.Diff(orig.Status, runner.Status)
+			diff := cmp.Diff(initialRunner.Status, runner.Status)
 			log.V(1).Info("Runner status changed", "diff", diff)
 			if err := r.Status().Update(ctx, runner); err != nil {
 				log.Error(err, "failed to update status", "runner", runner.Name)

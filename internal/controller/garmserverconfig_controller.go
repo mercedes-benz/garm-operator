@@ -54,7 +54,7 @@ func (r *GarmServerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
-	orig := garmServerConfig.DeepCopy()
+	initialGarmServerConfig := garmServerConfig.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(garmServerConfig) {
@@ -66,7 +66,7 @@ func (r *GarmServerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// always update the status
 	defer func() {
-		if !reflect.DeepEqual(garmServerConfig.Status, orig.Status) {
+		if !reflect.DeepEqual(garmServerConfig.Status, initialGarmServerConfig.Status) {
 			if err := r.Status().Update(ctx, garmServerConfig); err != nil {
 				log.Error(err, "failed to update status")
 				res = ctrl.Result{}
