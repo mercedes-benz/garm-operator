@@ -46,7 +46,7 @@ type RepositoryReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=repositories/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=repositories/finalizers,verbs=update
 
-func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
 	repositoryClient := garmClient.NewRepositoryClient()
@@ -60,12 +60,6 @@ func (r *RepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		return ctrl.Result{}, err
 	}
-
-	return r.reconcile(ctx, repositoryClient, repository)
-}
-
-func (r *RepositoryReconciler) reconcile(ctx context.Context, repositoryClient garmClient.RepositoryClient, repository *garmoperatorv1beta1.Repository) (res ctrl.Result, retErr error) {
-	log := log.FromContext(ctx)
 
 	initialRepository := repository.DeepCopy()
 

@@ -955,7 +955,9 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			mockRepositoryClient := mock.NewMockRepositoryClient(mockCtrl)
 			tt.expectGarmRequest(mockRepositoryClient.EXPECT())
 
-			_, err = reconciler.reconcile(context.Background(), mockRepositoryClient, repository)
+			repository.InitializeConditions()
+
+			_, err = reconciler.reconcileNormal(context.Background(), mockRepositoryClient, repository)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RepositoryReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
