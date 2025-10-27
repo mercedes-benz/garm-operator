@@ -928,7 +928,9 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			mockEnterpriseClient := mock.NewMockEnterpriseClient(mockCtrl)
 			tt.expectGarmRequest(mockEnterpriseClient.EXPECT())
 
-			_, err = reconciler.reconcile(context.Background(), mockEnterpriseClient, enterprise)
+			enterprise.InitializeConditions()
+
+			_, err = reconciler.reconcileNormal(context.Background(), mockEnterpriseClient, enterprise)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EnterpriseReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return

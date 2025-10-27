@@ -47,7 +47,7 @@ type EnterpriseReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=enterprises/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",namespace=xxxxx,resources=secrets,verbs=get;list;watch;
 
-func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
 	enterpriseClient := garmClient.NewEnterpriseClient()
@@ -61,12 +61,6 @@ func (r *EnterpriseReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		return ctrl.Result{}, err
 	}
-
-	return r.reconcile(ctx, enterpriseClient, enterprise)
-}
-
-func (r *EnterpriseReconciler) reconcile(ctx context.Context, enterpriseClient garmClient.EnterpriseClient, enterprise *garmoperatorv1beta1.Enterprise) (res ctrl.Result, retErr error) {
-	log := log.FromContext(ctx)
 
 	initialEnterprise := enterprise.DeepCopy()
 
