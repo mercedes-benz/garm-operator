@@ -928,7 +928,9 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 			mockOrganizationClient := mock.NewMockOrganizationClient(mockCtrl)
 			tt.expectGarmRequest(mockOrganizationClient.EXPECT())
 
-			_, err = reconciler.reconcile(context.Background(), mockOrganizationClient, organization)
+			organization.InitializeConditions()
+
+			_, err = reconciler.reconcileNormal(context.Background(), mockOrganizationClient, organization)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("OrganizationReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return

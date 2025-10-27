@@ -46,7 +46,7 @@ type OrganizationReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/finalizers,verbs=update
 
-func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
 
 	organizationClient := garmClient.NewOrganizationClient()
@@ -60,12 +60,6 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 		return ctrl.Result{}, err
 	}
-
-	return r.reconcile(ctx, organizationClient, organization)
-}
-
-func (r *OrganizationReconciler) reconcile(ctx context.Context, organizationClient garmClient.OrganizationClient, organization *garmoperatorv1beta1.Organization) (res ctrl.Result, retErr error) {
-	log := log.FromContext(ctx)
 
 	initialOrganization := organization.DeepCopy()
 
