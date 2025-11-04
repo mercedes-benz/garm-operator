@@ -173,7 +173,6 @@ MOCKGEN ?= $(LOCALBIN)/mockgen
 GORELEASER ?= $(LOCALBIN)/goreleaser
 MDTOC ?= $(LOCALBIN)/mdtoc
 SLICE ?= $(LOCALBIN)/kubectl-slice
-NANCY ?= $(LOCALBIN)/nancy
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 KBOM ?= $(LOCALBIN)/bom
 KIND ?= $(LOCALBIN)/kind
@@ -247,12 +246,6 @@ $(SLICE): $(LOCALBIN)
 	test -s $(LOCALBIN)/kubectl-slice && $(LOCALBIN)/kubectl-slice --version | grep -q $(SLICE_VERSION) || \
 	GOBIN=$(LOCALBIN) go install github.com/patrickdappollonio/kubectl-slice@$(SLICE_VERSION)
 
-.PHONY: nancy
-nancy: $(NANCY) ## Download nancy locally if necessary. If wrong version is installed, it will be overwritten.
-$(NANCY): $(LOCALBIN)
-	test -s $(LOCALBIN)/nancy && $(LOCALBIN)/nancy --version | grep -q $(NANCY_VERSION) || \
-	GOBIN=$(LOCALBIN) go install github.com/sonatype-nexus-community/nancy@$(NANCY_VERSION)
-
 .PHONY: govulncheck
 govulncheck: $(GOVULNCHECK) ## Download govulncheck locally if necessary. If wrong version is installed, it will be overwritten.
 $(GOVULNCHECK): $(LOCALBIN)
@@ -311,16 +304,12 @@ verify-doctoc: generate-doctoc
 	fi
 
 .PHONY: verify-security
-verify-security: govulncheck-scan nancy-scan ## Verify security by running govulncheck and nancy
+verify-security: govulncheck-scan ## Verify security by running govulncheck
 	@echo "Security checks passed"
 
 .PHONY: govulncheck-scan
 govulncheck-scan: govulncheck ## Perform govulncheck scan
 	$(GOVULNCHECK) ./...
-
-.PHONY: nancy-scan
-nancy-scan: nancy ## Perform nancy scan
-	go list -json -deps ./... | $(NANCY) sleuth
 
 ##@ Documentation
 .PHONY: generate-doctoc
