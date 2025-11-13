@@ -21,14 +21,14 @@ jobs:
 
       - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
-          go-version: '1.24.4'
+          go-version: "1.24.9"
 
       - name: make verify
         run: make verify
 
       - name: make lint
         run: make golangci-lint && GOLANGCI_LINT_EXTRA_ARGS=--timeout=1h make lint
-      
+
       - name: make test
         run: make test
 
@@ -37,5 +37,5 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-         name: sbom 
-         path: tmp/garm-operator.bom.spdx
+          name: sbom
+          path: tmp/garm-operator.bom.spdx
