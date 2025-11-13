@@ -118,8 +118,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Message:            "Pool Manager is not running",
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -132,8 +132,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -246,8 +246,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Message:            "Pool Manager is not running",
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -260,10 +260,10 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
+							Type:               string(conditions.WebhookSecretReference),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},
@@ -374,8 +374,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Message:            "Pool Manager is not running",
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -388,10 +388,10 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
+							Type:               string(conditions.WebhookSecretReference),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},
@@ -503,8 +503,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Message:            "Pool Manager is not running",
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -517,8 +517,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -641,8 +641,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Message:            "Pool Manager is not running",
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -655,8 +655,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -768,8 +768,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							Message:            "Pool Manager is not running",
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -782,8 +782,8 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -870,28 +870,28 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Reason:             string(conditions.FetchingWebhookSecretRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "secrets \"my-webhook-secret\" not found",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
+							Type:               string(conditions.GithubCredentialsReference),
 							Reason:             string(conditions.UnknownReason),
 							Status:             metav1.ConditionUnknown,
-							Message:            "credentials not reconciled yet",
+							Message:            conditions.CredentialsNotReconciledYetMsg,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
 							Type:               string(conditions.PoolManager),
 							Reason:             string(conditions.UnknownReason),
 							Status:             metav1.ConditionUnknown,
-							Message:            "GARM server not reconciled yet",
+							Message:            conditions.GarmServerNotReconciledYetMsg,
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "secrets \"my-webhook-secret\" not found",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -925,10 +925,12 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 
 			organization := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Organization)
 
-			mockOrganization := mock.NewMockOrganizationClient(mockCtrl)
-			tt.expectGarmRequest(mockOrganization.EXPECT())
+			mockOrganizationClient := mock.NewMockOrganizationClient(mockCtrl)
+			tt.expectGarmRequest(mockOrganizationClient.EXPECT())
 
-			_, err = reconciler.reconcileNormal(context.Background(), mockOrganization, organization)
+			organization.InitializeConditions()
+
+			_, err = reconciler.reconcileNormal(context.Background(), mockOrganizationClient, organization)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("OrganizationReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return

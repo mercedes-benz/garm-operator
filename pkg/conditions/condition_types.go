@@ -37,29 +37,31 @@ const (
 	PoolManagerRunningReason ConditionReason = "PoolManagerRunning"
 	PoolManagerFailureReason ConditionReason = "PoolManagerFailure"
 
-	SecretReference                ConditionType   = "SecretReference"
-	FetchingSecretRefSuccessReason ConditionReason = "FetchingSecretRefSuccess"
-	FetchingSecretRefFailedReason  ConditionReason = "FetchingSecretRefFailed"
+	WebhookSecretReference                ConditionType   = "WebhookSecretReference"
+	FetchingWebhookSecretRefSuccessReason ConditionReason = "FetchingWebhookSecretRefSuccess"
+	FetchingWebhookSecretRefFailedReason  ConditionReason = "FetchingWebhookSecretRefFailed"
 
-	CredentialsReference                ConditionType   = "CredentialsReference"
-	FetchingCredentialsRefSuccessReason ConditionReason = "CredentialsRefSuccess"
-	FetchingCredentialsRefFailedReason  ConditionReason = "CredentialsRefFailed"
+	GithubCredentialsReference                ConditionType   = "GithubCredentialsReference"  // #nosec G101
+	FetchingGithubCredentialsRefSuccessReason ConditionReason = "GithubCredentialsRefSuccess" // #nosec G101
+	FetchingGithubCredentialsRefFailedReason  ConditionReason = "GithubCredentialsRefFailed"  // #nosec G101
 )
 
 // Credential Conditions
 const (
-	EndpointReference                ConditionType   = "EndpointReference"
-	FetchingEndpointRefSuccessReason ConditionReason = "FetchingEndpointRefSuccess"
-	FetchingEndpointRefFailedReason  ConditionReason = "FetchingEndpointRefFailed"
+	GithubEndpointReference                ConditionType   = "GithubEndpointReference"
+	FetchingGithubEndpointRefSuccessReason ConditionReason = "FetchingGithubEndpointRefSuccess"
+	FetchingGithubEndpointRefFailedReason  ConditionReason = "FetchingGithubEndpointRefFailed"
 )
 
 const (
-	GarmServerNotReconciledYetMsg  string = "GARM server not reconciled yet"
-	CredentialsNotReconciledYetMsg string = "credentials not reconciled yet"
-	DeletingEnterpriseMsg          string = "Deleting enterprise"
-	DeletingOrgMsg                 string = "Deleting organization"
-	DeletingRepoMsg                string = "Deleting repository"
-	DeletingPoolMsg                string = "Deleting pool"
-	DeletingEndpointMsg            string = "Deleting endpoint"
-	DeletingCredentialsMsg         string = "Deleting credentials" // #nosec G101
+	GarmServerNotReconciledYetMsg     string = "GARM server not reconciled yet"
+	CredentialsNotReconciledYetMsg    string = "GithubCredentialsRef not reconciled yet" // #nosec G101
+	GithubEndpointNotReconciledYetMsg string = "GithubEndpointRef not reconciled yet"    // #nosec G101
+	WebhookSecretNotReconciledYetMsg  string = "WebhookSecretRef not reconciled yet"     // #nosec G101
+	DeletingEnterpriseMsg             string = "Deleting enterprise"
+	DeletingOrgMsg                    string = "Deleting organization"
+	DeletingRepoMsg                   string = "Deleting repository"
+	DeletingPoolMsg                   string = "Deleting pool"
+	DeletingEndpointMsg               string = "Deleting endpoint"
+	DeletingCredentialsMsg            string = "Deleting credentials" // #nosec G101
 )

@@ -8,9 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // RunnerSpec defines the desired state of Runner
 type RunnerSpec struct{}
 
@@ -50,11 +47,11 @@ type RunnerStatus struct {
 	// for this instance.
 	Addresses []commonParams.Address `json:"addresses,omitempty"`
 
-	// Status is the status of the instance inside the provider (eg: running, stopped, etc)
-	Status commonParams.InstanceStatus `json:"status,omitempty"`
+	// Status is the runner status as it appears on GitHub. (idle, pending, ...)
+	Status params.RunnerStatus `json:"status,omitempty"`
 
-	// RunnerStatus is the github runner status as it appears on GitHub.
-	InstanceStatus params.RunnerStatus `json:"instanceStatus,omitempty"`
+	// InstanceStatus of the instance inside the respective cloud provider of the physical instance (eg: running, stopped, ...)
+	InstanceStatus commonParams.InstanceStatus `json:"instanceStatus,omitempty"`
 
 	// PoolID is the ID of the garm pool to which a runner belongs.
 	PoolID string `json:"poolId,omitempty"`
@@ -72,6 +69,8 @@ type RunnerStatus struct {
 	// GithubRunnerGroup is the github runner group to which the runner belongs.
 	// The runner group must be created by someone with access to the enterprise.
 	GitHubRunnerGroup string `json:"githubRunnerGroup"`
+
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true

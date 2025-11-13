@@ -4,6 +4,8 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/mercedes-benz/garm-operator/pkg/conditions"
 )
 
 // GitHubEndpointSpec defines the desired state of GitHubEndpoint
@@ -36,6 +38,16 @@ type GitHubEndpoint struct {
 
 	Spec   GitHubEndpointSpec   `json:"spec,omitempty"`
 	Status GitHubEndpointStatus `json:"status,omitempty"`
+}
+
+func (e *GitHubEndpoint) InitializeConditions() {
+	if conditions.Get(e, conditions.ReadyCondition) == nil {
+		conditions.MarkUnknown(e, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(e, conditions.WebhookSecretReference) == nil {
+		conditions.MarkUnknown(e, conditions.WebhookSecretReference, conditions.UnknownReason, conditions.WebhookSecretNotReconciledYetMsg)
+	}
 }
 
 func (e *GitHubEndpoint) SetConditions(conditions []metav1.Condition) {

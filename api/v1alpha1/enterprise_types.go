@@ -41,6 +41,24 @@ type Enterprise struct {
 	Status EnterpriseStatus `json:"status,omitempty"`
 }
 
+func (e *Enterprise) InitializeConditions() {
+	if conditions.Get(e, conditions.ReadyCondition) == nil {
+		conditions.MarkUnknown(e, conditions.ReadyCondition, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(e, conditions.PoolManager) == nil {
+		conditions.MarkUnknown(e, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
+	}
+
+	if conditions.Get(e, conditions.WebhookSecretReference) == nil {
+		conditions.MarkUnknown(e, conditions.WebhookSecretReference, conditions.UnknownReason, conditions.WebhookSecretNotReconciledYetMsg)
+	}
+
+	if conditions.Get(e, conditions.GithubCredentialsReference) == nil {
+		conditions.MarkUnknown(e, conditions.GithubCredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
+	}
+}
+
 func (e *Enterprise) SetConditions(conditions []metav1.Condition) {
 	e.Status.Conditions = conditions
 }

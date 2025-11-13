@@ -118,8 +118,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -132,8 +132,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -246,8 +246,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -260,10 +260,10 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
+							Type:               string(conditions.WebhookSecretReference),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},
@@ -348,8 +348,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -362,10 +362,10 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
+							Type:               string(conditions.WebhookSecretReference),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},
@@ -477,8 +477,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -491,10 +491,10 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
+							Type:               string(conditions.WebhookSecretReference),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},
@@ -615,8 +615,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -629,10 +629,10 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
+							Type:               string(conditions.WebhookSecretReference),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 					},
@@ -768,8 +768,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
-							Reason:             string(conditions.FetchingCredentialsRefSuccessReason),
+							Type:               string(conditions.GithubCredentialsReference),
+							Reason:             string(conditions.FetchingGithubCredentialsRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -782,8 +782,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefSuccessReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefSuccessReason),
 							Status:             metav1.ConditionTrue,
 							Message:            "",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -870,13 +870,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							Type:               string(conditions.ReadyCondition),
-							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Reason:             string(conditions.FetchingWebhookSecretRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "secrets \"my-webhook-secret\" not found",
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.CredentialsReference),
+							Type:               string(conditions.GithubCredentialsReference),
 							Reason:             string(conditions.UnknownReason),
 							Status:             metav1.ConditionUnknown,
 							Message:            conditions.CredentialsNotReconciledYetMsg,
@@ -890,8 +890,8 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 							LastTransitionTime: metav1.NewTime(time.Now()),
 						},
 						{
-							Type:               string(conditions.SecretReference),
-							Reason:             string(conditions.FetchingSecretRefFailedReason),
+							Type:               string(conditions.WebhookSecretReference),
+							Reason:             string(conditions.FetchingWebhookSecretRefFailedReason),
 							Status:             metav1.ConditionFalse,
 							Message:            "secrets \"my-webhook-secret\" not found",
 							LastTransitionTime: metav1.NewTime(time.Now()),
@@ -925,10 +925,12 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 
 			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Enterprise)
 
-			mockEnterprise := mock.NewMockEnterpriseClient(mockCtrl)
-			tt.expectGarmRequest(mockEnterprise.EXPECT())
+			mockEnterpriseClient := mock.NewMockEnterpriseClient(mockCtrl)
+			tt.expectGarmRequest(mockEnterpriseClient.EXPECT())
 
-			_, err = reconciler.reconcileNormal(context.Background(), mockEnterprise, enterprise)
+			enterprise.InitializeConditions()
+
+			_, err = reconciler.reconcileNormal(context.Background(), mockEnterpriseClient, enterprise)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EnterpriseReconciler.reconcileNormal() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -1045,10 +1047,10 @@ func TestEnterpriseReconciler_reconcileDelete(t *testing.T) {
 
 			enterprise := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Enterprise)
 
-			mockEnterprise := mock.NewMockEnterpriseClient(mockCtrl)
-			tt.expectGarmRequest(mockEnterprise.EXPECT())
+			mockEnterpriseClient := mock.NewMockEnterpriseClient(mockCtrl)
+			tt.expectGarmRequest(mockEnterpriseClient.EXPECT())
 
-			_, err = reconciler.reconcileDelete(context.Background(), mockEnterprise, enterprise)
+			_, err = reconciler.reconcileDelete(context.Background(), mockEnterpriseClient, enterprise)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EnterpriseReconciler.reconcileDelete() error = %v, wantErr %v", err, tt.wantErr)
 				return

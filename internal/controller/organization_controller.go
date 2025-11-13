@@ -46,8 +46,10 @@ type OrganizationReconciler struct {
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=garm-operator.mercedes-benz.com,namespace=xxxxx,resources=organizations/finalizers,verbs=update
 
-func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, retErr error) {
 	log := log.FromContext(ctx)
+
+	organizationClient := garmClient.NewOrganizationClient()
 
 	organization := &garmoperatorv1beta1.Organization{}
 	err := r.Get(ctx, req.NamespacedName, organization)
@@ -58,6 +60,8 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 		return ctrl.Result{}, err
 	}
+
+	initialOrganization := organization.DeepCopy()
 
 	// Ignore objects that are paused
 	if annotations.IsPaused(organization) {
@@ -70,7 +74,19 @@ func (r *OrganizationReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	organizationClient := garmClient.NewOrganizationClient()
+	// Initialize conditions to unknown if not set already
+	organization.InitializeConditions()
+
+	// always update the status
+	defer func() {
+		if !reflect.DeepEqual(organization.Status, initialOrganization.Status) {
+			if err := r.Status().Update(ctx, organization); err != nil {
+				log.Error(err, "failed to update status")
+				res = ctrl.Result{}
+				retErr = err
+			}
+		}
+	}()
 
 	// Handle deleted organizations
 	if !organization.DeletionTimestamp.IsZero() {
@@ -86,38 +102,26 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &organization.Spec.WebhookSecretRef, organization.Namespace)
 	if err != nil {
-		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkFalse(organization, conditions.SecretReference, conditions.FetchingSecretRefFailedReason, err.Error())
-		conditions.MarkUnknown(organization, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
-		conditions.MarkUnknown(organization, conditions.CredentialsReference, conditions.UnknownReason, conditions.CredentialsNotReconciledYetMsg)
-		if err := r.Status().Update(ctx, organization); err != nil {
-			return ctrl.Result{}, err
-		}
+		event.Error(r.Recorder, organization, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
+		conditions.MarkFalse(organization, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(organization, conditions.SecretReference, conditions.FetchingSecretRefSuccessReason, "")
+	conditions.MarkTrue(organization, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefSuccessReason, "")
 
 	credentials, err := r.getCredentialsRef(ctx, organization)
 	if err != nil {
-		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingCredentialsRefFailedReason, err.Error())
-		conditions.MarkFalse(organization, conditions.CredentialsReference, conditions.FetchingCredentialsRefFailedReason, err.Error())
-		if conditions.Get(organization, conditions.PoolManager) == nil {
-			conditions.MarkUnknown(organization, conditions.PoolManager, conditions.UnknownReason, conditions.GarmServerNotReconciledYetMsg)
-		}
-		if err := r.Status().Update(ctx, organization); err != nil {
-			return ctrl.Result{}, err
-		}
+		event.Error(r.Recorder, organization, err.Error())
+		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
+		conditions.MarkFalse(organization, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		return ctrl.Result{}, err
 	}
-	conditions.MarkTrue(organization, conditions.CredentialsReference, conditions.FetchingCredentialsRefSuccessReason, "")
+	conditions.MarkTrue(organization, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefSuccessReason, "")
 
 	garmOrganization, err := r.getExistingGarmOrg(ctx, client, organization)
 	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, organization); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -127,9 +131,6 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 		if err != nil {
 			event.Error(r.Recorder, organization, err.Error())
 			conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-			if err := r.Status().Update(ctx, organization); err != nil {
-				return ctrl.Result{}, err
-			}
 			return ctrl.Result{}, err
 		}
 	}
@@ -143,9 +144,6 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	if err != nil {
 		event.Error(r.Recorder, organization, err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, organization); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -157,10 +155,6 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	if !garmOrganization.PoolManagerStatus.IsRunning {
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.PoolManagerFailureReason, "Pool Manager is not running")
 		conditions.MarkFalse(organization, conditions.PoolManager, conditions.PoolManagerFailureReason, garmOrganization.PoolManagerStatus.FailureReason)
-	}
-
-	if err := r.Status().Update(ctx, organization); err != nil {
-		return ctrl.Result{}, err
 	}
 
 	log.Info("reconciling organization successfully done")
@@ -241,9 +235,6 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client gar
 	log.Info("starting organization deletion")
 	event.Deleting(r.Recorder, organization, "starting organization deletion")
 	conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingOrgMsg)
-	if err := r.Status().Update(ctx, organization); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	err := client.DeleteOrganization(
 		organizations.NewDeleteOrgParams().
@@ -253,9 +244,6 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client gar
 		log.V(1).Info(fmt.Sprintf("client.DeleteOrganization error: %s", err))
 		event.Error(r.Recorder, organization, err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
-		if err := r.Status().Update(ctx, organization); err != nil {
-			return ctrl.Result{}, err
-		}
 		return ctrl.Result{}, err
 	}
 
