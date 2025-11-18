@@ -188,7 +188,7 @@ MDTOC_VERSION ?= v1.1.0
 SLICE_VERSION ?= v1.2.6
 NANCY_VERSION ?= v1.0.46
 KBOM_VERSION ?= v0.5.1
-KIND_VERSION ?= v0.22.0
+KIND_VERSION ?= v0.30.0
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
