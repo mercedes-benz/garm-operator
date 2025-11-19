@@ -5,8 +5,8 @@
 <!-- toc -->
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
-  - [🐛 Debugging](#-debugging)
   - [⚙️ Bootstrap garm-server with garm-provider-k8s for local development](#-bootstrap-garm-server-with-garm-provider-k8s-for-local-development)
+  - [🐛 Debugging](#-debugging)
 <!-- /toc -->
 
 ## Prerequisites
@@ -30,6 +30,55 @@ All other remaining tools (e.g. `kustomize`) are getting installed automatically
    The `make tilt-up` command will give you the URL to the local tilt environment.
 1. Time to start developing. 🎉
 
+### ⚙️ Bootstrap garm-server with garm-provider-k8s for local development
+
+If you need a `garm-server` with a configured [garm-provider-k8s](https://github.com/mercedes-benz/garm-provider-k8s) in your local cluster to spin up some `k8s based runners` for testing, you can do the following:
+
+#### 1. Clone the `garm-provider-k8s` repo:
+   ```bash
+   git clone https://github.com/mercedes-benz/garm-provider-k8s && cd ./garm-provider-k8s
+   ```
+
+#### 2. Generate a GitHub PAT
+   Your PAT needs the following permissions:
+   If you'll use a PAT (classic), you'll have to grant access for the following scopes. See official [cloudbase/garm](https://github.com/cloudbase/garm/blob/main/doc/github_credentials.md) docs for more information.
+
+   * ```public_repo``` - for access to a repository
+   * ```repo``` - for access to a private repository
+   * ```admin:org``` - if you plan on using this with an organization to which you have access
+   * ```manage_runners:enterprise``` - if you plan to use garm at the enterprise level
+   * ```admin:repo_hook``` - if you want to allow GARM to install webhooks on repositories (optional)
+   * ```admin:org_hook``` - if you want to allow GARM to install webhooks on organizations (optional)
+
+Fine grained PATs are also supported as long as you grant the required privileges:
+
+* **Repository permissions**:
+   * `Administration: Read & write` - needed to generate JIT config/registration token, remove runners, etc.
+   * `Metadata: Read-only` - automatically enabled by above
+* **Organization permissions**:
+   * `Self-hosted runners: Read & write` - needed to manage runners in an organization
+
+#### 3. Create the required `garm-operator` CRs:
+You can use the `make template` target in the root directory of the `garm-provider-k8s` repository to generate a new
+`garm-operator-crs.yaml` which contains all CRs required for `garm-operator`.
+
+```bash
+GARM_GITHUB_ORGANIZATION=my-github-org \
+GARM_GITHUB_REPOSITORY=my-github-repo \
+GARM_GITHUB_TOKEN=gha_testtoken \
+GARM_GITHUB_WEBHOOK_SECRET=supersecret \
+make template
+```
+
+#### 4. Build and deploy the `garm-server` with `garm-provider-k8s` into your local `kind` cluster:
+```bash
+make docker-build docker-build-summerwind-runner && kubectl apply -k hack/local-development/kubernetes/
+```
+
+#### 5. Deploy the `garm-operator` CRs to your local `kind` cluster:
+```bash
+kubectl apply -f hack/local-development/kubernetes/garm-operator-crs.yaml
+```
 
 ### 🐛 Debugging
 
@@ -38,7 +87,7 @@ This allows us to debug the `garm-operator` running in the local `kind` cluster.
 
 The following steps are required to start debugging the `garm-operator`:
 
-1. set the `mode` variable from `local` to `debug` in the `Tiltfile`
+#### 1. set the `mode` variable from `local` to `debug` in the `Tiltfile`
 
    This will start the `garm-operator` container with the `command` and `args` specified in the [`config/overlays/debug/manager_patch.yaml`](config/overlays/debug/manager_patch.yaml) file. (Ensure that the correct GARM credentials are set.)
 
@@ -49,7 +98,7 @@ The following steps are required to start debugging the `garm-operator`:
    API server listening at: [::]:2345
    ```
 
-1. IDE configuration
+#### 1. IDE configuration
    1. VSCode
       1. Create a `launch.json` file in the `.vscode` directory with the following content:
          ```json
@@ -77,28 +126,8 @@ The following steps are required to start debugging the `garm-operator`:
       </component>
       ```
       You can now choose your config in IntelliJs `Run Configurations` and hit `Debug`
-         
+
       ![img_2.png](docs/assets/intellij-debugging.png)
 
 1. Happy debugging 🐛
 
-
-### ⚙️ Bootstrap garm-server with garm-provider-k8s for local development
-
-If you need a `garm-server` with a configured [garm-provider-k8s](https://github.com/mercedes-benz/garm-provider-k8s) in your local cluster to spin up some `k8s based runners` for testing, you can do the following:
-
-Clone the `garm-provider-k8s` repo:
-   ```bash
-   $ git clone https://github.com/mercedes-benz/garm-provider-k8s && cd ./garm-provider-k8s
-   ```
-And follow this [guide](https://github.com/mercedes-benz/garm-provider-k8s/blob/main/DEVELOPMENT.md). But `instead` of the `make tilt-up` in the `garm-provider-k8s` repo, execute the folling command. Make sure you are in your `kind-garm-operator` kubernetes context:
-This will build a GitHub actions runner image and a garm-server image and bootstrap the garm-server in your local `kind` cluster:
-   ```bash
-   $ make build copy docker-build docker-build-summerwind-runner && kubectl apply -k hack/local-development/kubernetes/
-   ```
-
-Deploy the `garm-operator` CRs to your local `kind` cluster:
-   ```bash
-   $ kubectl apply -k hack/local-development/kubernetes/garm-operator-crs.yaml
-   ```
-Essentially this does the same as the `make tilt-up` target in `garm-provider-k8s`, but in your local garm-operator cluster. Otherwise, a separate cluster will be spawned with the latest garm-operator release.

@@ -20,7 +20,7 @@ fi
 KIND_CLUSTER_NAME=${CAPI_KIND_CLUSTER_NAME:-"garm-operator"}
 KIND_BINARY="bin/kind"
 # available versions can be found at https://github.com/kubernetes-sigs/kind/releases
-NODE_IMAGE="kindest/node:v1.28.7@sha256:9bc6c451a289cf96ad0bbaf33d416901de6fd632415b076ab05f5fa7e4f65c58"
+NODE_IMAGE="kindest/node:v1.34.0@sha256:7416a61b42b1662ca6ca89f02028ac133a309a2a30ba309614e8ec94d976dc5a"
 
 # 1. If kind cluster already exists exit.
 if [[ "$(${KIND_BINARY} get clusters)" =~ .*"${KIND_CLUSTER_NAME}".* ]]; then
@@ -48,6 +48,8 @@ fi
 cat <<EOF | "${KIND_BINARY}" create cluster --name="${KIND_CLUSTER_NAME}" --image="${NODE_IMAGE}" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+featureGates:
+  ImageVolume: true
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry]
