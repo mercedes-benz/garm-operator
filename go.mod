@@ -19,7 +19,7 @@ require (
 	github.com/knadh/koanf/v2 v2.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
-	github.com/spf13/pflag v1.0.7
+	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
 	golang.org/x/mod v0.30.0
