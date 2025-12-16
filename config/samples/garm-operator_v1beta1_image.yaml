@@ -3,4 +3,4 @@ kind: Image
 metadata:
   name: image-sample
 spec:
-  tag: localhost:5000/runner:linux-ubuntu-22:04-x86_64
+  tag: localhost:5000/runner:linux-ubuntu-22.04-x86_64

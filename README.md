@@ -5,6 +5,9 @@
 [![build](https://github.com/mercedes-benz/garm-operator/actions/workflows/build.yml/badge.svg)](https://github.com/mercedes-benz/garm-operator/actions/workflows/build.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mercedes-benz/garm-operator/badge)](https://scorecard.dev/viewer/?uri=github.com/mercedes-benz/garm-operator)
 
+> [!NOTE]
+> We are currently in the preparation phase to transfer the `garm-operator` to the [Cloudbase](https://github.com/cloudbase) organization. That means, that we will create one last release under the `mercedes-benz` organization and then transfer the repository. After the transfer, all future releases will be done under the `cloudbase` organization. Any further improvements to the operator will be done after the transfer.
+
 # garm-operator 
 
 <!-- toc -->
@@ -22,6 +25,7 @@
 - [License](#license)
 - [Provider Information](#provider-information)
 <!-- /toc -->
+
 
 ## ✨ What is the `garm-operator`?
 
