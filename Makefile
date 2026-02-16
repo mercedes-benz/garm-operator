@@ -108,6 +108,12 @@ docker-buildx: test ## Build and push docker image for the manager for cross-pla
 	- $(CONTAINER_TOOL) buildx rm project-v3-builder
 	rm Dockerfile.cross
 
+.PHONY: build-installer
+build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
+	mkdir -p dist
+	cd config/manager && "$(KUSTOMIZE)" edit set image controller=${IMG}
+	"$(KUSTOMIZE)" build config/default > dist/install.yaml
+
 ##@ Deployment
 
 ifndef ignore-not-found
@@ -176,6 +182,7 @@ SLICE ?= $(LOCALBIN)/kubectl-slice
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 KBOM ?= $(LOCALBIN)/bom
 KIND ?= $(LOCALBIN)/kind
+KUBEBUILDER ?= $(LOCALBIN)/kubebuilder
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
@@ -189,6 +196,7 @@ SLICE_VERSION ?= v1.2.6
 NANCY_VERSION ?= v1.0.46
 KBOM_VERSION ?= v0.5.1
 KIND_VERSION ?= v0.30.0
+KUBEBUILDER_VERSION ?= v4.12.0
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -264,6 +272,20 @@ $(KIND): $(LOCALBIN)
 	test -s $(LOCALBIN)/kind && $(LOCALBIN)/kind version | grep -q $(KIND_VERSION) || \
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@$(KIND_VERSION)
 
+.PHONY: kubebuilder
+kubebuilder: $(KUBEBUILDER) ## Download kubebuilder locally if necessary. If wrong version is installed, it will be overwritten.
+$(KUBEBUILDER): $(LOCALBIN)
+	@if test -x $(LOCALBIN)/kubebuilder && ! $(LOCALBIN)/kubebuilder version | grep -q $(KUBEBUILDER_VERSION); then \
+		echo "$(LOCALBIN)/kubebuilder version is not expected $(KUBEBUILDER_VERSION). Removing it before installing."; \
+		rm -rf $(LOCALBIN)/kubebuilder; \
+	fi
+	@if ! test -s $(LOCALBIN)/kubebuilder; then \
+		echo "Installing kubebuilder $(KUBEBUILDER_VERSION)..."; \
+		curl -L -o $(LOCALBIN)/kubebuilder "https://github.com/kubernetes-sigs/kubebuilder/releases/download/$(KUBEBUILDER_VERSION)/kubebuilder_$(shell go env GOOS)_$(shell go env GOARCH)"; \
+		chmod +x $(LOCALBIN)/kubebuilder; \
+	fi
+
+
 ##@ Lint / Verify
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run linting.
@@ -295,6 +317,16 @@ verify-manifests: manifests  ## Verify kubebuilder generated files are up to dat
 		git diff; \
 		echo "generated files are out of date, run make manifests"; exit 1; \
 	fi
+
+.PHONY: verify-helm-plugin
+verify-helm-plugin: ## Verify helm plugin scaffolding is up to date
+	$(KUBEBUILDER) edit --plugins=helm/v2-alpha --force
+	@if ! git diff --quiet HEAD -- dist/; then \
+		git diff -- dist; \
+		echo "helm plugin scaffolding is out of date, run 'kubebuilder edit --plugins=helm/v2-alpha --force' and commit changes"; \
+		exit 1; \
+	fi
+	@echo "Helm plugin scaffolding is up to date"
 
 .PHONY: verify-doctoc
 verify-doctoc: generate-doctoc
@@ -330,3 +362,50 @@ delete-kind-cluster:
 .PHONY: tilt-up
 tilt-up: kind-cluster ## Start tilt and build kind cluster
 	tilt up
+
+##@ Helm Deployment
+
+## Helm binary to use for deploying the chart
+HELM ?= helm
+## Namespace to deploy the Helm release
+HELM_NAMESPACE ?= garm-operator-system
+## Name of the Helm release
+HELM_RELEASE ?= garm-operator
+## Path to the Helm chart directory
+HELM_CHART_DIR ?= dist/chart
+## Additional arguments to pass to helm commands
+HELM_EXTRA_ARGS ?=
+
+.PHONY: install-helm
+install-helm: ## Install the latest version of Helm.
+	@command -v $(HELM) >/dev/null 2>&1 || { \
+		echo "Installing Helm..." && \
+		curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash; \
+	}
+
+.PHONY: helm-deploy
+helm-deploy: install-helm ## Deploy manager to the K8s cluster via Helm. Specify an image with IMG.
+	$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_CHART_DIR) \
+		--namespace $(HELM_NAMESPACE) \
+		--create-namespace \
+		--set manager.image.repository=$${IMG%:*} \
+		--set manager.image.tag=$${IMG##*:} \
+		--wait \
+		--timeout 5m \
+		$(HELM_EXTRA_ARGS)
+
+.PHONY: helm-uninstall
+helm-uninstall: ## Uninstall the Helm release from the K8s cluster.
+	$(HELM) uninstall $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
+
+.PHONY: helm-status
+helm-status: ## Show Helm release status.
+	$(HELM) status $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
+
+.PHONY: helm-history
+helm-history: ## Show Helm release history.
+	$(HELM) history $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
+
+.PHONY: helm-rollback
+helm-rollback: ## Rollback to previous Helm release.
+	$(HELM) rollback $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
