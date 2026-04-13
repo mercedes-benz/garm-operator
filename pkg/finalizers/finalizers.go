@@ -9,6 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+// EnsureFinalizer ensures that the given finalizer is present on the object. It returns true if the finalizer was added, and false if it was already present or if the object is being deleted.
 func EnsureFinalizer(ctx context.Context, c client.Client, o client.Object, finalizer string) (finalizerAdded bool, err error) {
 	// Finalizers can only be added when the deletionTimestamp is not set.
 	if !o.GetDeletionTimestamp().IsZero() {

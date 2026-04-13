@@ -54,7 +54,7 @@ func GenerateConfig(f *pflag.FlagSet, configFile string) error {
 	k := koanf.New(".")
 
 	// load config from envs with prefix OPERATOR_
-	k.Load(env.Provider("OPERATOR_", ".", func(s string) string {
+	err := k.Load(env.Provider("OPERATOR_", ".", func(s string) string {
 		// Transform env e.g. from OPERATOR_SYNC_PERIOD to operator.syncPeriod (camel case)
 		key := strings.SplitN(s, "_", 2)
 
@@ -66,9 +66,12 @@ func GenerateConfig(f *pflag.FlagSet, configFile string) error {
 
 		return res
 	}), nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to load operator config from environment variables")
+	}
 
 	// load config from envs with prefix GARM_
-	k.Load(env.Provider("GARM_", ".", func(s string) string {
+	err = k.Load(env.Provider("GARM_", ".", func(s string) string {
 		// Transform env e.g. from GARM_SERVER to garm.server (camel case)
 		key := strings.SplitN(s, "_", 2)
 
@@ -80,10 +83,13 @@ func GenerateConfig(f *pflag.FlagSet, configFile string) error {
 
 		return res
 	}), nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to load garm config from environment variables")
+	}
 
 	// load config from flags
 	if f != nil {
-		k.Load(posflag.ProviderWithFlag(f, ".", k, func(pf *pflag.Flag) (string, interface{}) {
+		err = k.Load(posflag.ProviderWithFlag(f, ".", k, func(pf *pflag.Flag) (string, interface{}) {
 			// Transform flag e.g. from operator-sync-period to operator.syncPeriod (camel case)
 			key := strings.SplitN(pf.Name, "-", 2)
 
@@ -102,6 +108,9 @@ func GenerateConfig(f *pflag.FlagSet, configFile string) error {
 
 			return res, val
 		}), nil)
+		if err != nil {
+			return errors.Wrap(err, "failed to load config from flags")
+		}
 	}
 
 	// load config from file

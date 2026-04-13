@@ -782,10 +782,10 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 			}
 
 			// clear out annotations to avoid comparison errors
-			GitHubCredential.ObjectMeta.Annotations = nil
+			GitHubCredential.Annotations = nil
 
 			// empty resource version to avoid comparison errors
-			GitHubCredential.ObjectMeta.ResourceVersion = ""
+			GitHubCredential.ResourceVersion = ""
 
 			// clear conditions lastTransitionTime to avoid comparison errors
 			conditions.NilLastTransitionTime(tt.expectedObject)

@@ -47,7 +47,10 @@ func InitiateFlags() *pflag.FlagSet {
 
 	f.Bool("dry-run", false, "If true, only print the object that would be sent, without sending it.")
 
-	f.Parse(os.Args[1:])
+	if err := f.Parse(os.Args[1:]); err != nil {
+		fmt.Printf("Error parsing flags: %v\n", err)
+		os.Exit(1)
+	}
 
 	return f
 }

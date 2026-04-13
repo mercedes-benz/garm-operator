@@ -127,10 +127,10 @@ func TestGarmServerConfig_reconcile(t *testing.T) {
 			}
 
 			// clear out annotations to avoid comparison errors
-			garmServerConfig.ObjectMeta.Annotations = nil
+			garmServerConfig.Annotations = nil
 
 			// empty resource version to avoid comparison errors
-			garmServerConfig.ObjectMeta.ResourceVersion = ""
+			garmServerConfig.ResourceVersion = ""
 
 			// clear conditions lastTransitionTime to avoid comparison errors
 			conditions.NilLastTransitionTime(tt.expectedObject)

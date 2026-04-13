@@ -241,7 +241,9 @@ func TestGenerateConfig(t *testing.T) {
 			var configFile string
 
 			for k, v := range tt.flags {
-				f.Set(k, v)
+				if err := f.Set(k, v); err != nil {
+					t.Fatalf("failed to set flag %s: %v", k, err)
+				}
 				if k == "config" {
 					configFile = v
 				}
