@@ -56,10 +56,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		{
 			name: "pool does not exist in garm - create",
 			object: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -88,10 +84,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -274,10 +266,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		{
 			name: "pool.Status has matching id in garm database, pool.Specs changed - update pool in garm",
 			object: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -309,10 +297,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -572,10 +556,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		{
 			name: "scaling idleRunners down to 2 - expect deletion of two old instances",
 			object: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -608,10 +588,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -982,10 +958,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		{
 			name: "pool does not exist in garm - error no image cr found",
 			object: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -1014,10 +986,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -1131,10 +1099,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 		{
 			name: "pool.Status has matching id in garm database, pool.Specs changed to not existent image cr ref - error no image cr found",
 			object: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -1166,10 +1130,6 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -1406,10 +1366,6 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 		{
 			name: "delete pool - scaling down runners",
 			object: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -1441,10 +1397,6 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -1622,10 +1574,6 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 		{
 			name: "delete pool - deleting garm resource",
 			object: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
@@ -1658,10 +1606,6 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 				},
 			},
 			expectedObject: &garmoperatorv1beta1.Pool{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pool",
-					APIVersion: garmoperatorv1beta1.GroupVersion.Group + "/" + garmoperatorv1beta1.GroupVersion.Version,
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-enterprise-pool",
 					Namespace: namespaceName,
