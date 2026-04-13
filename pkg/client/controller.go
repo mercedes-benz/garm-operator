@@ -3,7 +3,6 @@ package client
 
 import (
 	"github.com/cloudbase/garm/client/controller"
-	garmcontroller "github.com/cloudbase/garm/client/controller"
 	"github.com/cloudbase/garm/client/controller_info"
 	"github.com/cloudbase/garm/params"
 
@@ -42,7 +41,7 @@ func (s *controllerClient) GetControllerInfo() (*controller_info.ControllerInfoO
 			// after the first run, garm needs a configuration for webhook, metadata and callback
 			// to make garm work after the first run, we set some defaults
 			if IsConflictError(err) {
-				updateParams := garmcontroller.NewUpdateControllerParams().WithBody(params.UpdateControllerParams{
+				updateParams := controller.NewUpdateControllerParams().WithBody(params.UpdateControllerParams{
 					MetadataURL: util.StringPtr(initialMetadataURL),
 					CallbackURL: util.StringPtr(initialCallbackURL),
 					WebhookURL:  util.StringPtr(initialWebhookURL),

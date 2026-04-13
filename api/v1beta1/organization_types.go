@@ -79,7 +79,7 @@ func (o *Organization) GetID() string {
 }
 
 func (o *Organization) GetName() string {
-	return o.ObjectMeta.Name
+	return o.Name
 }
 
 func (o *Organization) GetPoolManagerIsRunning() bool {

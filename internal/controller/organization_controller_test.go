@@ -152,10 +152,12 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
+					//nolint:gosec
 					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
@@ -398,6 +400,7 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockOrganizationClientMockRecorder) {
+				//nolint:gosec
 				m.ListOrganizations(organizations.NewListOrgsParams()).Return(&organizations.ListOrgsOK{Payload: params.Organizations{
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
@@ -408,10 +411,12 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
+					//nolint:gosec
 					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-organization",
@@ -536,11 +541,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					},
 				}}, nil)
 				m.CreateOrganization(organizations.NewCreateOrgParams().WithBody(
+					//nolint:gosec
 					params.CreateOrgParams{
 						Name:            "new-organization",
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.CreateOrgOK{
+					//nolint:gosec
 					Payload: params.Organization{
 						Name:            "new-organization",
 						CredentialsName: "github-creds",
@@ -550,10 +557,12 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				}, nil)
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
+					//nolint:gosec
 					Payload: params.Organization{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "new-organization",
@@ -674,10 +683,12 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("e1dbf9a6-a9f6-4594-a5ac-12345").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
+					//nolint:gosec
 					Payload: params.Organization{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-organization",
@@ -796,11 +807,13 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 					{},
 				}}, nil)
 				m.CreateOrganization(organizations.NewCreateOrgParams().WithBody(
+					//nolint:gosec
 					params.CreateOrgParams{
 						Name:            "existing-organization",
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.CreateOrgOK{
+					//nolint:gosec
 					Payload: params.Organization{
 						Name:            "existing-organization",
 						CredentialsName: "github-creds",
@@ -810,10 +823,12 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 				}, nil)
 				m.UpdateOrganization(organizations.NewUpdateOrgParams().
 					WithOrgID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&organizations.UpdateOrgOK{
+					//nolint:gosec
 					Payload: params.Organization{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "existing-organization",
@@ -937,10 +952,10 @@ func TestOrganizationReconciler_reconcileNormal(t *testing.T) {
 			}
 
 			// clear out annotations to avoid comparison errors
-			organization.ObjectMeta.Annotations = nil
+			organization.Annotations = nil
 
 			// empty resource version to avoid comparison errors
-			organization.ObjectMeta.ResourceVersion = ""
+			organization.ResourceVersion = ""
 
 			// clear conditions lastTransitionTime to avoid comparison errors
 			conditions.NilLastTransitionTime(tt.expectedObject)

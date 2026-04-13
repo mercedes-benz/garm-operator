@@ -16,6 +16,7 @@ const (
 )
 
 var (
+	// GarmJwtExpiresAt is a Prometheus gauge that tracks the expiration timestamp of the JWT
 	GarmJwtExpiresAt = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: metricNamespace,
 		Subsystem: garmClient,
@@ -26,6 +27,7 @@ var (
 		},
 	})
 
+	// TotalGarmCalls is a Prometheus counter that tracks the total number of GARM API calls
 	TotalGarmCalls = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metricNamespace,
@@ -37,6 +39,7 @@ var (
 			},
 		}, []string{"method"})
 
+	// GarmCallErrors is a Prometheus counter that tracks the number of GARM API calls that failed
 	GarmCallErrors = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metricNamespace,

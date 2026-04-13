@@ -65,7 +65,7 @@ func (r *RunnerReconciler) reconcileNormal(ctx context.Context, req ctrl.Request
 
 	switch {
 	// found Runner CR and matching garm runner or RunnerCR is already in deleting state, continue with reconcile
-	case err == nil && garmRunner != nil || !runner.ObjectMeta.DeletionTimestamp.IsZero():
+	case err == nil && garmRunner != nil || !runner.DeletionTimestamp.IsZero():
 		log.Info("Found Runner CR and matching garm runner, continue with reconcile", "runner", runner.Name)
 
 	// Found RunnerCR but no matching garm runner, delete the RunnerCR
@@ -108,7 +108,7 @@ func (r *RunnerReconciler) reconcileNormal(ctx context.Context, req ctrl.Request
 	}()
 
 	// delete runner in garm db
-	if !runner.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !runner.DeletionTimestamp.IsZero() {
 		return r.reconcileDelete(ctx, instanceClient, runner, garmRunner)
 	}
 

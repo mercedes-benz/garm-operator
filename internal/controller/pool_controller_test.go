@@ -1367,10 +1367,10 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			}
 
 			// clear out annotations to avoid comparison errors
-			pool.ObjectMeta.Annotations = nil
+			pool.Annotations = nil
 
 			// empty resource version to avoid comparison errors
-			pool.ObjectMeta.ResourceVersion = ""
+			pool.ResourceVersion = ""
 
 			// clear conditions lastTransitionTime to avoid comparison errors
 			conditions.NilLastTransitionTime(tt.expectedObject)
@@ -1853,7 +1853,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 			}
 
 			// empty resource version to avoid comparison errors
-			pool.ObjectMeta.ResourceVersion = ""
+			pool.ResourceVersion = ""
 			pool.Spec.GitHubScopeRef.APIGroup = nil
 			conditions.NilLastTransitionTime(pool)
 			conditions.NilLastTransitionTime(tt.expectedObject)

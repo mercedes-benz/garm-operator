@@ -15,6 +15,7 @@ import (
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
 )
 
+// GetRunnersByPoolID returns a list of runners for a given pool ID
 func GetRunnersByPoolID(ctx context.Context, pool *garmoperatorv1beta1.Pool, instanceClient garmClient.InstanceClient) ([]params.Instance, error) {
 	log := log.FromContext(ctx)
 	log.Info("discover idle runners", "pool", pool.Name)

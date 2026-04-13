@@ -21,6 +21,7 @@ import (
 // set distinct and unique labels on each pool, and explicitly target those labels, or risk assigning
 // the job to the wrong worker type.
 
+// CreateComparableRunnerTags creates a list of tags for a runner that can be used for comparison
 func CreateComparableRunnerTags(poolTags []string, osArch providerParams.OSArch, osType providerParams.OSType) ([]params.Tag, error) {
 	githubDefaultTags, err := getGithubDefaultTags(osArch, osType)
 	if err != nil {

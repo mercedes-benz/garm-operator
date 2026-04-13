@@ -143,6 +143,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
 				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
+					//nolint:gosec
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
@@ -152,10 +153,12 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
+					//nolint:gosec
 					Payload: params.Enterprise{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
@@ -271,6 +274,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
 				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
+					//nolint:gosec
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
@@ -399,6 +403,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
 				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
+					//nolint:gosec
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
@@ -408,10 +413,12 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
+					//nolint:gosec
 					Payload: params.Enterprise{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-enterprise",
@@ -527,6 +534,7 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				},
 			},
 			expectGarmRequest: func(m *mock.MockEnterpriseClientMockRecorder) {
+				//nolint:gosec
 				m.ListEnterprises(enterprises.NewListEnterprisesParams()).Return(&enterprises.ListEnterprisesOK{Payload: params.Enterprises{
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
@@ -536,11 +544,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					},
 				}}, nil)
 				m.CreateEnterprise(enterprises.NewCreateEnterpriseParams().WithBody(
+					//nolint:gosec
 					params.CreateEnterpriseParams{
 						Name:            "new-enterprise",
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.CreateEnterpriseOK{
+					//nolint:gosec
 					Payload: params.Enterprise{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "new-enterprise",
@@ -550,10 +560,12 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				}, nil)
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
+					//nolint:gosec
 					Payload: params.Enterprise{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "new-enterprise",
@@ -674,10 +686,12 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("e1dbf9a6-a9f6-4594-a5ac-12345").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
+					//nolint:gosec
 					Payload: params.Enterprise{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-enterprise",
@@ -796,11 +810,13 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 					{},
 				}}, nil)
 				m.CreateEnterprise(enterprises.NewCreateEnterpriseParams().WithBody(
+					//nolint:gosec
 					params.CreateEnterpriseParams{
 						Name:            "existing-enterprise",
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.CreateEnterpriseOK{
+					//nolint:gosec
 					Payload: params.Enterprise{
 						Name:            "existing-enterprise",
 						CredentialsName: "github-creds",
@@ -810,10 +826,12 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 				}, nil)
 				m.UpdateEnterprise(enterprises.NewUpdateEnterpriseParams().
 					WithEnterpriseID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&enterprises.UpdateEnterpriseOK{
+					//nolint:gosec
 					Payload: params.Enterprise{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "existing-enterprise",
@@ -937,10 +955,10 @@ func TestEnterpriseReconciler_reconcileNormal(t *testing.T) {
 			}
 
 			// clear out annotations to avoid comparison errors
-			enterprise.ObjectMeta.Annotations = nil
+			enterprise.Annotations = nil
 
 			// empty resource version to avoid comparison errors
-			enterprise.ObjectMeta.ResourceVersion = ""
+			enterprise.ResourceVersion = ""
 
 			// clear conditions lastTransitionTime to avoid comparison errors
 			conditions.NilLastTransitionTime(tt.expectedObject)

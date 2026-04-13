@@ -145,6 +145,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
 				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
+					//nolint:gosec
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
@@ -155,10 +156,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
+					//nolint:gosec
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
@@ -277,6 +280,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
 				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
+					//nolint:gosec
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
@@ -287,10 +291,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "has-changed",
 						WebhookSecret:   "has-changed",
 					})).Return(&repositories.UpdateRepoOK{
+					//nolint:gosec
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
@@ -409,6 +415,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
 				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
+					//nolint:gosec
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
@@ -419,10 +426,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
+					//nolint:gosec
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
@@ -542,6 +551,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
 				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
+					//nolint:gosec
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-ae78a8f27a3e",
 						Name:            "existing-repository",
@@ -551,12 +561,14 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					},
 				}}, nil)
 				m.CreateRepository(repositories.NewCreateRepoParams().WithBody(
+					//nolint:gosec
 					params.CreateRepoParams{
 						Name:            "new-repository",
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						Owner:           "test-repo",
 					})).Return(&repositories.CreateRepoOK{
+					//nolint:gosec
 					Payload: params.Repository{
 						Name:            "new-repository",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
@@ -567,10 +579,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
+					//nolint:gosec
 					Payload: params.Repository{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "new-repository",
@@ -686,6 +700,7 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockRepositoryClientMockRecorder) {
 				m.ListRepositories(repositories.NewListReposParams()).Return(&repositories.ListReposOK{Payload: params.Repositories{
+					//nolint:gosec
 					{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-repository",
@@ -695,10 +710,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				}}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("e1dbf9a6-a9f6-4594-a5ac-12345").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
+					//nolint:gosec
 					Payload: params.Repository{
 						ID:              "e1dbf9a6-a9f6-4594-a5ac-12345",
 						Name:            "new-repository",
@@ -820,12 +837,14 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 					{},
 				}}, nil)
 				m.CreateRepository(repositories.NewCreateRepoParams().WithBody(
+					//nolint:gosec
 					params.CreateRepoParams{
 						Name:            "existing-repository",
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 						Owner:           "test-repo",
 					})).Return(&repositories.CreateRepoOK{
+					//nolint:gosec
 					Payload: params.Repository{
 						Name:            "existing-repository",
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
@@ -836,10 +855,12 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 				}, nil)
 				m.UpdateRepository(repositories.NewUpdateRepoParams().
 					WithRepoID("9e0da3cb-130b-428d-aa8a-e314d955060e").
+					//nolint:gosec
 					WithBody(params.UpdateEntityParams{
 						CredentialsName: "github-creds",
 						WebhookSecret:   "foobar",
 					})).Return(&repositories.UpdateRepoOK{
+					//nolint:gosec
 					Payload: params.Repository{
 						ID:              "9e0da3cb-130b-428d-aa8a-e314d955060e",
 						Name:            "existing-repository",
@@ -964,10 +985,10 @@ func TestRepositoryReconciler_reconcileNormal(t *testing.T) {
 			}
 
 			// clear out annotations to avoid comparison errors
-			repository.ObjectMeta.Annotations = nil
+			repository.Annotations = nil
 
 			// empty resource version to avoid comparison errors
-			repository.ObjectMeta.ResourceVersion = ""
+			repository.ResourceVersion = ""
 
 			// clear conditions lastTransitionTime to avoid comparison errors
 			conditions.NilLastTransitionTime(tt.expectedObject)

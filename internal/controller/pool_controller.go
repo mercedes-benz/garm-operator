@@ -101,7 +101,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res c
 	}()
 
 	// handle deletion
-	if !pool.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !pool.DeletionTimestamp.IsZero() {
 		return r.reconcileDelete(ctx, poolClient, pool, instanceClient)
 	}
 
@@ -203,8 +203,8 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 
 	longRunningIdleRunnersCount := len(runnerUtil.OldIdleRunners(config.Config.Operator.MinIdleRunnersAge, idleRunners))
 
-	switch {
-	case pool.Spec.MinIdleRunners == 0:
+	switch pool.Spec.MinIdleRunners {
+	case 0:
 		// scale to zero
 		// when scale to zero is desired, we immediately scale down to zero by deleting all idle runners
 

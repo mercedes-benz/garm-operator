@@ -77,7 +77,7 @@ func (r *Repository) GetID() string {
 }
 
 func (r *Repository) GetName() string {
-	return r.ObjectMeta.Name
+	return r.Name
 }
 
 func (r *Repository) GetPoolManagerIsRunning() bool {

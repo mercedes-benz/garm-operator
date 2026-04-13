@@ -181,7 +181,7 @@ KIND ?= $(LOCALBIN)/kind
 KUSTOMIZE_VERSION ?= v5.0.1
 CONTROLLER_TOOLS_VERSION ?= v0.18.0
 CONVERSION_GEN_VERSION ?= v0.34.2
-GOLANGCI_LINT_VERSION ?= v1.64.2
+GOLANGCI_LINT_VERSION ?= v2.11.4
 MOCKGEN_VERSION ?= v0.4.0
 GORELEASER_VERSION ?= v1.21.0
 MDTOC_VERSION ?= v1.1.0
@@ -220,7 +220,7 @@ $(ENVTEST): $(LOCALBIN)
 golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary. If wrong version is installed, it will be overwritten.
 $(GOLANGCI_LINT): $(LOCALBIN)
 	test -s $(LOCALBIN)/golangci-lint && $(LOCALBIN)/golangci-lint --version | grep -q $(GOLANGCI_LINT_VERSION) || \
-	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
 .PHONY: mockgen
 mockgen: $(MOCKGEN) ## Download mockgen locally if necessary. If wrong version is installed, it will be overwritten.

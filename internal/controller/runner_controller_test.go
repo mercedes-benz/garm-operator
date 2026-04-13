@@ -171,10 +171,10 @@ func TestRunnerReconciler_reconcileCreate(t *testing.T) {
 			}
 
 			// clear out annotations to avoid comparison errors
-			runner.ObjectMeta.Annotations = nil
+			runner.Annotations = nil
 
 			// empty resource version to avoid comparison errors
-			runner.ObjectMeta.ResourceVersion = ""
+			runner.ResourceVersion = ""
 
 			if !reflect.DeepEqual(runner, tt.expectedObject) {
 				t.Errorf("RunnerReconciler.reconcile() \ngot = %#v\n want %#v", runner, tt.expectedObject)
