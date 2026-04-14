@@ -37,13 +37,13 @@ jobs:
           BLACKDUCK_TOKEN: ${{ secrets.BLACKDUCK_TOKEN }}
 
       - name: Archive foss scan notices report
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: 3RD_PARTY_LICENSES.txt
           path: tmp/Black_Duck_Notices_Report.txt
 
       - name: Archive foss scan risk report
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: foss-scan-risk-report
           path: tmp/BlackDuck_RiskReport.pdf
