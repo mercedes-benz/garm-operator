@@ -189,6 +189,7 @@ SLICE_VERSION ?= v1.2.6
 NANCY_VERSION ?= v1.0.46
 KBOM_VERSION ?= v0.5.1
 KIND_VERSION ?= v0.30.0
+GOVULNCHECK_VERSION ?= v1.2.0
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -249,8 +250,8 @@ $(SLICE): $(LOCALBIN)
 .PHONY: govulncheck
 govulncheck: $(GOVULNCHECK) ## Download govulncheck locally if necessary. If wrong version is installed, it will be overwritten.
 $(GOVULNCHECK): $(LOCALBIN)
-	test -s $(LOCALBIN)/govulncheck || \
-	GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@latest
+	test -s $(LOCALBIN)/govulncheck && $(LOCALBIN)/govulncheck -version | grep -q $(GOVULNCHECK_VERSION) || \
+	GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
 
 .PHONY: kbom
 kbom: $(KBOM) ## Download kbom locally if necessary. If wrong version is installed, it will be overwritten.
