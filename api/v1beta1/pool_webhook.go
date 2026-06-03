@@ -9,13 +9,11 @@ import (
 	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -27,8 +25,7 @@ var (
 
 func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	c = mgr.GetClient()
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
 		WithValidator(&PoolValidator{}).
 		Complete()
 }
@@ -37,15 +34,10 @@ func (r *Pool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 type PoolValidator struct{}
 
-var _ webhook.CustomValidator = &PoolValidator{}
+var _ admission.Validator[*Pool] = &PoolValidator{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *PoolValidator) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	pool, ok := obj.(*Pool)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected Pool object, got %T", obj))
-	}
-
+func (r *PoolValidator) ValidateCreate(_ context.Context, pool *Pool) (admission.Warnings, error) {
 	poollog.Info("validate create request", "name", pool.Name, "namespace", pool.Namespace)
 
 	if err := validateExtraSpec(pool); err != nil {
@@ -59,18 +51,8 @@ func (r *PoolValidator) ValidateCreate(_ context.Context, obj runtime.Object) (a
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *PoolValidator) ValidateUpdate(_ context.Context, obj runtime.Object, oldObj runtime.Object) (admission.Warnings, error) {
-	pool, ok := obj.(*Pool)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected Pool object, got %T", obj))
-	}
-
+func (r *PoolValidator) ValidateUpdate(_ context.Context, oldPool *Pool, pool *Pool) (admission.Warnings, error) {
 	poollog.Info("validate update", "name", pool.Name, "namespace", pool.Namespace)
-
-	oldCRD, ok := oldObj.(*Pool)
-	if !ok {
-		return nil, apierrors.NewBadRequest("failed to convert runtime.Object to Pool CRD")
-	}
 
 	// if the object is being deleted, skip validation
 	if err := validateExtraSpec(pool); err != nil {
@@ -80,7 +62,7 @@ func (r *PoolValidator) ValidateUpdate(_ context.Context, obj runtime.Object, ol
 		)
 	}
 
-	if err := validateProviderName(pool, oldCRD); err != nil {
+	if err := validateProviderName(pool, oldPool); err != nil {
 		return nil, apierrors.NewInvalid(
 			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
 			pool.Name,
@@ -88,7 +70,7 @@ func (r *PoolValidator) ValidateUpdate(_ context.Context, obj runtime.Object, ol
 		)
 	}
 
-	if err := validateGitHubScope(pool, oldCRD); err != nil {
+	if err := validateGitHubScope(pool, oldPool); err != nil {
 		return nil, apierrors.NewInvalid(
 			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
 			pool.Name,
@@ -100,7 +82,7 @@ func (r *PoolValidator) ValidateUpdate(_ context.Context, obj runtime.Object, ol
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *PoolValidator) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *PoolValidator) ValidateDelete(_ context.Context, _ *Pool) (admission.Warnings, error) {
 	return nil, nil
 }
 

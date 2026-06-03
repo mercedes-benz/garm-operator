@@ -105,7 +105,7 @@ func (o *Organization) GetPoolManagerFailureReason() string {
 }
 
 func (o *Organization) GetKind() string {
-	return o.Kind
+	return string(OrganizationScope)
 }
 
 //+kubebuilder:object:root=true
@@ -118,5 +118,5 @@ type OrganizationList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Organization{}, &OrganizationList{})
+	objectTypes = append(objectTypes, &Organization{}, &OrganizationList{})
 }

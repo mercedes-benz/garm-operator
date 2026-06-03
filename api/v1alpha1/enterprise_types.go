@@ -115,5 +115,5 @@ type EnterpriseList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Enterprise{}, &EnterpriseList{})
+	objectTypes = append(objectTypes, &Enterprise{}, &EnterpriseList{})
 }

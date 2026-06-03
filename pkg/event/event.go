@@ -4,7 +4,7 @@ package event
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -17,26 +17,26 @@ const (
 	InfoEvent     = "Info"
 )
 
-func Creating(recorder record.EventRecorder, obj client.Object, msg string) {
-	recorder.Event(obj, corev1.EventTypeNormal, CreatingEvent, msg)
+func Creating(recorder events.EventRecorder, obj client.Object, action, msg string) {
+	recorder.Eventf(obj, nil, corev1.EventTypeNormal, CreatingEvent, action, msg)
 }
 
-func Updating(recorder record.EventRecorder, obj client.Object, msg string) {
-	recorder.Event(obj, corev1.EventTypeNormal, UpdatingEvent, msg)
+func Updating(recorder events.EventRecorder, obj client.Object, action, msg string) {
+	recorder.Eventf(obj, nil, corev1.EventTypeNormal, UpdatingEvent, action, msg)
 }
 
-func Deleting(recorder record.EventRecorder, obj client.Object, msg string) {
-	recorder.Event(obj, corev1.EventTypeNormal, DeletingEvent, msg)
+func Deleting(recorder events.EventRecorder, obj client.Object, action, msg string) {
+	recorder.Eventf(obj, nil, corev1.EventTypeNormal, DeletingEvent, action, msg)
 }
 
-func Scaling(recorder record.EventRecorder, obj client.Object, msg string) {
-	recorder.Event(obj, corev1.EventTypeNormal, ScalingEvent, msg)
+func Scaling(recorder events.EventRecorder, obj client.Object, action, msg string) {
+	recorder.Eventf(obj, nil, corev1.EventTypeNormal, ScalingEvent, action, msg)
 }
 
-func Info(recorder record.EventRecorder, obj client.Object, msg string) {
-	recorder.Event(obj, corev1.EventTypeNormal, InfoEvent, msg)
+func Info(recorder events.EventRecorder, obj client.Object, action, msg string) {
+	recorder.Eventf(obj, nil, corev1.EventTypeNormal, InfoEvent, action, msg)
 }
 
-func Error(recorder record.EventRecorder, obj client.Object, msg string) {
-	recorder.Event(obj, corev1.EventTypeWarning, ErrorEvent, msg)
+func Error(recorder events.EventRecorder, obj client.Object, action, msg string) {
+	recorder.Eventf(obj, nil, corev1.EventTypeWarning, ErrorEvent, action, msg)
 }

@@ -104,5 +104,5 @@ type RunnerList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Runner{}, &RunnerList{})
+	objectTypes = append(objectTypes, &Runner{}, &RunnerList{})
 }

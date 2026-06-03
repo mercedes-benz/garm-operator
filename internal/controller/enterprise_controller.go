@@ -13,7 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,7 +38,7 @@ import (
 type EnterpriseReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Recorder events.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
@@ -103,7 +103,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &enterprise.Spec.WebhookSecretRef, enterprise.Namespace)
 	if err != nil {
-		event.Error(r.Recorder, enterprise, err.Error())
+		event.Error(r.Recorder, enterprise, "reconcileNormal", err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(enterprise, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		return ctrl.Result{}, err
@@ -112,7 +112,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	credentials, err := r.getCredentialsRef(ctx, enterprise)
 	if err != nil {
-		event.Error(r.Recorder, enterprise, err.Error())
+		event.Error(r.Recorder, enterprise, "reconcileNormal", err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		conditions.MarkFalse(enterprise, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		return ctrl.Result{}, err
@@ -121,7 +121,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	garmEnterprise, err := r.getExistingGarmEnterprise(ctx, client, enterprise)
 	if err != nil {
-		event.Error(r.Recorder, enterprise, err.Error())
+		event.Error(r.Recorder, enterprise, "reconcileNormal", err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -130,7 +130,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 	if reflect.ValueOf(garmEnterprise).IsZero() {
 		garmEnterprise, err = r.createEnterprise(ctx, client, enterprise, webhookSecret)
 		if err != nil {
-			event.Error(r.Recorder, enterprise, err.Error())
+			event.Error(r.Recorder, enterprise, "createEnterprise", err.Error())
 			conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 			return ctrl.Result{}, err
 		}
@@ -143,7 +143,7 @@ func (r *EnterpriseReconciler) reconcileNormal(ctx context.Context, client garmC
 		PoolBalancerType: enterprise.Spec.PoolBalancerType,
 	})
 	if err != nil {
-		event.Error(r.Recorder, enterprise, err.Error())
+		event.Error(r.Recorder, enterprise, "updateEnterprise", err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -167,7 +167,7 @@ func (r *EnterpriseReconciler) createEnterprise(ctx context.Context, client garm
 	log.WithValues("enterprise", enterprise.Name)
 
 	log.Info("Enterprise doesn't exist on garm side. Creating new enterprise in garm.")
-	event.Creating(r.Recorder, enterprise, "enterprise doesn't exist on garm side")
+	event.Creating(r.Recorder, enterprise, "createEnterprise", "enterprise doesn't exist on garm side")
 
 	retValue, err := client.CreateEnterprise(
 		enterprises.NewCreateEnterpriseParams().
@@ -185,7 +185,7 @@ func (r *EnterpriseReconciler) createEnterprise(ctx context.Context, client garm
 	log.V(1).Info(fmt.Sprintf("enterprise %s created - return Value %v", enterprise.Name, retValue))
 
 	log.Info("creating enterprise in garm succeeded")
-	event.Info(r.Recorder, enterprise, "creating enterprise in garm succeeded")
+	event.Info(r.Recorder, enterprise, "createEnterprise", "creating enterprise in garm succeeded")
 
 	return retValue.Payload, nil
 }
@@ -233,7 +233,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmC
 	log.WithValues("enterprise", enterprise.Name)
 
 	log.Info("starting enterprise deletion")
-	event.Deleting(r.Recorder, enterprise, "starting enterprise deletion")
+	event.Deleting(r.Recorder, enterprise, "reconcileDelete", "starting enterprise deletion")
 	conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingEnterpriseMsg)
 
 	err := client.DeleteEnterprise(
@@ -242,7 +242,7 @@ func (r *EnterpriseReconciler) reconcileDelete(ctx context.Context, client garmC
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteEnterprise error: %s", err))
-		event.Error(r.Recorder, enterprise, err.Error())
+		event.Error(r.Recorder, enterprise, "reconcileDelete", err.Error())
 		conditions.MarkFalse(enterprise, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
