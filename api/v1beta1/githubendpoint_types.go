@@ -68,5 +68,5 @@ type GitHubEndpointList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&GitHubEndpoint{}, &GitHubEndpointList{})
+	objectTypes = append(objectTypes, &GitHubEndpoint{}, &GitHubEndpointList{})
 }

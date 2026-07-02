@@ -14,7 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,7 +39,7 @@ import (
 type GitHubCredentialReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Recorder events.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
@@ -104,7 +104,7 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	// get credentials in garm db with resource name
 	garmGitHubCreds, err := r.getExistingCredentials(client, credentials.Name)
 	if err != nil {
-		event.Error(r.Recorder, credentials, err.Error())
+		event.Error(r.Recorder, credentials, "reconcileNormal", err.Error())
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -131,7 +131,7 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	if reflect.ValueOf(garmGitHubCreds).IsZero() {
 		garmGitHubCreds, err = r.createCredentials(ctx, client, credentials, endpoint.Name, githubSecret)
 		if err != nil {
-			event.Error(r.Recorder, credentials, err.Error())
+			event.Error(r.Recorder, credentials, "createCredentials", err.Error())
 			conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 			return ctrl.Result{}, err
 		}
@@ -140,7 +140,7 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	// update credentials cr anytime the credentials in garm db changes
 	garmGitHubCreds, err = r.updateCredentials(ctx, client, int64(garmGitHubCreds.ID), credentials, githubSecret)
 	if err != nil {
-		event.Error(r.Recorder, credentials, err.Error())
+		event.Error(r.Recorder, credentials, "updateCredentials", err.Error())
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -148,7 +148,7 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	// get detailed credentials, as update or list methods on garm client do not join repo, org and enterprise fields
 	res, err := client.GetCredentials(garmcredentials.NewGetCredentialsParams().WithID(int64(garmGitHubCreds.ID)))
 	if err != nil {
-		event.Error(r.Recorder, credentials, err.Error())
+		event.Error(r.Recorder, credentials, "getCredentials", err.Error())
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -191,7 +191,7 @@ func (r *GitHubCredentialReconciler) createCredentials(ctx context.Context, clie
 	log.WithValues("credentials", credentials.Name)
 
 	log.Info("GitHubCredential doesn't exist on garm side. Creating new credentials in garm.")
-	event.Creating(r.Recorder, credentials, "credentials doesn't exist on garm side")
+	event.Creating(r.Recorder, credentials, "createCredentials", "credentials doesn't exist on garm side")
 
 	req := params.CreateGithubCredentialsParams{
 		Name:        credentials.Name,
@@ -220,7 +220,7 @@ func (r *GitHubCredentialReconciler) createCredentials(ctx context.Context, clie
 	log.V(1).Info(fmt.Sprintf("credentials %s created - return Value %v", credentials.Name, garmCredentials))
 
 	log.Info("creating credentials in garm succeeded")
-	event.Info(r.Recorder, credentials, "creating credentials in garm succeeded")
+	event.Info(r.Recorder, credentials, "createCredentials", "creating credentials in garm succeeded")
 
 	return garmCredentials.Payload, nil
 }
@@ -264,7 +264,7 @@ func (r *GitHubCredentialReconciler) reconcileDelete(ctx context.Context, client
 	log.WithValues("credentials", credentials.Name)
 
 	log.Info("starting credentials deletion")
-	event.Deleting(r.Recorder, credentials, "starting credentials deletion")
+	event.Deleting(r.Recorder, credentials, "reconcileDelete", "starting credentials deletion")
 	conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingCredentialsMsg)
 	if err := r.Status().Update(ctx, credentials); err != nil {
 		return ctrl.Result{}, err
@@ -275,7 +275,7 @@ func (r *GitHubCredentialReconciler) reconcileDelete(ctx context.Context, client
 			WithID(credentials.Status.ID),
 	); err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteCredentials error: %s", err))
-		event.Error(r.Recorder, credentials, err.Error())
+		event.Error(r.Recorder, credentials, "reconcileDelete", err.Error())
 		conditions.MarkFalse(credentials, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		if err := r.Status().Update(ctx, credentials); err != nil {
 			return ctrl.Result{}, err

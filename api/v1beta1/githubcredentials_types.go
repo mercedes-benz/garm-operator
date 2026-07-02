@@ -94,5 +94,5 @@ type GitHubCredentialList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&GitHubCredential{}, &GitHubCredentialList{})
+	objectTypes = append(objectTypes, &GitHubCredential{}, &GitHubCredentialList{})
 }

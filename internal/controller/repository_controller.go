@@ -13,7 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,7 +38,7 @@ import (
 type RepositoryReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Recorder events.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
@@ -102,7 +102,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &repository.Spec.WebhookSecretRef, repository.Namespace)
 	if err != nil {
-		event.Error(r.Recorder, repository, err.Error())
+		event.Error(r.Recorder, repository, "reconcileNormal", err.Error())
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(repository, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		return ctrl.Result{}, err
@@ -111,7 +111,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	credentials, err := r.getCredentialsRef(ctx, repository)
 	if err != nil {
-		event.Error(r.Recorder, repository, err.Error())
+		event.Error(r.Recorder, repository, "reconcileNormal", err.Error())
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		conditions.MarkFalse(repository, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		return ctrl.Result{}, err
@@ -120,7 +120,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 
 	garmRepository, err := r.getExistingGarmRepo(ctx, client, repository)
 	if err != nil {
-		event.Error(r.Recorder, repository, err.Error())
+		event.Error(r.Recorder, repository, "reconcileNormal", err.Error())
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -129,7 +129,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 	if reflect.ValueOf(garmRepository).IsZero() {
 		garmRepository, err = r.createRepository(ctx, client, repository, webhookSecret)
 		if err != nil {
-			event.Error(r.Recorder, repository, err.Error())
+			event.Error(r.Recorder, repository, "reconcileNormal", err.Error())
 			conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 			return ctrl.Result{}, err
 		}
@@ -142,7 +142,7 @@ func (r *RepositoryReconciler) reconcileNormal(ctx context.Context, client garmC
 		PoolBalancerType: repository.Spec.PoolBalancerType,
 	})
 	if err != nil {
-		event.Error(r.Recorder, repository, err.Error())
+		event.Error(r.Recorder, repository, "reconcileNormal", err.Error())
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -167,7 +167,7 @@ func (r *RepositoryReconciler) createRepository(ctx context.Context, client garm
 	log.WithValues("repository", repository.Name)
 
 	log.Info("Repository doesn't exist on garm side. Creating new repository in garm.")
-	event.Creating(r.Recorder, repository, "repository doesn't exist on garm side")
+	event.Creating(r.Recorder, repository, "createRepository", "repository doesn't exist on garm side")
 
 	retValue, err := client.CreateRepository(
 		repositories.NewCreateRepoParams().
@@ -186,7 +186,7 @@ func (r *RepositoryReconciler) createRepository(ctx context.Context, client garm
 	log.V(1).Info(fmt.Sprintf("repository %s created - return Value %v", repository.Name, retValue))
 
 	log.Info("creating repository in garm succeeded")
-	event.Info(r.Recorder, repository, "creating repository in garm succeeded")
+	event.Info(r.Recorder, repository, "createRepository", "creating repository in garm succeeded")
 
 	return retValue.Payload, nil
 }
@@ -234,7 +234,7 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmC
 	log.WithValues("repository", repository.Name)
 
 	log.Info("starting repository deletion")
-	event.Deleting(r.Recorder, repository, "starting repository deletion")
+	event.Deleting(r.Recorder, repository, "reconcileDelete", "starting repository deletion")
 	conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingRepoMsg)
 
 	err := client.DeleteRepository(
@@ -243,7 +243,7 @@ func (r *RepositoryReconciler) reconcileDelete(ctx context.Context, client garmC
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteRepository error: %s", err))
-		event.Error(r.Recorder, repository, err.Error())
+		event.Error(r.Recorder, repository, "reconcileDelete", err.Error())
 		conditions.MarkFalse(repository, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}

@@ -43,5 +43,5 @@ type ImageList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Image{}, &ImageList{})
+	objectTypes = append(objectTypes, &Image{}, &ImageList{})
 }

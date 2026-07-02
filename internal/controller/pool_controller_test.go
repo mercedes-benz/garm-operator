@@ -19,7 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -1345,7 +1345,7 @@ func TestPoolController_ReconcileCreate(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &PoolReconciler{
 				Client:   client,
-				Recorder: record.NewFakeRecorder(3),
+				Recorder: events.NewFakeRecorder(3),
 			}
 
 			pool := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Pool)
@@ -1836,7 +1836,7 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &PoolReconciler{
 				Client:   client,
-				Recorder: record.NewFakeRecorder(3),
+				Recorder: events.NewFakeRecorder(3),
 			}
 
 			pool := tt.object.DeepCopyObject().(*garmoperatorv1beta1.Pool)
@@ -1855,6 +1855,9 @@ func TestPoolController_ReconcileDelete(t *testing.T) {
 			// empty resource version to avoid comparison errors
 			pool.ResourceVersion = ""
 			pool.Spec.GitHubScopeRef.APIGroup = nil
+			// TypeMeta is stripped by the fake client (and real API server) after write operations
+			pool.TypeMeta = metav1.TypeMeta{}
+			tt.expectedObject.TypeMeta = metav1.TypeMeta{}
 			conditions.NilLastTransitionTime(pool)
 			conditions.NilLastTransitionTime(tt.expectedObject)
 
