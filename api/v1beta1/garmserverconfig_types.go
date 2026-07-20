@@ -73,5 +73,5 @@ type GarmServerConfigList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&GarmServerConfig{}, &GarmServerConfigList{})
+	objectTypes = append(objectTypes, &GarmServerConfig{}, &GarmServerConfigList{})
 }

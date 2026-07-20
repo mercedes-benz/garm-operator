@@ -116,5 +116,5 @@ type RepositoryList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Repository{}, &RepositoryList{})
+	objectTypes = append(objectTypes, &Repository{}, &RepositoryList{})
 }

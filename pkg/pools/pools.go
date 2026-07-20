@@ -5,7 +5,6 @@ package pools
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/cloudbase/garm/client/enterprises"
@@ -17,55 +16,7 @@ import (
 
 	garmoperatorv1beta1 "github.com/mercedes-benz/garm-operator/api/v1beta1"
 	garmClient "github.com/mercedes-benz/garm-operator/pkg/client"
-	"github.com/mercedes-benz/garm-operator/pkg/filter"
 )
-
-func GetGarmPoolBySpecs(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool, image *garmoperatorv1beta1.Image, gitHubScopeRef garmoperatorv1beta1.GitHubScope) (*params.Pool, error) {
-	log := log.FromContext(ctx)
-	log.Info("Getting existing garm pools by pool.spec")
-
-	githubScopeRefID := gitHubScopeRef.GetID()
-	githubScopeRefName := gitHubScopeRef.GetName()
-	scope, err := garmoperatorv1beta1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
-	if err != nil {
-		return nil, err
-	}
-
-	garmPools, err := garmClient.ListAllPools(pools.NewListPoolsParams())
-	if err != nil {
-		return nil, err
-	}
-
-	filteredGarmPools := filter.Match(garmPools.Payload,
-		MatchesImage(image.Spec.Tag),
-		MatchesFlavor(pool.Spec.Flavor),
-		MatchesProvider(pool.Spec.ProviderName),
-		MatchesGitHubScope(scope, githubScopeRefID),
-	)
-
-	log.WithValues("image", image.Spec.Tag,
-		"flavor", pool.Spec.Flavor,
-		"provider", pool.Spec.ProviderName,
-		"scope", scope,
-		"githubScopeRefId", githubScopeRefID,
-		"githubScopeRefName", githubScopeRefName,
-	).Info(fmt.Sprintf("%d garm pools with same spec found", len(filteredGarmPools)))
-
-	//nolint TODO: @rafalgalaw - can this happen?
-	// i guess it's blocked by the fact that we can't create a pool with the same spec on garm side
-	if len(filteredGarmPools) > 1 {
-		return nil, errors.New("can not create pool, multiple instances matching flavor, image and provider found in garm")
-	}
-
-	// pool with the same specs already exists
-	// return the first object in the list
-	if len(filteredGarmPools) == 1 {
-		return &filteredGarmPools[0], nil
-	}
-
-	// create
-	return nil, nil
-}
 
 func UpdatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *garmoperatorv1beta1.Pool, image *garmoperatorv1beta1.Image) error {
 	log := log.FromContext(ctx).
@@ -107,7 +58,13 @@ func CreatePool(ctx context.Context, garmClient garmClient.PoolClient, pool *gar
 
 	poolResult := params.Pool{}
 
+	fmt.Printf("+%v\n", gitHubScopeRef)
+
 	id := gitHubScopeRef.GetID()
+
+	fmt.Printf("id: %s\n", id)
+	fmt.Printf("kind: %s\n", gitHubScopeRef.GetKind())
+
 	scope, err := garmoperatorv1beta1.ToGitHubScopeKind(gitHubScopeRef.GetKind())
 	if err != nil {
 		return poolResult, err

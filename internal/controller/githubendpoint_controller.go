@@ -13,7 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,7 +38,7 @@ import (
 type GitHubEndpointReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Recorder events.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
@@ -109,7 +109,7 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 	// get endpoint in garm db with resource name
 	garmEndpoint, err := r.getExistingEndpoint(client, endpoint.Name)
 	if err != nil {
-		event.Error(r.Recorder, endpoint, err.Error())
+		event.Error(r.Recorder, endpoint, "reconcileNormal", err.Error())
 		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -118,7 +118,7 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 	if reflect.ValueOf(garmEndpoint).IsZero() {
 		garmEndpoint, err = r.createEndpoint(ctx, client, endpoint, caCertBundleSecret) // nolint:wastedassign
 		if err != nil {
-			event.Error(r.Recorder, endpoint, err.Error())
+			event.Error(r.Recorder, endpoint, "reconcileNormal", err.Error())
 			conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 			return ctrl.Result{}, err
 		}
@@ -127,7 +127,7 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 	// update endpoint cr anytime the endpoint in garm db changes
 	garmEndpoint, err = r.updateEndpoint(ctx, client, endpoint, caCertBundleSecret)
 	if err != nil {
-		event.Error(r.Recorder, endpoint, err.Error())
+		event.Error(r.Recorder, endpoint, "reconcileNormal", err.Error())
 		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -157,7 +157,7 @@ func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client ga
 	log.WithValues("endpoint", endpoint.Name)
 
 	log.Info("GitHubEndpoint doesn't exist on garm side. Creating new endpoint in garm.")
-	event.Creating(r.Recorder, endpoint, "endpoint doesn't exist on garm side")
+	event.Creating(r.Recorder, endpoint, "createEndpoint", "endpoint doesn't exist on garm side")
 
 	retValue, err := client.CreateEndpoint(endpoints.NewCreateGithubEndpointParams().WithBody(params.CreateGithubEndpointParams{
 		Name:          endpoint.Name,
@@ -175,7 +175,7 @@ func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client ga
 	log.V(1).Info(fmt.Sprintf("endpoint %s created - return Value %v", endpoint.Name, retValue))
 
 	log.Info("creating endpoint in garm succeeded")
-	event.Info(r.Recorder, endpoint, "creating endpoint in garm succeeded")
+	event.Info(r.Recorder, endpoint, "createEndpoint", "creating endpoint in garm succeeded")
 
 	return retValue.Payload, nil
 }
@@ -207,7 +207,7 @@ func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client g
 	log.WithValues("endpoint", endpoint.Name)
 
 	log.Info("starting endpoint deletion")
-	event.Deleting(r.Recorder, endpoint, "starting endpoint deletion")
+	event.Deleting(r.Recorder, endpoint, "reconcileDelete", "starting endpoint deletion")
 	conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingEndpointMsg)
 
 	err := client.DeleteEndpoint(
@@ -216,7 +216,7 @@ func (r *GitHubEndpointReconciler) reconcileDelete(ctx context.Context, client g
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteEndpoint error: %s", err))
-		event.Error(r.Recorder, endpoint, err.Error())
+		event.Error(r.Recorder, endpoint, "reconcileDelete", err.Error())
 		conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}

@@ -105,7 +105,7 @@ func (e *Enterprise) GetPoolManagerFailureReason() string {
 }
 
 func (e *Enterprise) GetKind() string {
-	return e.Kind
+	return string(EnterpriseScope)
 }
 
 //+kubebuilder:object:root=true
@@ -118,5 +118,5 @@ type EnterpriseList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Enterprise{}, &EnterpriseList{})
+	objectTypes = append(objectTypes, &Enterprise{}, &EnterpriseList{})
 }

@@ -16,7 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -767,7 +767,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &GitHubCredentialReconciler{
 				Client:   client,
-				Recorder: record.NewFakeRecorder(3),
+				Recorder: events.NewFakeRecorder(3),
 			}
 
 			GitHubCredential := tt.object.DeepCopyObject().(*garmoperatorv1beta1.GitHubCredential)
@@ -920,7 +920,7 @@ func TestGitHubCredentialReconciler_reconcileDelete(t *testing.T) {
 			// create a fake reconciler
 			reconciler := &GitHubCredentialReconciler{
 				Client:   client,
-				Recorder: record.NewFakeRecorder(3),
+				Recorder: events.NewFakeRecorder(3),
 			}
 
 			GitHubCredential := tt.object.DeepCopyObject().(*garmoperatorv1beta1.GitHubCredential)

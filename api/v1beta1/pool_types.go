@@ -105,5 +105,5 @@ type PoolList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Pool{}, &PoolList{})
+	objectTypes = append(objectTypes, &Pool{}, &PoolList{})
 }

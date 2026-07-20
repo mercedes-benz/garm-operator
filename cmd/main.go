@@ -147,7 +147,7 @@ func run() error {
 	if err = (&garmcontroller.EnterpriseReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("enterprise-controller"),
+		Recorder: mgr.GetEventRecorder("enterprise-controller"),
 	}).SetupWithManager(mgr,
 		controller.Options{
 			MaxConcurrentReconciles: config.Config.Operator.EnterpriseConcurrency,
@@ -159,7 +159,7 @@ func run() error {
 	if err = (&garmcontroller.PoolReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("pool-controller"),
+		Recorder: mgr.GetEventRecorder("pool-controller"),
 	}).SetupWithManager(mgr,
 		controller.Options{
 			MaxConcurrentReconciles: config.Config.Operator.PoolConcurrency,
@@ -171,7 +171,7 @@ func run() error {
 	if err = (&garmcontroller.OrganizationReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("organization-controller"),
+		Recorder: mgr.GetEventRecorder("organization-controller"),
 	}).SetupWithManager(mgr,
 		controller.Options{
 			MaxConcurrentReconciles: config.Config.Operator.OrganizationConcurrency,
@@ -183,7 +183,7 @@ func run() error {
 	if err = (&garmcontroller.RepositoryReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("repository-controller"),
+		Recorder: mgr.GetEventRecorder("repository-controller"),
 	}).SetupWithManager(mgr,
 		controller.Options{
 			MaxConcurrentReconciles: config.Config.Operator.RepositoryConcurrency,
@@ -217,7 +217,7 @@ func run() error {
 	if err = (&garmcontroller.GarmServerConfigReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("garm-server-config-controller"),
+		Recorder: mgr.GetEventRecorder("garm-server-config-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller GarmServerConfig: %w", err)
 	}
@@ -225,7 +225,7 @@ func run() error {
 	if err = (&garmcontroller.GitHubEndpointReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("github-endpoint-controller"),
+		Recorder: mgr.GetEventRecorder("github-endpoint-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller GitHubEndpoint: %w", err)
 	}
@@ -233,7 +233,7 @@ func run() error {
 	if err = (&garmcontroller.GitHubCredentialReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("github-credentials-controller"),
+		Recorder: mgr.GetEventRecorder("github-credentials-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller GitHubCredential: %w", err)
 	}

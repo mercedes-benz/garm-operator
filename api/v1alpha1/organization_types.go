@@ -115,5 +115,5 @@ type OrganizationList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Organization{}, &OrganizationList{})
+	objectTypes = append(objectTypes, &Organization{}, &OrganizationList{})
 }

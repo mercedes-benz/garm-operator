@@ -13,7 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,7 +38,7 @@ import (
 type OrganizationReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Recorder events.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
@@ -102,7 +102,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 
 	webhookSecret, err := secret.FetchRef(ctx, r.Client, &organization.Spec.WebhookSecretRef, organization.Namespace)
 	if err != nil {
-		event.Error(r.Recorder, organization, err.Error())
+		event.Error(r.Recorder, organization, "reconcileNormal", err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		conditions.MarkFalse(organization, conditions.WebhookSecretReference, conditions.FetchingWebhookSecretRefFailedReason, err.Error())
 		return ctrl.Result{}, err
@@ -111,7 +111,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 
 	credentials, err := r.getCredentialsRef(ctx, organization)
 	if err != nil {
-		event.Error(r.Recorder, organization, err.Error())
+		event.Error(r.Recorder, organization, "reconcileNormal", err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		conditions.MarkFalse(organization, conditions.GithubCredentialsReference, conditions.FetchingGithubCredentialsRefFailedReason, err.Error())
 		return ctrl.Result{}, err
@@ -120,7 +120,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 
 	garmOrganization, err := r.getExistingGarmOrg(ctx, client, organization)
 	if err != nil {
-		event.Error(r.Recorder, organization, err.Error())
+		event.Error(r.Recorder, organization, "reconcileNormal", err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -129,7 +129,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 	if reflect.ValueOf(garmOrganization).IsZero() {
 		garmOrganization, err = r.createOrganization(ctx, client, organization, webhookSecret)
 		if err != nil {
-			event.Error(r.Recorder, organization, err.Error())
+			event.Error(r.Recorder, organization, "reconcileNormal", err.Error())
 			conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 			return ctrl.Result{}, err
 		}
@@ -142,7 +142,7 @@ func (r *OrganizationReconciler) reconcileNormal(ctx context.Context, client gar
 		PoolBalancerType: organization.Spec.PoolBalancerType,
 	})
 	if err != nil {
-		event.Error(r.Recorder, organization, err.Error())
+		event.Error(r.Recorder, organization, "reconcileNormal", err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -167,7 +167,7 @@ func (r *OrganizationReconciler) createOrganization(ctx context.Context, client 
 	log.WithValues("organization", organization.Name)
 
 	log.Info("Organization doesn't exist on garm side. Creating new organization in garm.")
-	event.Creating(r.Recorder, organization, "organization doesn't exist on garm side")
+	event.Creating(r.Recorder, organization, "createOrganization", "organization doesn't exist on garm side")
 
 	retValue, err := client.CreateOrganization(
 		organizations.NewCreateOrgParams().
@@ -185,7 +185,7 @@ func (r *OrganizationReconciler) createOrganization(ctx context.Context, client 
 	log.V(1).Info(fmt.Sprintf("organization %s created - return Value %v", organization.Name, retValue))
 
 	log.Info("creating organization in garm succeeded")
-	event.Info(r.Recorder, organization, "creating organization in garm succeeded")
+	event.Info(r.Recorder, organization, "createOrganization", "creating organization in garm succeeded")
 
 	return retValue.Payload, nil
 }
@@ -233,7 +233,7 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client gar
 	log.WithValues("organization", organization.Name)
 
 	log.Info("starting organization deletion")
-	event.Deleting(r.Recorder, organization, "starting organization deletion")
+	event.Deleting(r.Recorder, organization, "reconcileDelete", "starting organization deletion")
 	conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingOrgMsg)
 
 	err := client.DeleteOrganization(
@@ -242,7 +242,7 @@ func (r *OrganizationReconciler) reconcileDelete(ctx context.Context, client gar
 	)
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.DeleteOrganization error: %s", err))
-		event.Error(r.Recorder, organization, err.Error())
+		event.Error(r.Recorder, organization, "reconcileDelete", err.Error())
 		conditions.MarkFalse(organization, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())
 		return ctrl.Result{}, err
 	}

@@ -7,12 +7,10 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -20,8 +18,7 @@ import (
 var repositorylog = logf.Log.WithName("repository-resource")
 
 func (r *Repository) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
 		WithValidator(&RepositoryValidator{}).
 		Complete()
 }
@@ -30,31 +27,21 @@ func (r *Repository) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 type RepositoryValidator struct{}
 
-var _ webhook.CustomValidator = &RepositoryValidator{}
+var _ admission.Validator[*Repository] = &RepositoryValidator{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *RepositoryValidator) ValidateCreate(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *RepositoryValidator) ValidateCreate(_ context.Context, _ *Repository) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *RepositoryValidator) ValidateUpdate(_ context.Context, obj runtime.Object, oldObj runtime.Object) (admission.Warnings, error) {
-	repo, ok := obj.(*Repository)
-	if !ok {
-		return nil, apierrors.NewBadRequest("failed to convert runtime.Object to Repository CRD")
-	}
+func (r *RepositoryValidator) ValidateUpdate(_ context.Context, oldObj *Repository, newObj *Repository) (admission.Warnings, error) {
+	repositorylog.Info("validate update", "name", newObj.Name, "namespace", newObj.Namespace)
 
-	repositorylog.Info("validate update", "name", repo.Name, "namespace", repo.Namespace)
-
-	oldCRD, ok := oldObj.(*Repository)
-	if !ok {
-		return nil, apierrors.NewBadRequest("failed to convert runtime.Object to Repository CRD")
-	}
-
-	if err := validateRepoOwnerName(repo, oldCRD); err != nil {
+	if err := validateRepoOwnerName(newObj, oldObj); err != nil {
 		return nil, apierrors.NewInvalid(
 			schema.GroupKind{Group: GroupVersion.Group, Kind: "Repository"},
-			repo.Name,
+			newObj.Name,
 			field.ErrorList{err},
 		)
 	}
@@ -77,6 +64,6 @@ func validateRepoOwnerName(repo, oldRepo *Repository) *field.Error {
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *RepositoryValidator) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *RepositoryValidator) ValidateDelete(_ context.Context, _ *Repository) (admission.Warnings, error) {
 	return nil, nil
 }

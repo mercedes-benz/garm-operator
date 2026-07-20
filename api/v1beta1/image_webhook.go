@@ -7,10 +7,8 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -19,8 +17,7 @@ var imagelog = logf.Log.WithName("image-resource")
 
 func (i *Image) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	c = mgr.GetClient()
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(i).
+	return ctrl.NewWebhookManagedBy(mgr, i).
 		WithValidator(&ImageValidator{}).
 		Complete()
 }
@@ -29,27 +26,21 @@ func (i *Image) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 type ImageValidator struct{}
 
-var _ webhook.CustomValidator = &ImageValidator{}
+var _ admission.Validator[*Image] = &ImageValidator{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (i *ImageValidator) ValidateCreate(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (i *ImageValidator) ValidateCreate(_ context.Context, _ *Image) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (i *ImageValidator) ValidateUpdate(_ context.Context, _ runtime.Object, _ runtime.Object) (admission.Warnings, error) {
+func (i *ImageValidator) ValidateUpdate(_ context.Context, _ *Image, _ *Image) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (i *ImageValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (i *ImageValidator) ValidateDelete(ctx context.Context, image *Image) (admission.Warnings, error) {
 	var msg string
-
-	image, ok := obj.(*Image)
-	if !ok {
-		msg = fmt.Sprintf("expected Image object, got %T", obj)
-		return nil, apierrors.NewBadRequest(msg)
-	}
 
 	imagelog.Info("validate delete", "name", image.Name, "namespace", image.Namespace)
 

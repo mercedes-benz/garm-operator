@@ -16,7 +16,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,7 +44,7 @@ import (
 type PoolReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Recorder events.EventRecorder
 }
 
 const (
@@ -65,7 +65,7 @@ func (r *PoolReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res c
 			return ctrl.Result{}, nil
 		}
 		log.Error(err, "cannot fetch Pool")
-		event.Error(r.Recorder, pool, err.Error())
+		event.Error(r.Recorder, pool, "reconcile", err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -158,7 +158,7 @@ func (r *PoolReconciler) reconcileCreate(ctx context.Context, garmClient garmCli
 	}
 
 	log.Info("creating pool in garm succeeded")
-	event.Info(r.Recorder, pool, "creating pool in garm succeeded")
+	event.Info(r.Recorder, pool, "reconcileCreate", "creating pool in garm succeeded")
 
 	pool.Status.ID = garmPool.ID
 	pool.Status.LongRunningIdleRunners = garmPool.MinIdleRunners
@@ -209,7 +209,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		// when scale to zero is desired, we immediately scale down to zero by deleting all idle runners
 
 		log.Info("Scaling pool", "pool", pool.Name)
-		event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
+		event.Scaling(r.Recorder, pool, "reconcileUpdate", fmt.Sprintf("scale idle runners down to %d", pool.Spec.MinIdleRunners))
 
 		runners := runnerUtil.DeletableRunners(ctx, idleRunners)
 		for _, runner := range runners {
@@ -232,7 +232,7 @@ func (r *PoolReconciler) reconcileUpdate(ctx context.Context, garmClient garmCli
 		runners := runnerUtil.DeletableRunners(ctx, alignedRunners)
 		for _, runner := range runners {
 			log.Info("Scaling pool", "pool", pool.Name)
-			event.Scaling(r.Recorder, pool, fmt.Sprintf("scale long running idle runners down to %d", pool.Spec.MinIdleRunners))
+			event.Scaling(r.Recorder, pool, "reconcileUpdate", fmt.Sprintf("scale long running idle runners down to %d", pool.Spec.MinIdleRunners))
 
 			if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
 				log.Error(err, "unable to delete runner", "runner", runner.Name)
@@ -254,7 +254,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 	// pool does not exist in garm database yet as ID in Status is empty, so we can safely delete it
 	log := log.FromContext(ctx)
 	log.Info("Deleting Pool", "pool", pool.Name)
-	event.Deleting(r.Recorder, pool, "")
+	event.Deleting(r.Recorder, pool, "reconcileDelete", "deleting pool")
 	conditions.MarkFalse(pool, conditions.ReadyCondition, conditions.DeletingReason, conditions.DeletingPoolMsg)
 	if err := r.Status().Update(ctx, pool); err != nil {
 		return ctrl.Result{}, err
@@ -304,7 +304,7 @@ func (r *PoolReconciler) reconcileDelete(ctx context.Context, garmClient garmCli
 
 	// scale pool down that all idle runners are deleted
 	log.Info("Scaling pool", "pool", pool.Name)
-	event.Scaling(r.Recorder, pool, fmt.Sprintf("scale idle runners down to %d before deleting", pool.Spec.MinIdleRunners))
+	event.Scaling(r.Recorder, pool, "reconcileDelete", fmt.Sprintf("scale idle runners down to %d before deleting", pool.Spec.MinIdleRunners))
 
 	for _, runner := range deletableRunners {
 		if err := instanceClient.DeleteInstance(instances.NewDeleteInstanceParams().WithInstanceName(runner.Name)); err != nil {
@@ -335,7 +335,7 @@ func (r *PoolReconciler) errorLog(ctx context.Context, obj client.Object, err er
 	log := log.FromContext(ctx)
 
 	log.Error(err, "error")
-	event.Error(r.Recorder, obj, err.Error())
+	event.Error(r.Recorder, obj, "reconcile", err.Error())
 }
 
 func (r *PoolReconciler) comparePoolSpecs(ctx context.Context, pool *garmoperatorv1beta1.Pool, imageTag string, poolClient garmClient.PoolClient) (bool, []params.Instance, error) {
@@ -439,6 +439,15 @@ func (r *PoolReconciler) fetchGitHubScopeCRD(ctx context.Context, pool *garmoper
 	default:
 		return nil, fmt.Errorf("unsupported GitHubScopeRef kind: %s", pool.Spec.GitHubScopeRef.Kind)
 	}
+
+	fmt.Printf("fetched GitHubScopeRef: %v\n", gitHubScope)
+
+	gvk, err := r.GroupVersionKindFor(gitHubScope)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("GVK: %v\n", gvk)
 
 	return gitHubScope.(garmoperatorv1beta1.GitHubScope), nil
 }

@@ -60,5 +60,5 @@ func MatchesTag(tag string) filter.Predicate[Image] {
 }
 
 func init() {
-	SchemeBuilder.Register(&Image{}, &ImageList{})
+	objectTypes = append(objectTypes, &Image{}, &ImageList{})
 }
