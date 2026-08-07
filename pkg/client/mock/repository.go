@@ -113,3 +113,47 @@ func (mr *MockRepositoryClientMockRecorder) UpdateRepository(param any) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepository", reflect.TypeOf((*MockRepositoryClient)(nil).UpdateRepository), param)
 }
+
+// GetRepoWebhookInfo mocks base method.
+func (m *MockRepositoryClient) GetRepoWebhookInfo(param *repositories.GetRepoWebhookInfoParams) (*repositories.GetRepoWebhookInfoOK, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRepoWebhookInfo", param)
+	ret0, _ := ret[0].(*repositories.GetRepoWebhookInfoOK)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRepoWebhookInfo indicates an expected call of GetRepoWebhookInfo.
+func (mr *MockRepositoryClientMockRecorder) GetRepoWebhookInfo(param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepoWebhookInfo", reflect.TypeOf((*MockRepositoryClient)(nil).GetRepoWebhookInfo), param)
+}
+
+// InstallRepoWebhook mocks base method.
+func (m *MockRepositoryClient) InstallRepoWebhook(param *repositories.InstallRepoWebhookParams) (*repositories.InstallRepoWebhookOK, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstallRepoWebhook", param)
+	ret0, _ := ret[0].(*repositories.InstallRepoWebhookOK)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InstallRepoWebhook indicates an expected call of InstallRepoWebhook.
+func (mr *MockRepositoryClientMockRecorder) InstallRepoWebhook(param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallRepoWebhook", reflect.TypeOf((*MockRepositoryClient)(nil).InstallRepoWebhook), param)
+}
+
+// UninstallRepoWebhook mocks base method.
+func (m *MockRepositoryClient) UninstallRepoWebhook(param *repositories.UninstallRepoWebhookParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UninstallRepoWebhook", param)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UninstallRepoWebhook indicates an expected call of UninstallRepoWebhook.
+func (mr *MockRepositoryClientMockRecorder) UninstallRepoWebhook(param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UninstallRepoWebhook", reflect.TypeOf((*MockRepositoryClient)(nil).UninstallRepoWebhook), param)
+}

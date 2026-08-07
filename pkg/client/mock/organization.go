@@ -113,3 +113,47 @@ func (mr *MockOrganizationClientMockRecorder) UpdateOrganization(param any) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockOrganizationClient)(nil).UpdateOrganization), param)
 }
+
+// GetOrgWebhookInfo mocks base method.
+func (m *MockOrganizationClient) GetOrgWebhookInfo(param *organizations.GetOrgWebhookInfoParams) (*organizations.GetOrgWebhookInfoOK, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrgWebhookInfo", param)
+	ret0, _ := ret[0].(*organizations.GetOrgWebhookInfoOK)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrgWebhookInfo indicates an expected call of GetOrgWebhookInfo.
+func (mr *MockOrganizationClientMockRecorder) GetOrgWebhookInfo(param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgWebhookInfo", reflect.TypeOf((*MockOrganizationClient)(nil).GetOrgWebhookInfo), param)
+}
+
+// InstallOrgWebhook mocks base method.
+func (m *MockOrganizationClient) InstallOrgWebhook(param *organizations.InstallOrgWebhookParams) (*organizations.InstallOrgWebhookOK, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstallOrgWebhook", param)
+	ret0, _ := ret[0].(*organizations.InstallOrgWebhookOK)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InstallOrgWebhook indicates an expected call of InstallOrgWebhook.
+func (mr *MockOrganizationClientMockRecorder) InstallOrgWebhook(param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallOrgWebhook", reflect.TypeOf((*MockOrganizationClient)(nil).InstallOrgWebhook), param)
+}
+
+// UninstallOrgWebhook mocks base method.
+func (m *MockOrganizationClient) UninstallOrgWebhook(param *organizations.UninstallOrgWebhookParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UninstallOrgWebhook", param)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UninstallOrgWebhook indicates an expected call of UninstallOrgWebhook.
+func (mr *MockOrganizationClientMockRecorder) UninstallOrgWebhook(param any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UninstallOrgWebhook", reflect.TypeOf((*MockOrganizationClient)(nil).UninstallOrgWebhook), param)
+}
