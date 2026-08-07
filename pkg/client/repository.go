@@ -14,6 +14,9 @@ type RepositoryClient interface {
 	GetRepository(param *repositories.GetRepoParams) (*repositories.GetRepoOK, error)
 	UpdateRepository(param *repositories.UpdateRepoParams) (*repositories.UpdateRepoOK, error)
 	DeleteRepository(param *repositories.DeleteRepoParams) error
+	InstallRepoWebhook(param *repositories.InstallRepoWebhookParams) (*repositories.InstallRepoWebhookOK, error)
+	GetRepoWebhookInfo(param *repositories.GetRepoWebhookInfoParams) (*repositories.GetRepoWebhookInfoOK, error)
+	UninstallRepoWebhook(param *repositories.UninstallRepoWebhookParams) error
 }
 
 type repositoryClient struct {
@@ -85,4 +88,41 @@ func (s *repositoryClient) UpdateRepository(param *repositories.UpdateRepoParams
 		}
 		return repository, nil
 	})
+}
+
+func (s *repositoryClient) InstallRepoWebhook(param *repositories.InstallRepoWebhookParams) (*repositories.InstallRepoWebhookOK, error) {
+	return EnsureAuth(func() (*repositories.InstallRepoWebhookOK, error) {
+		metrics.TotalGarmCalls.WithLabelValues("repository.InstallWebhook").Inc()
+		webhook, err := s.GarmAPI().Repositories.InstallRepoWebhook(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("repository.InstallWebhook").Inc()
+			return nil, err
+		}
+		return webhook, nil
+	})
+}
+
+func (s *repositoryClient) GetRepoWebhookInfo(param *repositories.GetRepoWebhookInfoParams) (*repositories.GetRepoWebhookInfoOK, error) {
+	return EnsureAuth(func() (*repositories.GetRepoWebhookInfoOK, error) {
+		metrics.TotalGarmCalls.WithLabelValues("repository.GetWebhookInfo").Inc()
+		webhook, err := s.GarmAPI().Repositories.GetRepoWebhookInfo(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("repository.GetWebhookInfo").Inc()
+			return nil, err
+		}
+		return webhook, nil
+	})
+}
+
+func (s *repositoryClient) UninstallRepoWebhook(param *repositories.UninstallRepoWebhookParams) error {
+	_, err := EnsureAuth(func() (interface{}, error) {
+		metrics.TotalGarmCalls.WithLabelValues("repository.UninstallWebhook").Inc()
+		err := s.GarmAPI().Repositories.UninstallRepoWebhook(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("repository.UninstallWebhook").Inc()
+			return nil, err
+		}
+		return nil, nil
+	})
+	return err
 }
