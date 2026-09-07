@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: MIT
+version: 2
 project_name: garm-operator
+dist: tmp/goreleaser
 before:
   hooks:
     - go mod tidy
     - sh -c "IMG=ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }} make release-manifests"
+    - sh -c "IMG=ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }} VERSION={{ .Version }} make release-helm"
 builds:
   - env:
       - CGO_ENABLED=0
@@ -13,16 +16,22 @@ builds:
       - amd64
     main: ./cmd/
 
-dockers:
-  - image_templates:
-      - "ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }}"
-      - "ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:latest"
+dockers_v2:
+  - images:
+      - "ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}"
+    tags:
+      - "v{{ .Version }}"
+      - latest
     dockerfile: release.Dockerfile
+    platforms:
+      - linux/amd64
+    sbom: false
     extra_files:
       - tmp/3RD_PARTY_LICENSES.txt
 
 archives:
-  - format: tar.gz
+  - formats:
+      - tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: >-
       {{ .ProjectName }}_
@@ -35,7 +44,7 @@ archives:
 checksum:
   name_template: "checksums.txt"
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   use: github
@@ -64,6 +73,7 @@ release:
     - glob: tmp/garm_operator_crds.yaml
     - glob: tmp/garm_operator.yaml
     - glob: tmp/garm-operator.bom.spdx
+    - glob: tmp/garm-operator-*.tgz
     - glob: tmp/3RD_PARTY_LICENSES.txt
     - glob: tmp/BlackDuck_RiskReport.pdf
   header: |
@@ -72,5 +82,6 @@ release:
     * `garm_operator.yaml` contains the operator deployment manifest with all the required RBAC rules and certificate configurations.
     * `garm_operator_crds.yaml` contains the CRDs for the operator.
     * `garm_operator_all.yaml` is the combination of the above two files.
+    * `garm-operator-{{ .Version }}.tgz` contains the Helm chart.
 
     ---

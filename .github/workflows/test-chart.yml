@@ -1,0 +1,109 @@
+# SPDX-License-Identifier: MIT
+
+name: test-chart
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CERT_MANAGER_VERSION: v1.21.1
+  IMG: controller:latest
+  KIND_CLUSTER: garm-operator-chart
+
+jobs:
+  test-chart:
+    name: lint and install chart
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        with:
+          version: v3.19.0
+
+      - name: Generate and verify chart
+        run: make verify-helm HELM=helm IMG="$IMG"
+
+      - name: Build controller image
+        run: docker build --tag "$IMG" .
+
+      - name: Install Kind
+        run: |
+          make kind
+          bin/kind version
+
+      - name: Create Kind cluster
+        run: bin/kind create cluster --name "$KIND_CLUSTER"
+
+      - name: Load controller image
+        run: bin/kind load docker-image "$IMG" --name "$KIND_CLUSTER"
+
+      - name: Install cert-manager via Helm
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm upgrade --install cert-manager jetstack/cert-manager \
+            --version "$CERT_MANAGER_VERSION" \
+            --namespace cert-manager \
+            --create-namespace \
+            --set crds.enabled=true \
+            --wait \
+            --timeout 5m
+
+      - name: Deploy GARM mock
+        run: |
+          kubectl apply -f .github/testdata/garm-mock.yaml
+          kubectl rollout status deployment/garm-mock --timeout=2m
+
+      - name: Install chart
+        run: |
+          make helm-deploy \
+            HELM=helm \
+            IMG="$IMG" \
+            HELM_EXTRA_ARGS="-f .github/testdata/chart-values.yaml"
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/garm-operator-controller-manager \
+            --namespace garm-operator-system \
+            --timeout=5m
+          kubectl get crd enterprises.garm-operator.mercedes-benz.com
+          kubectl get validatingwebhookconfiguration garm-operator-validating-webhook-configuration
+          make helm-status HELM=helm
+
+      - name: Upgrade chart
+        run: |
+          make helm-deploy \
+            HELM=helm \
+            IMG="$IMG" \
+            HELM_EXTRA_ARGS="-f .github/testdata/chart-values.yaml --set manager.replicas=2"
+          test "$(kubectl get deployment/garm-operator-controller-manager \
+            --namespace garm-operator-system \
+            -o jsonpath='{.spec.replicas}')" -eq 2
+          test "$(helm history garm-operator --namespace garm-operator-system --max 1 -o json | jq -r '.[0].revision')" -eq 2
+
+      - name: Uninstall chart
+        run: |
+          make helm-uninstall HELM=helm
+          if helm status garm-operator --namespace garm-operator-system; then
+            echo "Helm release still exists after uninstall"
+            exit 1
+          fi
+
+      - name: Delete Kind cluster
+        if: always()
+        run: bin/kind delete cluster --name "$KIND_CLUSTER"
