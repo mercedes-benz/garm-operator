@@ -155,6 +155,15 @@ release-manifests: manifests kustomize slice ## Generate manifests for releasing
 	$(SLICE) -f tmp/garm_operator_all.yaml --include-kind CustomResourceDefinition --template "garm_operator_crds.yaml" -o tmp/
 	$(SLICE) -f tmp/garm_operator_all.yaml --exclude-kind CustomResourceDefinition --template "garm_operator.yaml" -o tmp/
 
+.PHONY: release-helm
+release-helm: helm verify-helm verify-chart ## Package the Helm chart for release. VERSION must not include a leading v.
+	@test -n "$(VERSION)" || { echo "VERSION is required"; exit 1; }
+	mkdir -p tmp
+	$(HELM) package $(HELM_CHART_DIR) \
+		--version "$(VERSION)" \
+		--app-version "v$(VERSION)" \
+		--destination tmp
+
 ##@ Build Dependencies
 
 ## Location to install dependencies to
@@ -176,6 +185,7 @@ SLICE ?= $(LOCALBIN)/kubectl-slice
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 KBOM ?= $(LOCALBIN)/bom
 KIND ?= $(LOCALBIN)/kind
+HELM ?= $(LOCALBIN)/helm
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
@@ -190,6 +200,7 @@ NANCY_VERSION ?= v1.0.46
 KBOM_VERSION ?= v0.5.1
 KIND_VERSION ?= v0.30.0
 GOVULNCHECK_VERSION ?= v1.2.0
+HELM_VERSION ?= v3.17.1
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -265,6 +276,21 @@ $(KIND): $(LOCALBIN)
 	test -s $(LOCALBIN)/kind && $(LOCALBIN)/kind version | grep -q $(KIND_VERSION) || \
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@$(KIND_VERSION)
 
+.PHONY: helm
+helm: $(HELM) ## Download helm locally if necessary.
+$(HELM): $(LOCALBIN)
+	@if test -x $(LOCALBIN)/helm && ! $(LOCALBIN)/helm version --short | grep -q $(HELM_VERSION); then \
+		echo "$(LOCALBIN)/helm version is not expected $(HELM_VERSION). Removing it before installing."; \
+		rm -rf $(LOCALBIN)/helm; \
+	fi
+	@if ! test -s $(LOCALBIN)/helm; then \
+		echo "Installing helm $(HELM_VERSION)..."; \
+		OS=$$(go env GOOS); \
+		ARCH=$$(go env GOARCH); \
+		curl -fsSL "https://get.helm.sh/helm-$(HELM_VERSION)-$${OS}-$${ARCH}.tar.gz" | tar -zx -C $(LOCALBIN) --strip-components=1 "$${OS}-$${ARCH}/helm"; \
+		chmod +x $(LOCALBIN)/helm; \
+	fi
+
 ##@ Lint / Verify
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run linting.
@@ -274,7 +300,7 @@ lint: $(GOLANGCI_LINT) ## Run linting.
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linte
 	GOLANGCI_LINT_EXTRA_ARGS=--fix $(MAKE) lint
 
-ALL_VERIFY_CHECKS = gen manifests doctoc license security
+ALL_VERIFY_CHECKS = gen manifests doctoc license security chart helm
 
 .PHONY: verify
 verify: $(addprefix verify-,$(ALL_VERIFY_CHECKS)) ## Run all verify-* targets
@@ -296,6 +322,19 @@ verify-manifests: manifests  ## Verify kubebuilder generated files are up to dat
 		git diff; \
 		echo "generated files are out of date, run make manifests"; exit 1; \
 	fi
+
+.PHONY: verify-chart
+verify-chart: update-chart ## Verify Helm chart templates are up to date
+	@if !(git diff --quiet charts/garm-operator/templates/crd charts/garm-operator/templates/rbac charts/garm-operator/templates/webhook charts/garm-operator/templates/monitoring); then \
+		git diff charts/garm-operator/templates; \
+		echo "chart templates are out of date, run make update-chart"; exit 1; \
+	fi
+
+.PHONY: verify-chart-crds
+verify-chart-crds: verify-chart
+
+.PHONY: verify-helm
+verify-helm: helm-lint helm-template ## Lint and render the Helm chart
 
 .PHONY: verify-doctoc
 verify-doctoc: generate-doctoc
@@ -331,3 +370,63 @@ delete-kind-cluster:
 .PHONY: tilt-up
 tilt-up: kind-cluster ## Start tilt and build kind cluster
 	tilt up
+
+##@ Helm Deployment
+
+## Helm chart directory
+HELM_CHART_DIR ?= charts/garm-operator
+## Helm release name
+HELM_RELEASE ?= garm-operator
+## Helm release namespace
+HELM_NAMESPACE ?= garm-operator-system
+## Additional arguments to pass to helm
+HELM_EXTRA_ARGS ?=
+
+.PHONY: update-chart
+update-chart: kustomize slice ## Synchronize Helm chart templates (CRDs, RBAC, Webhooks, Metrics) from Kubebuilder manifests
+	./hack/update-chart.sh
+
+.PHONY: update-chart-crds
+update-chart-crds: update-chart
+
+.PHONY: helm-lint
+helm-lint: helm ## Lint the Helm chart.
+	$(HELM) lint $(HELM_CHART_DIR)
+
+.PHONY: helm-template
+helm-template: helm ## Render the Helm chart with default and sample configurations.
+	$(HELM) template $(HELM_RELEASE) $(HELM_CHART_DIR) --namespace $(HELM_NAMESPACE) >/dev/null
+	$(HELM) template $(HELM_RELEASE) $(HELM_CHART_DIR) \
+		--namespace $(HELM_NAMESPACE) \
+		--set manager.replicas=2 \
+		--set certManager.enable=true \
+		--set webhook.enable=true \
+		--show-only templates/manager/deployment.yaml \
+		| grep -q 'replicas: 2'
+
+.PHONY: helm-deploy
+helm-deploy: helm ## Deploy operator to the K8s cluster via Helm. Specify image with IMG.
+	$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_CHART_DIR) \
+		--namespace $(HELM_NAMESPACE) \
+		--create-namespace \
+		--set manager.image.repository=$${IMG%:*} \
+		--set manager.image.tag=$${IMG##*:} \
+		--wait \
+		--timeout 5m \
+		$(HELM_EXTRA_ARGS)
+
+.PHONY: helm-uninstall
+helm-uninstall: helm ## Uninstall the Helm release from the K8s cluster.
+	$(HELM) uninstall $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
+
+.PHONY: helm-status
+helm-status: helm ## Show Helm release status.
+	$(HELM) status $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
+
+.PHONY: helm-history
+helm-history: helm ## Show Helm release history.
+	$(HELM) history $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
+
+.PHONY: helm-rollback
+helm-rollback: helm ## Rollback to previous Helm release.
+	$(HELM) rollback $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)

@@ -1,0 +1,12 @@
+{{- if and .Values.certManager.enable (empty .Values.certManager.issuerRef) }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "garm-operator.fullname" . }}-selfsigned-issuer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "garm-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: certificate
+spec:
+  selfSigned: {}
+{{- end }}

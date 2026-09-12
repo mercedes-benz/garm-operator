@@ -66,11 +66,50 @@ The compatibility matrix for client-go and Kubernetes cluster can be found
 
 ### Deployment
 
-#### `garm-operator`
+#### Helm (Recommended)
+
+The operator can be deployed using the Helm chart located in `charts/garm-operator` or downloaded from GitHub releases as `garm-operator-<version>.tgz`.
+
+##### 1. Using an existing Kubernetes Secret for GARM credentials
+
+Following GitOps best practices, create a Secret containing your GARM password:
+
+```bash
+kubectl create secret generic garm-credentials \
+  --namespace garm-operator-system \
+  --create-namespace \
+  --from-literal=password='<garm-server-password>'
+```
+
+Then install the chart referencing the secret:
+
+```bash
+helm install garm-operator ./charts/garm-operator \
+  --namespace garm-operator-system \
+  --create-namespace \
+  --set garm.server="<garm-server-url>" \
+  --set garm.username="<garm-server-username>" \
+  --set garm.existingSecret="garm-credentials"
+```
+
+##### 2. Passing credentials via values
+
+```bash
+helm install garm-operator ./charts/garm-operator \
+  --namespace garm-operator-system \
+  --create-namespace \
+  --set garm.server="<garm-server-url>" \
+  --set garm.username="<garm-server-username>" \
+  --set garm.password="<garm-server-password>"
+```
+
+For more configuration options and details, please refer to the [Helm chart README](charts/garm-operator/README.md).
+
+#### Kubernetes Manifests
 
 We are releasing the `garm-operator` as container image together with the corresponding Kubernetes manifests. You can find the latest release [here](https://github.com/mercedes-benz/garm-operator/releases).
 
-This manifests can be used to deploy the `garm-operator` into your Kubernetes cluster.
+These manifests can be used to deploy the `garm-operator` into your Kubernetes cluster.
 
 ```bash
 export GARM_OPERATOR_VERSION=<garm-operator-version>

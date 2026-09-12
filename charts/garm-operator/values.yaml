@@ -1,0 +1,171 @@
+# Default values for garm-operator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# GARM server connection configuration
+garm:
+  # GARM server URL (e.g. http://garm-server:9997)
+  server: ""
+  # GARM admin username
+  username: ""
+  # GARM admin password. If existingSecret is set, this is ignored.
+  password: ""
+  # Reference to an existing Secret containing GARM credentials
+  # The secret should contain the key specified by secretKeys.passwordKey.
+  # It may also optionally contain secretKeys.usernameKey and secretKeys.serverKey.
+  existingSecret: ""
+  # Keys in the Secret (either created or referenced via existingSecret)
+  secretKeys:
+    passwordKey: "password"
+    usernameKey: "username"
+    serverKey: "server"
+  # Initialize GARM on startup (default: false)
+  init: false
+  # GARM admin email (required if init is true)
+  email: ""
+
+# Operator configuration
+operator:
+  # Namespace to watch for custom resources. If left empty, all namespaces are watched.
+  watchNamespace: ""
+  # Address the metric endpoint binds to
+  metricsBindAddress: ":8080"
+  # Address the health probe endpoint binds to
+  healthProbeBindAddress: ":8081"
+  # Enable leader election for controller manager
+  leaderElection: false
+  # Controller manager sync period
+  syncPeriod: "5m0s"
+  # Interval for syncing runners
+  syncRunnersInterval: "5m0s"
+  # Minimum idle runners age before deletion
+  minIdleRunnersAge: "5m0s"
+  # Concurrency settings for reconcilers
+  runnerConcurrency: 20
+  repositoryConcurrency: 5
+  organizationConcurrency: 3
+  enterpriseConcurrency: 1
+  poolConcurrency: 10
+  # Enable runner reconciliation loop
+  runnerReconciliation: true
+  # Log verbosity level (0-5)
+  logVerbosityLevel: 0
+  # Additional arguments to pass to the operator
+  extraArgs: []
+  # Additional environment variables to pass to the operator
+  extraEnv: []
+  # Additional environment variables from configmaps/secrets
+  extraEnvFrom: []
+
+# Controller manager deployment settings
+manager:
+  # Number of replicas
+  replicas: 1
+
+  # Image configuration
+  image:
+    repository: ghcr.io/mercedes-benz/garm-operator/garm-operator
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  # Image pull secrets
+  imagePullSecrets: []
+
+  # Pod annotations
+  podAnnotations:
+    kubectl.kubernetes.io/default-container: manager
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8080"
+
+  # Pod labels
+  podLabels: {}
+
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+
+  # Container security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+  # Resource requests and limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
+
+  # Node selector
+  nodeSelector: {}
+
+  # Tolerations
+  tolerations: []
+
+  # Affinity
+  affinity: {}
+
+# ServiceAccount configuration
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use. If not set and create is true, a name is generated using the fullname template.
+  name: ""
+
+# RBAC configuration
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+# Custom Resource Definitions
+crd:
+  # Specifies whether CRDs should be installed with the chart
+  enable: true
+  # Keep CRDs upon helm uninstall
+  keep: true
+
+# Webhook configuration
+webhook:
+  # Enable admission webhooks
+  enable: true
+  # Port on which the webhook server listens
+  port: 9443
+  # Webhook Service configuration
+  service:
+    type: ClusterIP
+    port: 443
+
+# cert-manager integration for webhook TLS certificates
+certManager:
+  # Enable cert-manager Issuer and Certificate generation
+  enable: true
+  # If specified, use this Issuer instead of creating a self-signed issuer
+  issuerRef: {}
+    # group: cert-manager.io
+    # kind: ClusterIssuer
+    # name: letsencrypt-prod
+
+# Prometheus monitoring configuration
+prometheus:
+  # Enable Prometheus ServiceMonitor
+  enable: false
+  serviceMonitor:
+    interval: "30s"
+    labels: {}
+
+# kube-state-metrics configuration
+kubeStateMetrics:
+  # Deploy CustomResourceStateMetrics ConfigMap for kube-state-metrics
+  createConfigMap: true
+
+# Overrides for names
+nameOverride: ""
+fullnameOverride: ""
