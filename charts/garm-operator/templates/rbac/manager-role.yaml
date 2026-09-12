@@ -1,0 +1,157 @@
+{{- if .Values.rbac.create }}
+{{- if empty .Values.operator.watchNamespace }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "garm-operator.fullname" . }}-manager-role
+  labels:
+    {{- include "garm-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rbac
+rules:
+- apiGroups:
+  - ""
+  - "events.k8s.io"
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - enterprises
+  - garmserverconfigs
+  - githubcredentials
+  - githubendpoints
+  - images
+  - organizations
+  - pools
+  - repositories
+  - runners
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - enterprises/finalizers
+  - garmserverconfigs/finalizers
+  - githubcredentials/finalizers
+  - githubendpoints/finalizers
+  - organizations/finalizers
+  - repositories/finalizers
+  - runners/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - enterprises/status
+  - garmserverconfigs/status
+  - githubcredentials/status
+  - githubendpoints/status
+  - organizations/status
+  - pools/status
+  - repositories/status
+  - runners/status
+  verbs:
+  - get
+  - patch
+  - update
+{{- else }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "garm-operator.fullname" . }}-manager-role
+  labels:
+    {{- include "garm-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rbac
+rules:
+- apiGroups:
+  - ""
+  - "events.k8s.io"
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "garm-operator.fullname" . }}-manager-role
+  namespace: {{ .Values.operator.watchNamespace | default .Release.Namespace }}
+  labels:
+    {{- include "garm-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rbac
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - enterprises
+  - garmserverconfigs
+  - githubcredentials
+  - githubendpoints
+  - images
+  - organizations
+  - pools
+  - repositories
+  - runners
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - enterprises/finalizers
+  - garmserverconfigs/finalizers
+  - githubcredentials/finalizers
+  - githubendpoints/finalizers
+  - organizations/finalizers
+  - repositories/finalizers
+  - runners/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - garm-operator.mercedes-benz.com
+  resources:
+  - enterprises/status
+  - garmserverconfigs/status
+  - githubcredentials/status
+  - githubendpoints/status
+  - organizations/status
+  - pools/status
+  - repositories/status
+  - runners/status
+  verbs:
+  - get
+  - patch
+  - update
+{{- end }}
+{{- end }}
