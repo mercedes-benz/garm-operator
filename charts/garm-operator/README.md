@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT -->
+
 # GARM Operator Helm Chart
 
 Helm chart for installing and configuring the [garm-operator](https://github.com/mercedes-benz/garm-operator) in Kubernetes.
