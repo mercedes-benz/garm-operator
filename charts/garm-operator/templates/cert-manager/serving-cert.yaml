@@ -1,0 +1,22 @@
+{{- if .Values.certManager.enable }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "garm-operator.fullname" . }}-serving-cert
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "garm-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: certificate
+spec:
+  dnsNames:
+    - {{ include "garm-operator.webhookServiceName" . }}.{{ .Release.Namespace }}.svc
+    - {{ include "garm-operator.webhookServiceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    {{- if .Values.certManager.issuerRef }}
+    {{- toYaml .Values.certManager.issuerRef | nindent 4 }}
+    {{- else }}
+    kind: Issuer
+    name: {{ include "garm-operator.fullname" . }}-selfsigned-issuer
+    {{- end }}
+  secretName: webhook-server-cert
+{{- end }}
