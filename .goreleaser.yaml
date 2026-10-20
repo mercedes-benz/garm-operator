@@ -4,6 +4,7 @@ before:
   hooks:
     - go mod tidy
     - sh -c "IMG=ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }} make release-manifests"
+    - sh -c "IMG=ghcr.io/mercedes-benz/garm-operator/{{ .ProjectName }}:v{{ .Version }} VERSION={{ .Version }} make release-helm"
 builds:
   - env:
       - CGO_ENABLED=0
@@ -63,6 +64,7 @@ release:
     - glob: tmp/garm_operator_all.yaml
     - glob: tmp/garm_operator_crds.yaml
     - glob: tmp/garm_operator.yaml
+    - glob: tmp/garm-operator-*.tgz
     - glob: tmp/garm-operator.bom.spdx
     - glob: tmp/3RD_PARTY_LICENSES.txt
     - glob: tmp/BlackDuck_RiskReport.pdf
@@ -72,5 +74,6 @@ release:
     * `garm_operator.yaml` contains the operator deployment manifest with all the required RBAC rules and certificate configurations.
     * `garm_operator_crds.yaml` contains the CRDs for the operator.
     * `garm_operator_all.yaml` is the combination of the above two files.
+    * `garm-operator-{{ .Version }}.tgz` contains the Helm chart for deploying the operator.
 
     ---

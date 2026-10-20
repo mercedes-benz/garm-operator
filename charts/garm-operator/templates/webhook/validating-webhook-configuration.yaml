@@ -1,0 +1,72 @@
+{{- if .Values.webhook.enable }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "garm-operator.fullname" . }}-validating-webhook-configuration
+  labels:
+    {{- include "garm-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook
+  annotations:
+    {{- if .Values.certManager.enable }}
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "garm-operator.fullname" . }}-serving-cert
+    {{- end }}
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "garm-operator.webhookServiceName" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /validate-garm-operator-mercedes-benz-com-v1beta1-image
+  failurePolicy: Fail
+  name: validate.image.garm-operator.mercedes-benz.com
+  rules:
+  - apiGroups:
+    - garm-operator.mercedes-benz.com
+    apiVersions:
+    - v1beta1
+    operations:
+    - DELETE
+    resources:
+    - images
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "garm-operator.webhookServiceName" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /validate-garm-operator-mercedes-benz-com-v1beta1-pool
+  failurePolicy: Fail
+  name: validate.pool.garm-operator.mercedes-benz.com
+  rules:
+  - apiGroups:
+    - garm-operator.mercedes-benz.com
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - pools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "garm-operator.webhookServiceName" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /validate-garm-operator-mercedes-benz-com-v1beta1-repository
+  failurePolicy: Fail
+  name: validate.repository.garm-operator.mercedes-benz.com
+  rules:
+  - apiGroups:
+    - garm-operator.mercedes-benz.com
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - repositories
+  sideEffects: None
+{{- end }}

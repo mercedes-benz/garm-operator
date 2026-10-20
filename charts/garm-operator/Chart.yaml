@@ -1,0 +1,18 @@
+apiVersion: v2
+name: garm-operator
+description: A Helm chart for deploying the Kubernetes GARM (GitHub Actions Runner Manager) Operator
+type: application
+version: 0.1.0
+appVersion: "v0.1.0"
+home: https://github.com/mercedes-benz/garm-operator
+sources:
+  - https://github.com/mercedes-benz/garm-operator
+keywords:
+  - garm
+  - github-actions
+  - runner
+  - operator
+  - kubernetes
+maintainers:
+  - name: mercedes-benz
+    url: https://github.com/mercedes-benz

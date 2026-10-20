@@ -1,0 +1,184 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "garm-operator.fullname" . }}-controller-manager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "garm-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: manager
+spec:
+  replicas: {{ .Values.manager.replicas }}
+  selector:
+    matchLabels:
+      {{- include "garm-operator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.manager.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "garm-operator.labels" . | nindent 8 }}
+        app.kubernetes.io/component: manager
+        {{- with .Values.manager.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.manager.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "garm-operator.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.manager.podSecurityContext | nindent 8 }}
+      containers:
+        - name: manager
+          command:
+            - /manager
+          {{- with .Values.operator.extraArgs }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.manager.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.manager.securityContext | nindent 12 }}
+          env:
+            {{- if or .Values.garm.existingSecret .Values.garm.password }}
+            - name: GARM_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "garm-operator.secretName" . }}
+                  key: {{ .Values.garm.secretKeys.passwordKey }}
+            {{- end }}
+            {{- if .Values.garm.server }}
+            - name: GARM_SERVER
+              value: {{ .Values.garm.server | quote }}
+            {{- else if .Values.garm.existingSecret }}
+            - name: GARM_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "garm-operator.secretName" . }}
+                  key: {{ .Values.garm.secretKeys.serverKey }}
+                  optional: true
+            {{- end }}
+            {{- if .Values.garm.username }}
+            - name: GARM_USERNAME
+              value: {{ .Values.garm.username | quote }}
+            {{- else if .Values.garm.existingSecret }}
+            - name: GARM_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "garm-operator.secretName" . }}
+                  key: {{ .Values.garm.secretKeys.usernameKey }}
+                  optional: true
+            {{- end }}
+            {{- if .Values.garm.init }}
+            - name: GARM_INIT
+              value: {{ .Values.garm.init | quote }}
+            {{- end }}
+            {{- if .Values.garm.email }}
+            - name: GARM_EMAIL
+              value: {{ .Values.garm.email | quote }}
+            {{- end }}
+            {{- if .Values.operator.watchNamespace }}
+            - name: OPERATOR_WATCH_NAMESPACE
+              value: {{ .Values.operator.watchNamespace | quote }}
+            {{- end }}
+            - name: OPERATOR_METRICS_BIND_ADDRESS
+              value: {{ .Values.operator.metricsBindAddress | quote }}
+            - name: OPERATOR_HEALTH_PROBE_BIND_ADDRESS
+              value: {{ .Values.operator.healthProbeBindAddress | quote }}
+            - name: OPERATOR_LEADER_ELECTION
+              value: {{ .Values.operator.leaderElection | quote }}
+            - name: OPERATOR_SYNC_PERIOD
+              value: {{ .Values.operator.syncPeriod | quote }}
+            - name: OPERATOR_SYNC_RUNNERS_INTERVAL
+              value: {{ .Values.operator.syncRunnersInterval | quote }}
+            - name: OPERATOR_MIN_IDLE_RUNNERS_AGE
+              value: {{ .Values.operator.minIdleRunnersAge | quote }}
+            - name: OPERATOR_RUNNER_CONCURRENCY
+              value: {{ .Values.operator.runnerConcurrency | quote }}
+            - name: OPERATOR_REPOSITORY_CONCURRENCY
+              value: {{ .Values.operator.repositoryConcurrency | quote }}
+            - name: OPERATOR_ORGANIZATION_CONCURRENCY
+              value: {{ .Values.operator.organizationConcurrency | quote }}
+            - name: OPERATOR_ENTERPRISE_CONCURRENCY
+              value: {{ .Values.operator.enterpriseConcurrency | quote }}
+            - name: OPERATOR_POOL_CONCURRENCY
+              value: {{ .Values.operator.poolConcurrency | quote }}
+            - name: OPERATOR_RUNNER_RECONCILIATION
+              value: {{ .Values.operator.runnerReconciliation | quote }}
+            - name: OPERATOR_LOG_VERBOSITY_LEVEL
+              value: {{ .Values.operator.logVerbosityLevel | quote }}
+            {{- with .Values.operator.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.operator.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.webhook.enable }}
+          ports:
+            - containerPort: {{ .Values.webhook.port }}
+              name: webhook-server
+              protocol: TCP
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.manager.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.webhook.enable }}
+            - name: cert
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+              readOnly: true
+            {{- end }}
+            - name: serviceaccount-volume
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      volumes:
+        {{- if .Values.webhook.enable }}
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: webhook-server-cert
+        {{- end }}
+        - name: serviceaccount-volume
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 600
+              - configMap:
+                  name: kube-root-ca.crt
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+              - downwardAPI:
+                  items:
+                    - fieldRef:
+                        apiVersion: v1
+                        fieldPath: metadata.namespace
+                      path: namespace
+      {{- with .Values.manager.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.manager.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.manager.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
