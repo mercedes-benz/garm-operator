@@ -14,6 +14,9 @@ type OrganizationClient interface {
 	GetOrganization(param *organizations.GetOrgParams) (*organizations.GetOrgOK, error)
 	UpdateOrganization(param *organizations.UpdateOrgParams) (*organizations.UpdateOrgOK, error)
 	DeleteOrganization(param *organizations.DeleteOrgParams) error
+	InstallOrgWebhook(param *organizations.InstallOrgWebhookParams) (*organizations.InstallOrgWebhookOK, error)
+	GetOrgWebhookInfo(param *organizations.GetOrgWebhookInfoParams) (*organizations.GetOrgWebhookInfoOK, error)
+	UninstallOrgWebhook(param *organizations.UninstallOrgWebhookParams) error
 }
 
 type organizationClient struct {
@@ -85,4 +88,41 @@ func (s *organizationClient) UpdateOrganization(param *organizations.UpdateOrgPa
 		}
 		return organization, nil
 	})
+}
+
+func (s *organizationClient) InstallOrgWebhook(param *organizations.InstallOrgWebhookParams) (*organizations.InstallOrgWebhookOK, error) {
+	return EnsureAuth(func() (*organizations.InstallOrgWebhookOK, error) {
+		metrics.TotalGarmCalls.WithLabelValues("organization.InstallWebhook").Inc()
+		webhook, err := s.GarmAPI().Organizations.InstallOrgWebhook(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("organization.InstallWebhook").Inc()
+			return nil, err
+		}
+		return webhook, nil
+	})
+}
+
+func (s *organizationClient) GetOrgWebhookInfo(param *organizations.GetOrgWebhookInfoParams) (*organizations.GetOrgWebhookInfoOK, error) {
+	return EnsureAuth(func() (*organizations.GetOrgWebhookInfoOK, error) {
+		metrics.TotalGarmCalls.WithLabelValues("organization.GetWebhookInfo").Inc()
+		webhook, err := s.GarmAPI().Organizations.GetOrgWebhookInfo(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("organization.GetWebhookInfo").Inc()
+			return nil, err
+		}
+		return webhook, nil
+	})
+}
+
+func (s *organizationClient) UninstallOrgWebhook(param *organizations.UninstallOrgWebhookParams) error {
+	_, err := EnsureAuth(func() (interface{}, error) {
+		metrics.TotalGarmCalls.WithLabelValues("organization.UninstallWebhook").Inc()
+		err := s.GarmAPI().Organizations.UninstallOrgWebhook(param, s.Token())
+		if err != nil {
+			metrics.GarmCallErrors.WithLabelValues("organization.UninstallWebhook").Inc()
+			return nil, err
+		}
+		return nil, nil
+	})
+	return err
 }
