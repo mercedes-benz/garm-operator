@@ -116,7 +116,7 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 
 	// if not found, create endpoint in garm db
 	if reflect.ValueOf(garmEndpoint).IsZero() {
-		garmEndpoint, err = r.createEndpoint(ctx, client, endpoint, caCertBundleSecret) // nolint:wastedassign
+		_, err = r.createEndpoint(ctx, client, endpoint, caCertBundleSecret) // nolint:wastedassign
 		if err != nil {
 			event.Error(r.Recorder, endpoint, "reconcileNormal", err.Error())
 			conditions.MarkFalse(endpoint, conditions.ReadyCondition, conditions.GarmAPIErrorReason, err.Error())

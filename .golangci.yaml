@@ -60,6 +60,9 @@ linters:
           - revive
         path: 'api/v1alpha1/(.+)_conversion\.go'
         text: "var-naming: don't use underscores in Go names; func (.+)"
+      - linters:
+          - goconst
+        path: '.+_test\.go'
 
 formatters:
   enable:

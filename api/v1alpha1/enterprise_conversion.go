@@ -22,7 +22,7 @@ func (e *Enterprise) ConvertFrom(dstRaw conversion.Hub) error {
 func Convert_v1alpha1_EnterpriseSpec_To_v1beta1_EnterpriseSpec(in *EnterpriseSpec, out *v1beta1.EnterpriseSpec, s apiconversion.Scope) error {
 	out.CredentialsRef = corev1.TypedLocalObjectReference{
 		Name:     in.CredentialsName,
-		Kind:     "GitHubCredential",
+		Kind:     "GitHubCredential", // nolint:goconst
 		APIGroup: &v1beta1.GroupVersion.Group,
 	}
 

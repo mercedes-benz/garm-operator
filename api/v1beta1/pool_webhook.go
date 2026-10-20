@@ -41,7 +41,7 @@ func (r *PoolValidator) ValidateCreate(_ context.Context, pool *Pool) (admission
 	poollog.Info("validate create request", "name", pool.Name, "namespace", pool.Namespace)
 
 	if err := validateExtraSpec(pool); err != nil {
-		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"}, // nolint:goconst
 			pool.Name,
 			field.ErrorList{err},
 		)
@@ -56,23 +56,21 @@ func (r *PoolValidator) ValidateUpdate(_ context.Context, oldPool *Pool, pool *P
 
 	// if the object is being deleted, skip validation
 	if err := validateExtraSpec(pool); err != nil {
-		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"}, // nolint:goconst
 			pool.Name,
 			field.ErrorList{err},
 		)
 	}
 
 	if err := validateProviderName(pool, oldPool); err != nil {
-		return nil, apierrors.NewInvalid(
-			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"}, // nolint:goconst
 			pool.Name,
 			field.ErrorList{err},
 		)
 	}
 
 	if err := validateGitHubScope(pool, oldPool); err != nil {
-		return nil, apierrors.NewInvalid(
-			schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"},
+		return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Pool"}, // nolint:goconst
 			pool.Name,
 			field.ErrorList{err},
 		)
