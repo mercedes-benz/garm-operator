@@ -68,9 +68,11 @@ The compatibility matrix for client-go and Kubernetes cluster can be found
 
 #### `garm-operator`
 
-We are releasing the `garm-operator` as container image together with the corresponding Kubernetes manifests. You can find the latest release [here](https://github.com/mercedes-benz/garm-operator/releases).
+We release the `garm-operator` as a container image together with Kubernetes manifests and a Helm chart. You can find the latest release [here](https://github.com/mercedes-benz/garm-operator/releases).
 
-This manifests can be used to deploy the `garm-operator` into your Kubernetes cluster.
+##### Kubernetes manifests
+
+These manifests can be used to deploy the `garm-operator` into your Kubernetes cluster.
 
 ```bash
 export GARM_OPERATOR_VERSION=<garm-operator-version>
@@ -78,8 +80,35 @@ export GARM_SERVER_URL=<garm-server-url>
 export GARM_SERVER_USERNAME=<garm-server-username>
 export GARM_SERVER_PASSWORD=<garm-server-password>
 export OPERATOR_WATCH_NAMESPACE=<operator-watch-namespace>
-curl -L https://github.com/mercedes-benz/garm-operator/releases/download/${GARM_OPERATOR_VERSION}/garm-operator-all.yaml | envsubst | kubectl apply -f -
+curl -L https://github.com/mercedes-benz/garm-operator/releases/download/${GARM_OPERATOR_VERSION}/garm_operator_all.yaml | envsubst | kubectl apply -f -
 ```
+
+##### Helm
+
+Each release publishes the chart to GHCR and attaches the packaged chart to the GitHub release. Configure the GARM connection in a values file:
+
+```yaml
+manager:
+  args:
+    - --garm-server=https://garm.example.com
+    - --garm-username=<garm-server-username>
+    - --garm-password=<garm-server-password>
+    - --operator-watch-namespace=<operator-watch-namespace>
+```
+
+Install the OCI chart using the release version without its leading `v`:
+
+```bash
+export GARM_OPERATOR_VERSION=<garm-operator-version>
+helm install garm-operator \
+  oci://ghcr.io/mercedes-benz/garm-operator/charts/garm-operator \
+  --version "${GARM_OPERATOR_VERSION#v}" \
+  --namespace garm-operator-system \
+  --create-namespace \
+  --values values.yaml
+```
+
+Alternatively, download `garm-operator-${GARM_OPERATOR_VERSION#v}.tgz` from the corresponding GitHub release and install that archive with Helm.
 
 The full configuration parsing documentation can be found in the [configuration parsing guide](./docs/config/configuration-parsing.md)
 

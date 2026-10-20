@@ -108,6 +108,17 @@ docker-buildx: test ## Build and push docker image for the manager for cross-pla
 	- $(CONTAINER_TOOL) buildx rm project-v3-builder
 	rm Dockerfile.cross
 
+.PHONY: build-installer
+build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
+	mkdir -p dist
+	@tmpdir="$$(mktemp -d)"; \
+	trap 'rm -rf "$$tmpdir"' EXIT; \
+	cp -R config "$$tmpdir/config"; \
+	cd "$$tmpdir/config/manager"; \
+	"$(abspath $(KUSTOMIZE))" edit set image controller="$(IMG)"; \
+	cd "$(CURDIR)"; \
+	"$(abspath $(KUSTOMIZE))" build "$$tmpdir/config/default" > dist/install.yaml
+
 ##@ Deployment
 
 ifndef ignore-not-found
@@ -155,6 +166,15 @@ release-manifests: manifests kustomize slice ## Generate manifests for releasing
 	$(SLICE) -f tmp/garm_operator_all.yaml --include-kind CustomResourceDefinition --template "garm_operator_crds.yaml" -o tmp/
 	$(SLICE) -f tmp/garm_operator_all.yaml --exclude-kind CustomResourceDefinition --template "garm_operator.yaml" -o tmp/
 
+.PHONY: release-helm
+release-helm: verify-helm ## Package the Helm chart for release. VERSION must not include a leading v.
+	@test -n "$(VERSION)" || { echo "VERSION is required"; exit 1; }
+	mkdir -p tmp
+	$(HELM) package $(HELM_CHART_DIR) \
+		--version "$(VERSION)" \
+		--app-version "v$(VERSION)" \
+		--destination tmp
+
 ##@ Build Dependencies
 
 ## Location to install dependencies to
@@ -176,6 +196,7 @@ SLICE ?= $(LOCALBIN)/kubectl-slice
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 KBOM ?= $(LOCALBIN)/bom
 KIND ?= $(LOCALBIN)/kind
+KUBEBUILDER ?= $(LOCALBIN)/kubebuilder
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
@@ -183,13 +204,14 @@ CONTROLLER_TOOLS_VERSION ?= v0.18.0
 CONVERSION_GEN_VERSION ?= v0.34.2
 GOLANGCI_LINT_VERSION ?= v2.11.4
 MOCKGEN_VERSION ?= v0.4.0
-GORELEASER_VERSION ?= v1.21.0
+GORELEASER_VERSION ?= v2.17.0
 MDTOC_VERSION ?= v1.1.0
 SLICE_VERSION ?= v1.2.6
 NANCY_VERSION ?= v1.0.46
 KBOM_VERSION ?= v0.5.1
 KIND_VERSION ?= v0.30.0
 GOVULNCHECK_VERSION ?= v1.2.0
+KUBEBUILDER_VERSION ?= v4.13.1
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -230,10 +252,9 @@ $(MOCKGEN): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install go.uber.org/mock/mockgen@$(MOCKGEN_VERSION)
 
 .PHONY: goreleaser
-goreleaser: $(GORELEASER) ## Download goreleaser locally if necessary. If wrong version is installed, it will be overwritten.
-$(GORELEASER): $(LOCALBIN)
+goreleaser: $(LOCALBIN) ## Download goreleaser locally if necessary. If wrong version is installed, it will be overwritten.
 	test -s $(LOCALBIN)/goreleaser && $(LOCALBIN)/goreleaser --version | grep -q $(GORELEASER_VERSION) || \
-	GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@$(GORELEASER_VERSION)
+	GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser/v2@$(GORELEASER_VERSION)
 
 .PHONY: mdtoc
 mdtoc: $(MDTOC) ## Download mdtoc locally if necessary. If wrong version is installed, it will be overwritten.
@@ -264,6 +285,20 @@ kind: $(KIND) ## Download kind locally if necessary. If wrong version is install
 $(KIND): $(LOCALBIN)
 	test -s $(LOCALBIN)/kind && $(LOCALBIN)/kind version | grep -q $(KIND_VERSION) || \
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@$(KIND_VERSION)
+
+.PHONY: kubebuilder
+kubebuilder: $(KUBEBUILDER) ## Download kubebuilder locally if necessary. If wrong version is installed, it will be overwritten.
+$(KUBEBUILDER): $(LOCALBIN)
+	@if test -x $(LOCALBIN)/kubebuilder && ! $(LOCALBIN)/kubebuilder version | grep -q $(KUBEBUILDER_VERSION); then \
+		echo "$(LOCALBIN)/kubebuilder version is not expected $(KUBEBUILDER_VERSION). Removing it before installing."; \
+		rm -rf $(LOCALBIN)/kubebuilder; \
+	fi
+	@if ! test -s $(LOCALBIN)/kubebuilder; then \
+		echo "Installing kubebuilder $(KUBEBUILDER_VERSION)..."; \
+		curl -L -o $(LOCALBIN)/kubebuilder "https://github.com/kubernetes-sigs/kubebuilder/releases/download/$(KUBEBUILDER_VERSION)/kubebuilder_$(shell go env GOOS)_$(shell go env GOARCH)"; \
+		chmod +x $(LOCALBIN)/kubebuilder; \
+	fi
+
 
 ##@ Lint / Verify
 .PHONY: lint
@@ -331,3 +366,70 @@ delete-kind-cluster:
 .PHONY: tilt-up
 tilt-up: kind-cluster ## Start tilt and build kind cluster
 	tilt up
+
+##@ Helm Deployment
+
+## Helm binary to use for deploying the chart
+HELM ?= helm
+## Namespace to deploy the Helm release
+HELM_NAMESPACE ?= garm-operator-system
+## Name of the Helm release
+HELM_RELEASE ?= garm-operator
+## Path to the Helm chart directory
+HELM_CHART_DIR ?= dist/chart
+## Additional arguments to pass to helm commands
+HELM_EXTRA_ARGS ?=
+
+.PHONY: helm-check
+helm-check: ## Verify that Helm is installed.
+	@command -v "$(HELM)" >/dev/null 2>&1 || { echo "Helm is required: https://helm.sh/docs/intro/install/"; exit 1; }
+
+.PHONY: helm-generate
+helm-generate: build-installer kubebuilder ## Generate the Helm chart from the Kustomize installer manifest.
+	rm -rf dist/chart
+	$(KUBEBUILDER) edit --plugins=helm/v2-alpha
+
+.PHONY: helm-lint
+helm-lint: helm-generate helm-check ## Lint the generated Helm chart.
+	$(HELM) lint $(HELM_CHART_DIR)
+
+.PHONY: helm-template
+helm-template: helm-generate helm-check ## Render the generated Helm chart.
+	$(HELM) template $(HELM_RELEASE) $(HELM_CHART_DIR) --namespace $(HELM_NAMESPACE) >/dev/null
+	$(HELM) template $(HELM_RELEASE) $(HELM_CHART_DIR) \
+		--namespace $(HELM_NAMESPACE) \
+		--set manager.replicas=2 \
+		--set certManager.enable=true \
+		--set webhook.enable=true \
+		--show-only templates/manager/manager.yaml \
+		| grep -q 'replicas: 2'
+
+.PHONY: verify-helm
+verify-helm: helm-lint helm-template ## Generate, lint, and render the Helm chart.
+
+.PHONY: helm-deploy
+helm-deploy: helm-generate helm-check ## Deploy manager to the K8s cluster via Helm. Specify an image with IMG.
+	$(HELM) upgrade --install $(HELM_RELEASE) $(HELM_CHART_DIR) \
+		--namespace $(HELM_NAMESPACE) \
+		--create-namespace \
+		--set manager.image.repository=$${IMG%:*} \
+		--set manager.image.tag=$${IMG##*:} \
+		--wait \
+		--timeout 5m \
+		$(HELM_EXTRA_ARGS)
+
+.PHONY: helm-uninstall
+helm-uninstall: helm-check ## Uninstall the Helm release from the K8s cluster.
+	$(HELM) uninstall $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
+
+.PHONY: helm-status
+helm-status: helm-check ## Show Helm release status.
+	$(HELM) status $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
+
+.PHONY: helm-history
+helm-history: helm-check ## Show Helm release history.
+	$(HELM) history $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)
+
+.PHONY: helm-rollback
+helm-rollback: helm-check ## Rollback to previous Helm release.
+	$(HELM) rollback $(HELM_RELEASE) --namespace $(HELM_NAMESPACE)

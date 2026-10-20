@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
   id-token: write
+  packages: write
 
 jobs:
   goreleaser:
@@ -33,9 +34,19 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        with:
+          version: v3.19.0
+
+      - name: Login Helm to ghcr.io
+        run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | helm registry login ghcr.io \
+            --username "${{ secrets.REGISTRY_USERNAME }}" \
+            --password-stdin
+
       - name: Synopsys Detect
         run: |
-          GITHUB_REF="$(echo $GITHUB_REF_NAME | tr ':/' '_')"
+          GITHUB_REF="$(echo "$GITHUB_REF_NAME" | tr ':/' '_')"
           BLACKDUCK_SCAN_VERSION_NAME="${GITHUB_REF}_${GITHUB_SHA}"
           export BLACKDUCK_SCAN_VERSION_NAME
 
@@ -58,6 +69,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
 
+      - name: Publish Helm chart to ghcr.io
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          helm push "tmp/garm-operator-${version}.tgz" \
+            oci://ghcr.io/mercedes-benz/garm-operator/charts
+
       - name: Send http get to doc.crds.dev to index a new version
         run: |
-          curl -sL https://doc.crds.dev/github.com/mercedes-benz/garm-operator@${{ github.event.release.tag_name }} | grep -A2 'class="container"'
+          curl -sL https://doc.crds.dev/github.com/mercedes-benz/garm-operator@${{ github.ref_name }} | grep -A2 'class="container"'
