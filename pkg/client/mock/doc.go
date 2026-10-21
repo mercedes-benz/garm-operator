@@ -24,3 +24,5 @@ package mock
 //go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt credentials.go > _credentials.go && mv _credentials.go credentials.go"
 //go:generate ../../../bin/mockgen -package mock -destination=controller.go -source=../controller.go GarmServerConfig
 //go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt controller.go > _controller.go && mv _controller.go controller.go"
+//go:generate ../../../bin/mockgen -package mock -destination=scaleset.go -source=../scaleset.go ScaleSetClient
+//go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate.go.txt scaleset.go > _scaleset.go && mv _scaleset.go scaleset.go"

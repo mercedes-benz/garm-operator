@@ -38,6 +38,7 @@ rules:
   - pools
   - repositories
   - runners
+  - scalesets
   verbs:
   - create
   - delete
@@ -56,6 +57,7 @@ rules:
   - organizations/finalizers
   - repositories/finalizers
   - runners/finalizers
+  - scalesets/finalizers
   verbs:
   - update
 - apiGroups:
@@ -69,6 +71,7 @@ rules:
   - pools/status
   - repositories/status
   - runners/status
+  - scalesets/status
   verbs:
   - get
   - patch

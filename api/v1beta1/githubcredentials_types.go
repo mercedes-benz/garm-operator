@@ -16,7 +16,7 @@ type GitHubCredentialSpec struct {
 	EndpointRef corev1.TypedLocalObjectReference `json:"endpointRef"`
 
 	// either pat or app
-	AuthType params.GithubAuthType `json:"authType"`
+	AuthType params.ForgeAuthType `json:"authType"`
 
 	// if AuthType is app
 	AppID          int64 `json:"appId,omitempty"`
