@@ -5,6 +5,9 @@ package v1beta1
 func (*Pool) Hub() {}
 
 // Hub marks this type as a conversion hub.
+func (*ScaleSet) Hub() {}
+
+// Hub marks this type as a conversion hub.
 func (*Image) Hub() {}
 
 // Hub marks this type as a conversion hub.
