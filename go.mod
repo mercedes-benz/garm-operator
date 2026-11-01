@@ -5,7 +5,7 @@ go 1.27.2
 
 require (
 	github.com/cloudbase/garm v0.1.5
-	github.com/cloudbase/garm-provider-common v0.1.4
+	github.com/cloudbase/garm-provider-common v0.1.9
 	github.com/go-openapi/runtime v0.33.0
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
@@ -79,7 +79,7 @@ require (
 	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/minio/sio v0.4.0 // indirect
+	github.com/minio/sio v0.4.3 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
