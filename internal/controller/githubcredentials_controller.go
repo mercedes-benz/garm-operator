@@ -171,10 +171,10 @@ func (r *GitHubCredentialReconciler) reconcileNormal(ctx context.Context, client
 	return ctrl.Result{}, nil
 }
 
-func (r *GitHubCredentialReconciler) getExistingCredentials(client garmClient.CredentialsClient, name string) (params.GithubCredentials, error) {
+func (r *GitHubCredentialReconciler) getExistingCredentials(client garmClient.CredentialsClient, name string) (params.ForgeCredentials, error) {
 	credentials, err := client.ListCredentials(garmcredentials.NewListCredentialsParams())
 	if err != nil {
-		return params.GithubCredentials{}, err
+		return params.ForgeCredentials{}, err
 	}
 
 	for _, creds := range credentials.Payload {
@@ -183,10 +183,10 @@ func (r *GitHubCredentialReconciler) getExistingCredentials(client garmClient.Cr
 		}
 	}
 
-	return params.GithubCredentials{}, nil
+	return params.ForgeCredentials{}, nil
 }
 
-func (r *GitHubCredentialReconciler) createCredentials(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredential, endpoint, githubSecret string) (params.GithubCredentials, error) {
+func (r *GitHubCredentialReconciler) createCredentials(ctx context.Context, client garmClient.CredentialsClient, credentials *garmoperatorv1beta1.GitHubCredential, endpoint, githubSecret string) (params.ForgeCredentials, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("credentials", credentials.Name)
 
@@ -201,20 +201,20 @@ func (r *GitHubCredentialReconciler) createCredentials(ctx context.Context, clie
 	}
 
 	switch credentials.Spec.AuthType {
-	case params.GithubAuthType(garmconfig.GithubAuthTypePAT):
+	case params.ForgeAuthType(garmconfig.GithubAuthTypePAT):
 		req.PAT.OAuth2Token = githubSecret
-	case params.GithubAuthType(garmconfig.GithubAuthTypeApp):
+	case params.ForgeAuthType(garmconfig.GithubAuthTypeApp):
 		req.App.AppID = credentials.Spec.AppID
 		req.App.InstallationID = credentials.Spec.InstallationID
 		req.App.PrivateKeyBytes = []byte(githubSecret)
 	default:
-		return params.GithubCredentials{}, fmt.Errorf("invalid auth type %s", credentials.Spec.AuthType)
+		return params.ForgeCredentials{}, fmt.Errorf("invalid auth type %s", credentials.Spec.AuthType)
 	}
 
 	garmCredentials, err := client.CreateCredentials(garmcredentials.NewCreateCredentialsParams().WithBody(req))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateCredentials error: %s", err))
-		return params.GithubCredentials{}, err
+		return params.ForgeCredentials{}, err
 	}
 
 	log.V(1).Info(fmt.Sprintf("credentials %s created - return Value %v", credentials.Name, garmCredentials))
@@ -225,7 +225,7 @@ func (r *GitHubCredentialReconciler) createCredentials(ctx context.Context, clie
 	return garmCredentials.Payload, nil
 }
 
-func (r *GitHubCredentialReconciler) updateCredentials(ctx context.Context, client garmClient.CredentialsClient, credentialsID int64, credentials *garmoperatorv1beta1.GitHubCredential, githubSecret string) (params.GithubCredentials, error) {
+func (r *GitHubCredentialReconciler) updateCredentials(ctx context.Context, client garmClient.CredentialsClient, credentialsID int64, credentials *garmoperatorv1beta1.GitHubCredential, githubSecret string) (params.ForgeCredentials, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update credentials")
 
@@ -235,16 +235,16 @@ func (r *GitHubCredentialReconciler) updateCredentials(ctx context.Context, clie
 	}
 
 	switch credentials.Spec.AuthType {
-	case params.GithubAuthType(garmconfig.GithubAuthTypePAT):
+	case params.ForgeAuthType(garmconfig.GithubAuthTypePAT):
 		req.PAT = &params.GithubPAT{OAuth2Token: githubSecret}
-	case params.GithubAuthType(garmconfig.GithubAuthTypeApp):
+	case params.ForgeAuthType(garmconfig.GithubAuthTypeApp):
 		req.App = &params.GithubApp{
 			AppID:           credentials.Spec.AppID,
 			InstallationID:  credentials.Spec.InstallationID,
 			PrivateKeyBytes: []byte(githubSecret),
 		}
 	default:
-		return params.GithubCredentials{}, fmt.Errorf("invalid auth type %s", credentials.Spec.AuthType)
+		return params.ForgeCredentials{}, fmt.Errorf("invalid auth type %s", credentials.Spec.AuthType)
 	}
 
 	retValue, err := client.UpdateCredentials(
@@ -253,7 +253,7 @@ func (r *GitHubCredentialReconciler) updateCredentials(ctx context.Context, clie
 			WithBody(req))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.UpdateCredentials error: %s", err))
-		return params.GithubCredentials{}, err
+		return params.ForgeCredentials{}, err
 	}
 
 	return retValue.Payload, nil
@@ -333,7 +333,7 @@ func (r *GitHubCredentialReconciler) findCredentialsForSecret(ctx context.Contex
 	return requests
 }
 
-func getRepoOrgEnterpriseNames(creds params.GithubCredentials) ([]string, []string, []string) {
+func getRepoOrgEnterpriseNames(creds params.ForgeCredentials) ([]string, []string, []string) {
 	var repos, orgs, enterprises []string
 	for _, repo := range creds.Repositories {
 		repos = append(repos, repo.Name)

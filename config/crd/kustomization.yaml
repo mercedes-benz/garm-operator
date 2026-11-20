@@ -4,6 +4,7 @@
 resources:
   - bases/garm-operator.mercedes-benz.com_enterprises.yaml
   - bases/garm-operator.mercedes-benz.com_pools.yaml
+  - bases/garm-operator.mercedes-benz.com_scalesets.yaml
   - bases/garm-operator.mercedes-benz.com_organizations.yaml
   - bases/garm-operator.mercedes-benz.com_images.yaml
   - bases/garm-operator.mercedes-benz.com_repositories.yaml

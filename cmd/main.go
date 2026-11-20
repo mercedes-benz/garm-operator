@@ -168,6 +168,18 @@ func run() error {
 		return fmt.Errorf("unable to create controller Pool: %w", err)
 	}
 
+	if err = (&garmcontroller.ScaleSetReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorder("scaleset-controller"),
+	}).SetupWithManager(mgr,
+		controller.Options{
+			MaxConcurrentReconciles: config.Config.Operator.PoolConcurrency,
+		},
+	); err != nil {
+		return fmt.Errorf("unable to create controller ScaleSet: %w", err)
+	}
+
 	if err = (&garmcontroller.OrganizationReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
