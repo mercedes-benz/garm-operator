@@ -109,7 +109,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockEndpointClientMockRecorder) {
 				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().WithName("existing-github-endpoint")).Return(&endpoints.GetGithubEndpointOK{
-					Payload: params.GithubEndpoint{
+					Payload: params.ForgeEndpoint{
 						Name:          "existing-github-endpoint",
 						Description:   "existing-github-endpoint",
 						APIBaseURL:    "https://api.github.com",
@@ -127,7 +127,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						BaseURL:       util.StringPtr("https://github.com"),
 						CACertBundle:  []byte("foobar"),
 					})).Return(&endpoints.UpdateGithubEndpointOK{
-					Payload: params.GithubEndpoint{
+					Payload: params.ForgeEndpoint{
 						Name:          "existing-github-endpoint",
 						Description:   "existing-github-endpoint",
 						APIBaseURL:    "https://api.github.com",
@@ -230,7 +230,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().
 					WithName("existing-github-endpoint")).
 					Return(&endpoints.GetGithubEndpointOK{
-						Payload: params.GithubEndpoint{
+						Payload: params.ForgeEndpoint{
 							Name:          "existing-github-endpoint",
 							Description:   "existing-github-endpoint",
 							APIBaseURL:    "https://api.github.com",
@@ -248,7 +248,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						BaseURL:       util.StringPtr("https://github-enterprise.com"),
 						CACertBundle:  []byte("foobar"),
 					})).Return(&endpoints.UpdateGithubEndpointOK{
-					Payload: params.GithubEndpoint{
+					Payload: params.ForgeEndpoint{
 						Name:          "existing-github-endpoint",
 						Description:   "has-changed",
 						APIBaseURL:    "https://api.github-enterprise.com",
@@ -342,7 +342,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						BaseURL:       "https://github.com",
 						CACertBundle:  []byte("foobar"),
 					})).Return(&endpoints.CreateGithubEndpointOK{
-					Payload: params.GithubEndpoint{
+					Payload: params.ForgeEndpoint{
 						Name:          "new-github-endpoint",
 						Description:   "new github endpoint",
 						APIBaseURL:    "https://api.github.com",
@@ -360,7 +360,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						BaseURL:       util.StringPtr("https://github.com"),
 						CACertBundle:  []byte("foobar"),
 					})).Return(&endpoints.UpdateGithubEndpointOK{
-					Payload: params.GithubEndpoint{
+					Payload: params.ForgeEndpoint{
 						Name:          "new-github-endpoint",
 						Description:   "new github endpoint",
 						APIBaseURL:    "https://api.github.com",
@@ -415,7 +415,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().
 					WithName("existing-github-endpoint")).
 					Return(&endpoints.GetGithubEndpointOK{
-						Payload: params.GithubEndpoint{
+						Payload: params.ForgeEndpoint{
 							Name:          "existing-github-endpoint",
 							Description:   "existing-github-endpoint",
 							APIBaseURL:    "https://api.github.com",
@@ -546,7 +546,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 				m.GetEndpoint(endpoints.NewGetGithubEndpointParams().
 					WithName("existing-github-endpoint")).
 					Return(&endpoints.GetGithubEndpointOK{
-						Payload: params.GithubEndpoint{
+						Payload: params.ForgeEndpoint{
 							Name:          "existing-github-endpoint",
 							Description:   "existing-github-endpoint",
 							APIBaseURL:    "https://api.github.com",
@@ -564,7 +564,7 @@ func TestGitHubEndpointReconciler_reconcileNormal(t *testing.T) {
 						BaseURL:       util.StringPtr("https://github.com"),
 						CACertBundle:  []byte(""),
 					})).Return(&endpoints.UpdateGithubEndpointOK{
-					Payload: params.GithubEndpoint{
+					Payload: params.ForgeEndpoint{
 						Name:          "existing-github-endpoint",
 						Description:   "existing-github-endpoint",
 						APIBaseURL:    "https://api.github.com",

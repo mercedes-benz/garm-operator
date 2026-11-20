@@ -51,7 +51,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "existing-github-credential",
-					AuthType:    params.GithubAuthTypePAT,
+					AuthType:    params.ForgeAuthTypePAT,
 					SecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "github-token",
 						Key:  "token",
@@ -100,7 +100,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "existing-github-credential",
-					AuthType:    params.GithubAuthTypePAT,
+					AuthType:    params.ForgeAuthTypePAT,
 					SecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "github-token",
 						Key:  "token",
@@ -146,7 +146,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockCredentialsClientMockRecorder) {
 				m.ListCredentials(credentials.NewListCredentialsParams()).Return(&credentials.ListCredentialsOK{
-					Payload: []params.GithubCredentials{
+					Payload: []params.ForgeCredentials{
 						{
 							ID:                 1,
 							Name:               "existing-github-credential",
@@ -155,17 +155,17 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 							UploadBaseURL:      "https://uploads.github.com",
 							BaseURL:            "https://github.com",
 							CABundle:           nil,
-							AuthType:           params.GithubAuthTypePAT,
+							AuthType:           params.ForgeAuthTypePAT,
 							Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 							Organizations:      nil,
 							Enterprises:        nil,
-							Endpoint:           params.GithubEndpoint{},
+							Endpoint:           params.ForgeEndpoint{},
 							CredentialsPayload: nil,
 						},
 					},
 				}, nil)
 				m.GetCredentials(credentials.NewGetCredentialsParams().WithID(1)).Return(&credentials.GetCredentialsOK{
-					Payload: params.GithubCredentials{
+					Payload: params.ForgeCredentials{
 						ID:                 1,
 						Name:               "existing-github-credential",
 						Description:        "existing-github-credential",
@@ -173,11 +173,11 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 						UploadBaseURL:      "https://uploads.github.com",
 						BaseURL:            "https://github.com",
 						CABundle:           nil,
-						AuthType:           params.GithubAuthTypePAT,
+						AuthType:           params.ForgeAuthTypePAT,
 						Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 						Organizations:      nil,
 						Enterprises:        nil,
-						Endpoint:           params.GithubEndpoint{},
+						Endpoint:           params.ForgeEndpoint{},
 						CredentialsPayload: nil,
 					},
 				}, nil)
@@ -190,7 +190,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 							OAuth2Token: "foobar",
 						},
 					})).Return(&credentials.UpdateCredentialsOK{
-					Payload: params.GithubCredentials{
+					Payload: params.ForgeCredentials{
 						ID:                 1,
 						Name:               "existing-github-credential",
 						Description:        "existing-github-credential",
@@ -198,11 +198,11 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 						UploadBaseURL:      "https://uploads.github.com",
 						BaseURL:            "https://github.com",
 						CABundle:           nil,
-						AuthType:           params.GithubAuthTypePAT,
+						AuthType:           params.ForgeAuthTypePAT,
 						Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 						Organizations:      nil,
 						Enterprises:        nil,
-						Endpoint:           params.GithubEndpoint{},
+						Endpoint:           params.ForgeEndpoint{},
 						CredentialsPayload: nil,
 					},
 				}, nil)
@@ -221,7 +221,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "updated-github-credential",
-					AuthType:    params.GithubAuthTypePAT,
+					AuthType:    params.ForgeAuthTypePAT,
 					SecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "github-token",
 						Key:  "token",
@@ -270,7 +270,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "updated-github-credential",
-					AuthType:    params.GithubAuthTypePAT,
+					AuthType:    params.ForgeAuthTypePAT,
 					SecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "github-token",
 						Key:  "token",
@@ -316,7 +316,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockCredentialsClientMockRecorder) {
 				m.ListCredentials(credentials.NewListCredentialsParams()).Return(&credentials.ListCredentialsOK{
-					Payload: []params.GithubCredentials{
+					Payload: []params.ForgeCredentials{
 						{
 							ID:                 1,
 							Name:               "existing-github-credential",
@@ -325,11 +325,11 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 							UploadBaseURL:      "https://uploads.github.com",
 							BaseURL:            "https://github.com",
 							CABundle:           nil,
-							AuthType:           params.GithubAuthTypePAT,
+							AuthType:           params.ForgeAuthTypePAT,
 							Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 							Organizations:      nil,
 							Enterprises:        nil,
-							Endpoint:           params.GithubEndpoint{},
+							Endpoint:           params.ForgeEndpoint{},
 							CredentialsPayload: nil,
 						},
 					},
@@ -337,7 +337,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				m.GetCredentials(credentials.NewGetCredentialsParams().
 					WithID(1)).
 					Return(&credentials.GetCredentialsOK{
-						Payload: params.GithubCredentials{
+						Payload: params.ForgeCredentials{
 							ID:                 1,
 							Name:               "existing-github-credential",
 							Description:        "existing-github-credential",
@@ -345,11 +345,11 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 							UploadBaseURL:      "https://uploads.github.com",
 							BaseURL:            "https://github.com",
 							CABundle:           nil,
-							AuthType:           params.GithubAuthTypePAT,
+							AuthType:           params.ForgeAuthTypePAT,
 							Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 							Organizations:      nil,
 							Enterprises:        nil,
-							Endpoint:           params.GithubEndpoint{},
+							Endpoint:           params.ForgeEndpoint{},
 							CredentialsPayload: nil,
 						},
 					}, nil)
@@ -362,7 +362,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 							OAuth2Token: "new-foobar",
 						},
 					})).Return(&credentials.UpdateCredentialsOK{
-					Payload: params.GithubCredentials{
+					Payload: params.ForgeCredentials{
 						ID:                 1,
 						Name:               "existing-github-credential",
 						Description:        "updated-github-credential",
@@ -370,11 +370,11 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 						UploadBaseURL:      "https://uploads.github.com",
 						BaseURL:            "https://github.com",
 						CABundle:           nil,
-						AuthType:           params.GithubAuthTypePAT,
+						AuthType:           params.ForgeAuthTypePAT,
 						Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 						Organizations:      nil,
 						Enterprises:        nil,
-						Endpoint:           params.GithubEndpoint{},
+						Endpoint:           params.ForgeEndpoint{},
 						CredentialsPayload: nil,
 					},
 				}, nil)
@@ -393,7 +393,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "new-github-credential",
-					AuthType:    params.GithubAuthTypePAT,
+					AuthType:    params.ForgeAuthTypePAT,
 					SecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "github-token",
 						Key:  "token",
@@ -415,7 +415,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "new-github-credential",
-					AuthType:    params.GithubAuthTypePAT,
+					AuthType:    params.ForgeAuthTypePAT,
 					SecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "github-token",
 						Key:  "token",
@@ -488,7 +488,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockCredentialsClientMockRecorder) {
 				m.ListCredentials(credentials.NewListCredentialsParams()).Return(&credentials.ListCredentialsOK{
-					Payload: []params.GithubCredentials{
+					Payload: []params.ForgeCredentials{
 						{
 							ID:                 1,
 							Name:               "existing-github-credential",
@@ -497,11 +497,11 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 							UploadBaseURL:      "https://uploads.github.com",
 							BaseURL:            "https://github.com",
 							CABundle:           nil,
-							AuthType:           params.GithubAuthTypePAT,
+							AuthType:           params.ForgeAuthTypePAT,
 							Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 							Organizations:      nil,
 							Enterprises:        nil,
-							Endpoint:           params.GithubEndpoint{},
+							Endpoint:           params.ForgeEndpoint{},
 							CredentialsPayload: nil,
 						},
 					},
@@ -510,13 +510,13 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 					WithBody(params.CreateGithubCredentialsParams{
 						Name:        "new-github-credential",
 						Description: "new-github-credential",
-						AuthType:    params.GithubAuthTypePAT,
+						AuthType:    params.ForgeAuthTypePAT,
 						PAT: params.GithubPAT{
 							OAuth2Token: "foobar",
 						},
 						Endpoint: "existing-github-endpoint",
 					})).Return(&credentials.CreateCredentialsOK{
-					Payload: params.GithubCredentials{
+					Payload: params.ForgeCredentials{
 						ID:                 2,
 						Name:               "new-github-credential",
 						Description:        "new-github-credential",
@@ -524,11 +524,11 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 						UploadBaseURL:      "https://uploads.github.com",
 						BaseURL:            "https://github.com",
 						CABundle:           nil,
-						AuthType:           params.GithubAuthTypePAT,
+						AuthType:           params.ForgeAuthTypePAT,
 						Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 						Organizations:      nil,
 						Enterprises:        nil,
-						Endpoint:           params.GithubEndpoint{},
+						Endpoint:           params.ForgeEndpoint{},
 						CredentialsPayload: nil,
 					},
 				}, nil)
@@ -541,7 +541,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 							OAuth2Token: "foobar",
 						},
 					})).Return(&credentials.UpdateCredentialsOK{
-					Payload: params.GithubCredentials{
+					Payload: params.ForgeCredentials{
 						ID:                 2,
 						Name:               "new-github-credential",
 						Description:        "new-github-credential",
@@ -549,18 +549,18 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 						UploadBaseURL:      "https://uploads.github.com",
 						BaseURL:            "https://github.com",
 						CABundle:           nil,
-						AuthType:           params.GithubAuthTypePAT,
+						AuthType:           params.ForgeAuthTypePAT,
 						Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 						Organizations:      nil,
 						Enterprises:        nil,
-						Endpoint:           params.GithubEndpoint{},
+						Endpoint:           params.ForgeEndpoint{},
 						CredentialsPayload: nil,
 					},
 				}, nil)
 				m.GetCredentials(credentials.NewGetCredentialsParams().
 					WithID(2)).
 					Return(&credentials.GetCredentialsOK{
-						Payload: params.GithubCredentials{
+						Payload: params.ForgeCredentials{
 							ID:                 2,
 							Name:               "new-github-credential",
 							Description:        "new-github-credential",
@@ -568,11 +568,11 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 							UploadBaseURL:      "https://uploads.github.com",
 							BaseURL:            "https://github.com",
 							CABundle:           nil,
-							AuthType:           params.GithubAuthTypePAT,
+							AuthType:           params.ForgeAuthTypePAT,
 							Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 							Organizations:      nil,
 							Enterprises:        nil,
-							Endpoint:           params.GithubEndpoint{},
+							Endpoint:           params.ForgeEndpoint{},
 							CredentialsPayload: nil,
 						},
 					}, nil)
@@ -591,7 +591,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "existing-github-credential",
-					AuthType:    params.GithubAuthTypePAT,
+					AuthType:    params.ForgeAuthTypePAT,
 					SecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "github-token",
 						Key:  "token",
@@ -645,7 +645,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "existing-github-credential",
-					AuthType:    params.GithubAuthTypePAT,
+					AuthType:    params.ForgeAuthTypePAT,
 					SecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "github-token",
 						Key:  "token",
@@ -718,7 +718,7 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 			},
 			expectGarmRequest: func(m *mock.MockCredentialsClientMockRecorder) {
 				m.ListCredentials(credentials.NewListCredentialsParams()).Return(&credentials.ListCredentialsOK{
-					Payload: []params.GithubCredentials{
+					Payload: []params.ForgeCredentials{
 						{
 							ID:                 1,
 							Name:               "existing-github-credential",
@@ -727,11 +727,11 @@ func TestGitHubCredentialReconciler_reconcileNormal(t *testing.T) {
 							UploadBaseURL:      "https://uploads.github.com",
 							BaseURL:            "https://github.com",
 							CABundle:           nil,
-							AuthType:           params.GithubAuthTypePAT,
+							AuthType:           params.ForgeAuthTypePAT,
 							Repositories:       []params.Repository{{ID: strconv.Itoa(1), Owner: "foo-org", Name: "foobar-repo"}, {ID: strconv.Itoa(2), Owner: "foo-org", Name: "foobar-repo1"}},
 							Organizations:      nil,
 							Enterprises:        nil,
-							Endpoint:           params.GithubEndpoint{},
+							Endpoint:           params.ForgeEndpoint{},
 							CredentialsPayload: nil,
 						},
 					},
@@ -822,7 +822,7 @@ func TestGitHubCredentialReconciler_reconcileDelete(t *testing.T) {
 				},
 				Spec: garmoperatorv1beta1.GitHubCredentialSpec{
 					Description: "existing-github-credential",
-					AuthType:    params.GithubAuthTypePAT,
+					AuthType:    params.ForgeAuthTypePAT,
 					SecretRef: garmoperatorv1beta1.SecretRef{
 						Name: "github-token",
 						Key:  "token",

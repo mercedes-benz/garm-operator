@@ -139,20 +139,20 @@ func (r *GitHubEndpointReconciler) reconcileNormal(ctx context.Context, client g
 	return ctrl.Result{}, nil
 }
 
-func (r *GitHubEndpointReconciler) getExistingEndpoint(client garmClient.EndpointClient, name string) (params.GithubEndpoint, error) {
+func (r *GitHubEndpointReconciler) getExistingEndpoint(client garmClient.EndpointClient, name string) (params.ForgeEndpoint, error) {
 	endpoint, err := client.GetEndpoint(endpoints.NewGetGithubEndpointParams().WithName(name))
 	if err != nil && garmClient.IsNotFoundError(err) {
-		return params.GithubEndpoint{}, nil
+		return params.ForgeEndpoint{}, nil
 	}
 
 	if err != nil {
-		return params.GithubEndpoint{}, err
+		return params.ForgeEndpoint{}, err
 	}
 
 	return endpoint.Payload, nil
 }
 
-func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint, caCertBundleSecret string) (params.GithubEndpoint, error) {
+func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint, caCertBundleSecret string) (params.ForgeEndpoint, error) {
 	log := log.FromContext(ctx)
 	log.WithValues("endpoint", endpoint.Name)
 
@@ -169,7 +169,7 @@ func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client ga
 	}))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.CreateEndpoint error: %s", err))
-		return params.GithubEndpoint{}, err
+		return params.ForgeEndpoint{}, err
 	}
 
 	log.V(1).Info(fmt.Sprintf("endpoint %s created - return Value %v", endpoint.Name, retValue))
@@ -180,7 +180,7 @@ func (r *GitHubEndpointReconciler) createEndpoint(ctx context.Context, client ga
 	return retValue.Payload, nil
 }
 
-func (r *GitHubEndpointReconciler) updateEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint, caCertBundleSecret string) (params.GithubEndpoint, error) {
+func (r *GitHubEndpointReconciler) updateEndpoint(ctx context.Context, client garmClient.EndpointClient, endpoint *garmoperatorv1beta1.GitHubEndpoint, caCertBundleSecret string) (params.ForgeEndpoint, error) {
 	log := log.FromContext(ctx)
 	log.V(1).Info("update endpoint")
 
@@ -196,7 +196,7 @@ func (r *GitHubEndpointReconciler) updateEndpoint(ctx context.Context, client ga
 			}))
 	if err != nil {
 		log.V(1).Info(fmt.Sprintf("client.UpdateEndpoint error: %s", err))
-		return params.GithubEndpoint{}, err
+		return params.ForgeEndpoint{}, err
 	}
 
 	return retValue.Payload, nil

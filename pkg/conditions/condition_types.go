@@ -53,6 +53,18 @@ const (
 	FetchingGithubEndpointRefFailedReason  ConditionReason = "FetchingGithubEndpointRefFailed"
 )
 
+// ScaleSet Conditions & Reasons. All of these describe states that only a
+// change to the object (or to something it references) can resolve, so the
+// reconciler reports them on the Ready condition instead of returning an error.
+const (
+	InvalidSpecReason      ConditionReason = "InvalidSpec"
+	AdoptionRequiredReason ConditionReason = "AdoptionRequired"
+	AdoptionRefusedReason  ConditionReason = "AdoptionRefused"
+	RecreateBlockedReason  ConditionReason = "RecreateBlocked"
+	DrainingReason         ConditionReason = "Draining"
+	ScopeRefNotFoundReason ConditionReason = "ScopeRefNotFound"
+)
+
 const (
 	GarmServerNotReconciledYetMsg     string = "GARM server not reconciled yet"
 	CredentialsNotReconciledYetMsg    string = "GithubCredentialsRef not reconciled yet" // #nosec G101
